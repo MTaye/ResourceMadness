@@ -1,0 +1,10 @@
+name: ResourceMadness
+main: com.mtaye.ResourceMadness.RM
+version: 0.1
+author: mtaye
+description: ResourceMadness!
+commands:
+ resourcemadness:
+  description: Access to all DropChest related commands
+  aliases:
+      - rm
