@@ -35,7 +35,7 @@ public class RMPlayer {
 		setPlayer(player);
 	}
 	
-	public void setRequestFilter(Material[] items, FilterType type, Boolean force){
+	public void setRequestFilter(HashMap<Material, String> items, FilterType type, Boolean force){
 		_requestFilter = new RMRequestFilter(items,type,force);
 	}
 	public RMRequestFilter getRequestFilter(){

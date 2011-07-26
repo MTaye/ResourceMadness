@@ -25,6 +25,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.PluginManager;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -234,69 +235,187 @@ public class RM extends JavaPlugin {
 	}
 	
 	public void parseFilter(RMPlayer rmp, List<String> args, Boolean viaPlayer){
-		int size = args.size()-1;
+		int size = 0;
 		List<Material> items = new ArrayList<Material>();
+		List<String> amount = new ArrayList<String>();
 		FilterType type = null;
 		Boolean force = null;
-		if(args.size()==2){
-			if(args.get(0).equalsIgnoreCase("add")) force = true;
-			else if(args.get(0).equalsIgnoreCase("remove")) force = false;
-			else{
-				syntaxError(rmp);
-				return;
+		if(args.size()>1){
+			if(args.get(0).equalsIgnoreCase("add")){
+				force = true;
+				size+=1;
+			}
+			else if(args.get(0).equalsIgnoreCase("remove")){
+				force = false;
+				size+=1;
 			}
 		}
 		if(args.size()>0){
-			if(args.get(size).equalsIgnoreCase("all")) type = FilterType.ALL;
-			else if(args.get(size).equalsIgnoreCase("clear")) type = FilterType.CLEAR;
-			else if(args.get(size).equalsIgnoreCase("block")) type = FilterType.BLOCK;
-			else if(args.get(size).equalsIgnoreCase("item")) type = FilterType.ITEM;
-			else if(args.get(size).equalsIgnoreCase("raw")) type = FilterType.RAW;
-			else if(args.get(size).equalsIgnoreCase("crafted")) type = FilterType.CRAFTED;
-			else{
-				String[] strItems = args.get(size).split(",");
-				for(String str : strItems){
-					if(str.contains("-")){
-						String[] strItems2 = str.split("-");
-						int id1=getIntByString(strItems2[0]);
-						int id2=getIntByString(strItems2[1]);
-						if((id1!=-1)&&(id2!=-1)){
-							if(id1>id2){
-								int id3=id1;
-								id1=id2;
-								id2=id3;
-							}
-							while(id1<=id2){
-								Material mat = Material.getMaterial(id1);
-								if(mat!=null){
-									items.add(mat);
-								}
-								id1++;
-							}
-						}
-					}
-					else{
-						int id=getIntByString(str);
-						if(id!=-1){
-							Material mat = Material.getMaterial(id);
-							if(mat!=null){
-								items.add(mat);
+			args = args.subList(size, args.size());
+			String arg0 = args.get(0);
+			if(arg0.contains("all")) type = FilterType.ALL;
+			else if(arg0.contains("clear")) type = FilterType.CLEAR;
+			else if(arg0.contains("block")) type = FilterType.BLOCK;
+			else if(arg0.contains("item")) type = FilterType.ITEM;
+			else if(arg0.contains("raw")) type = FilterType.RAW;
+			else if(arg0.contains("crafted")) type = FilterType.CRAFTED;
+
+			if((type!=null)&&(type!=FilterType.CLEAR)){
+				boolean useDefaultAmount = true;
+				items = getItemsFromFilter(type);
+				amount.clear();
+				if(arg0.contains(":")){
+					List<String> strArgs = splitArgs(arg0);
+					String strAmount = ""; 
+					String[] strSplit = strArgs.get(0).split(":");
+					if(strSplit.length>1){
+						strAmount = strSplit[1];
+						if(checkInt(strAmount)){
+							useDefaultAmount = false;
+							for(int i=0; i<items.size(); i++){							
+								amount.add(strAmount);
 							}
 						}
 					}
 				}
-				if(items.size()==0){
-					syntaxError(rmp);
-					return;
+				if(useDefaultAmount) amount = getDefaultAmount(items);
+			}
+			else{
+				for(String arg : args){
+					List<String> strArgs = splitArgs(arg);
+					for(String strArg : strArgs){
+						String strAmount = "";
+						String[] strSplit = strArg.split(":");
+						String[] strItems = strSplit[0].split(",");
+						if(strSplit.length>1){
+							strAmount = strSplit[1];
+							if(!checkInt(strAmount)) strAmount="";
+						}
+						for(String str : strItems){
+							if(str.contains("-")){
+								String[] strItems2 = str.split("-");
+								int id1=getIntByString(strItems2[0]);
+								int id2=getIntByString(strItems2[1]);
+								if((id1!=-1)&&(id2!=-1)){
+									if(id1>id2){
+										int id3=id1;
+										id1=id2;
+										id2=id3;
+									}
+									while(id1<=id2){
+										Material mat = Material.getMaterial(id1);
+										if(mat!=null){
+											items.add(mat);
+											if(strAmount=="") strAmount = Integer.toString(mat.getMaxStackSize());
+											amount.add(strAmount);
+										}
+										id1++;
+									}
+								}
+							}
+							else{
+								int id=getIntByString(str);
+								if(id!=-1){
+									Material mat = Material.getMaterial(id);
+									if(mat!=null){
+										items.add(mat);
+										if(strAmount=="") strAmount = Integer.toString(mat.getMaxStackSize());
+										amount.add(strAmount);
+									}
+								}
+							}
+						}
+					}
 				}
 			}
-			Material[] matItems = items.toArray(new Material[items.size()]);
-			rmp.setRequestFilter(matItems, type, force);
+			if((type==null)&&(items.size()==0)){
+				syntaxError(rmp);
+				return;
+			}
+			HashMap<Material, String> hashItems = new HashMap<Material, String>();
+			for(int i=0; i<items.size(); i++){
+				hashItems.put(items.get(i), amount.get(i));
+			}
+			rmp.setRequestFilter(hashItems, type, force);
 			if(viaPlayer){
 				rmp.setPlayerAction(PlayerAction.FILTER);
 				rmp.sendMessage("Left click a chest, sign or wool block to modify the filter.");
 			}
 		}
+	}
+	
+	public boolean checkInt(String arg){
+		int val = 0;
+		if(arg.contains("-")){
+			String[] split = arg.split("-");
+			int val1 = 0;
+			int val2 = 0;
+			if(split.length>0) val1 = getIntByString(split[0]);
+			if(split.length>1) val2 = getIntByString(split[1]);
+			if((val1==-1)||(val2==-1)) val = -1;
+		}
+		else val = getIntByString(arg);
+		if(val!=-1){
+			return true;
+		}
+		return false;
+	}
+	
+	public List<String> getDefaultAmount(List<Material> items){
+		List<String> amount = new ArrayList<String>();
+		if(items==null) return null;
+		else{
+			for(Material item : items){
+				amount.add(Integer.toString(item.getMaxStackSize()));
+			}
+		}
+		return amount;
+	}
+	
+	public List<Material> getItemsFromFilter(FilterType type){
+		List<Material> materials = Arrays.asList(Material.values());
+		List<Material> items = new ArrayList<Material>();
+		switch(type){
+		case ALL:
+			return materials;
+		case BLOCK:
+			for(Material mat : materials) if(mat.isBlock()) items.add(mat);
+			return items;
+		case ITEM:
+			for(Material mat : materials) if(mat!=Material.AIR) if(!mat.isBlock()) items.add(mat);
+			return items;
+		case RAW:
+			return items;
+		case CRAFTED:
+			return items;
+		}
+		return items;
+	}
+	
+	public List<String> splitArgs(String listArg){
+		List<String> args = new ArrayList<String>();
+		getServer().broadcastMessage("listArg:"+listArg);
+		if(listArg.contains(":")){
+			int pos = 0;
+			int posEnd = 0;
+			while(pos!=-1){
+				posEnd = listArg.indexOf(":",pos);
+				if(posEnd!=-1) posEnd = listArg.indexOf(",",posEnd);
+				getServer().broadcastMessage("lng:"+listArg.length()+"pos:"+pos+"posEnd:"+posEnd);
+				if(posEnd!=-1){
+					getServer().broadcastMessage("add:"+listArg.substring(pos,posEnd));
+					args.add(listArg.substring(pos,posEnd));
+					pos = posEnd+1;
+				}
+				else{
+					getServer().broadcastMessage("add:"+listArg.substring(pos));
+					args.add(listArg.substring(pos));
+					pos = -1;
+				}
+			}
+			return args;
+		}
+		else return Arrays.asList(listArg);
 	}
 	
 	public void sendListById(String arg, RMPlayer rmp){

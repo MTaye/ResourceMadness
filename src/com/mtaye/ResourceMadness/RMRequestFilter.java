@@ -1,5 +1,6 @@
 package com.mtaye.ResourceMadness;
 
+import java.util.HashMap;
 import java.util.List;
 
 import org.bukkit.Material;
@@ -7,16 +8,16 @@ import org.bukkit.Material;
 import com.mtaye.ResourceMadness.RMGame.FilterType;
 
 public class RMRequestFilter {
-	Material[] _items;
+	HashMap<Material, String> _items;
 	FilterType _type;
 	Boolean _force;
 	
-	public RMRequestFilter(Material[] items, FilterType type, Boolean force){
+	public RMRequestFilter(HashMap<Material, String> items, FilterType type, Boolean force){
 		_items = items;
 		_type = type;
 		_force = force;
 	}
-	public RMRequestFilter(Material[] items, Boolean force){
+	public RMRequestFilter(HashMap<Material, String> items, Boolean force){
 		_items = items;
 		_force = force;
 	}
@@ -24,7 +25,7 @@ public class RMRequestFilter {
 		_type = type;
 		_force = force;
 	}
-	public RMRequestFilter(Material[] items){
+	public RMRequestFilter(HashMap<Material, String> items){
 		_items = items;
 	}
 	public RMRequestFilter(FilterType type){
@@ -34,7 +35,7 @@ public class RMRequestFilter {
 		_force = force;
 	}
 	
-	public Material[] getItems(){
+	public HashMap<Material, String> getItems(){
 		return _items;
 	}
 	public FilterType getType(){

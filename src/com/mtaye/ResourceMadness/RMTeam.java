@@ -62,18 +62,20 @@ public class RMTeam {
 				RMTeam rmTeam = game.getPlayerTeam(rmp);
 				if(rmTeam!=null){
 					if(rmTeam!=this){
-						rmp.sendMessage("You must quiet the "+plugin.getChatColorByDye(rmTeam.getTeamColor())+rmTeam.getTeamColor()+ChatColor.WHITE+" team from game id "+ChatColor.YELLOW+game.getId()+ChatColor.WHITE+" first.");
+						rmp.sendMessage("You must quit the "+plugin.getChatColorByDye(rmTeam.getTeamColor())+rmTeam.getTeamColor()+ChatColor.WHITE+" team from game id "+ChatColor.YELLOW+game.getId()+ChatColor.WHITE+" first.");
 						return;
 					}
 				}
 			}
 			_players.put(rmp.getName(), rmp);
 			rmp.sendMessage(ChatColor.YELLOW+"Joined"+ChatColor.WHITE+" the "+plugin.getChatColorByDye(getTeamColor())+getTeamColor()+ChatColor.WHITE+" team.");
+			_game.updateSigns();
 			return;
 		}
 		else{
 			_players.remove(rmp.getName());
 			rmp.sendMessage(ChatColor.GRAY+"Quit"+ChatColor.WHITE+" the "+plugin.getChatColorByDye(getTeamColor())+getTeamColor()+ChatColor.WHITE+" team.");
+			_game.updateSigns();
 			return;
 		}
 	}

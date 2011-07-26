@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 
 import java.util.Hashtable;
@@ -51,11 +52,14 @@ public class RMGame {
 	//private Inventory _inventory;
 	
 	private final int _amountLimit = 20;
-	private List<Material> _filter = new ArrayList<Material>();
+	private HashMap<Material, String> _filter = new HashMap<Material, String>();
 	private static RMPlayer _requestPlayer;
 	private int _amount;
 	private boolean _random = true;
 	private boolean _allowHackMaterials = false;
+	
+	private Material _lastFilterMaterial = Material.AIR;
+	private String _lastFilterAmount = "0";
 	
 	private enum Part { GLASS, STONE, CHEST, WALL_SIGN, WOOL; }
 	public enum RMState { SETUP, COUNTDOWN, GAMEPLAY, GAMEOVER; }
@@ -79,8 +83,19 @@ public class RMGame {
 		_requestPlayer = null;
 	}
 
-	public List<Material> getFilterItems(){
+	public HashMap<Material, String> getFilterItems(){
 		return _filter;
+	}
+	public int getFilterItemsTotal(){
+		int total = 0;
+		for(String amount : _filter.values()){
+			try{
+				total+=Integer.parseInt(amount);
+			}
+			catch(Exception e){
+			}
+		}
+		return total;
 	}
 	
 	public Material[] getItems(){
@@ -143,57 +158,62 @@ public class RMGame {
 	public void clearItemsToFilter(){
 		_filter.clear();
 	}
-	private Boolean addItemToFilter(Material mat){
-		if(!_filter.contains(mat)){
-			_filter.add(mat);
-			return true;
-		}
-		return false;
+	private Boolean addItemToFilter(Material mat, String amount){
+		_lastFilterMaterial = mat;
+		_lastFilterAmount = amount;
+		_filter.put(mat, amount);
+		return true;
 	}
 	private Boolean removeItemToFilter(Material mat){
-		if(_filter.contains(mat)){
+		if(_filter.containsKey(mat)){
+			_lastFilterMaterial = mat;
+			_lastFilterAmount = _filter.get(mat);
 			_filter.remove(mat);
 			return true;
 		}
 		return false;
 	}
-	private Boolean addRemoveItemToFilter(Material mat){
-		if(!_filter.contains(mat)){
-			_filter.add(mat);
+	private Boolean addRemoveItemToFilter(Material mat, String amount){
+		if(!_filter.containsKey(mat)){
+			_lastFilterMaterial = mat;
+			_lastFilterAmount = amount;
+			_filter.put(mat, amount);
 			return true;
 		}
 		else{
+			_lastFilterMaterial = mat;
+			_lastFilterAmount = _filter.get(mat);
 			_filter.remove(mat);
 			return false;
 		}
 	}
-	public List<Material> addItemsToFilter(List<Material> items){
+	public List<Material> addItemsToFilter(HashMap<Material, String> items){
 		List<Material> addedItems = new ArrayList<Material>();
 		if(!_allowHackMaterials) items = removeHackMaterials(items);
-		for(Material item : items){
+		for(Material item : items.keySet()){
 			if(item!=Material.AIR){
-				if(addItemToFilter(item)) addedItems.add(item);
+				if(addItemToFilter(item, items.get(item))) addedItems.add(item);
 			}
 		}
 		return addedItems;
 	}
-	public List<Material> removeItemsToFilter(List<Material> items){
+	public List<Material> removeItemsToFilter(HashMap<Material, String> items){
 		List<Material> removedItems = new ArrayList<Material>();
 		if(!_allowHackMaterials) items = removeHackMaterials(items);
-		for(Material item : items){
+		for(Material item : items.keySet()){
 			if(item!=Material.AIR){
 				if(removeItemToFilter(item)) removedItems.add(item);
 			}
 		}
 		return removedItems;
 	}
-	public List<Material>[] addRemoveItemsToFilter(List<Material> items){
+	public List<Material>[] addRemoveItemsToFilter(HashMap<Material, String> items){
 		List<Material> addedItems = new ArrayList<Material>();
 		List<Material> removedItems = new ArrayList<Material>();
 		if(!_allowHackMaterials) items = removeHackMaterials(items);
-		for(Material item : items){
+		for(Material item : items.keySet()){
 			if(item!=Material.AIR){
-				if(addRemoveItemToFilter(item)) addedItems.add(item);
+				if(addRemoveItemToFilter(item, items.get(item))) addedItems.add(item);
 				else removedItems.add(item);
 			}
 		}
@@ -203,9 +223,11 @@ public class RMGame {
 		return allItems;
 	}
 	public void sortItemsToFilter(){
+		/*
 		if(_filter.size()!=0){
-			Collections.sort(_filter);
+			Map.sort(_filter);
 		}
+		*/
 	}
 	
 	//ITEMS TO FIND
@@ -286,11 +308,13 @@ public class RMGame {
 		}
 		switch(_state){
 			case SETUP:
+				int items = getFilterItems().size();
+				int total = getFilterItemsTotal();
 				for(RMTeam rmTeam : getTeams()){
 					Sign sign = rmTeam.getSign();
-					sign.setLine(0, "Filtered items:");
-					sign.setLine(1, ""+getFilterItems().size());
-					sign.setLine(2, "Players:");
+					sign.setLine(0, "Filtered: "+items);
+					sign.setLine(1, "Total: "+total);
+					sign.setLine(2, "Players: "+rmTeam.getPlayers().length);
 					sign.setLine(3, ""+rmTeam.getPlayers().length);
 					sign.update();
 				}
@@ -308,10 +332,10 @@ public class RMGame {
 				for(RMTeam rmTeam : getTeams()){
 					Sign sign = rmTeam.getSign();
 					RMChest rmChest = rmTeam.getChest();
-					sign.setLine(0, "Items to find:");
-					sign.setLine(1, ""+rmChest.getItems().size());
-					sign.setLine(2, "Amount to find:");
-					sign.setLine(3, ""+rmChest.getItemsAmount());
+					sign.setLine(0, "Found:");
+					sign.setLine(1, "Left:"+rmChest.getItems().size());
+					sign.setLine(2, "Items:");
+					sign.setLine(3, "Amount:"+rmChest.getItemsAmount());
 					sign.update();
 				}
 				break;
@@ -325,12 +349,20 @@ public class RMGame {
 			case SETUP:
 				if(rmp.getName() == getOwnerName()){
 					String items = "";
-					for(int i=0; i<_filter.size(); i++){
-						items += _filter.get(i).getId()+",";
+					
+					//Sort
+					HashMap<Integer, Material> hash = new HashMap<Integer, Material>();
+					for(Material mat : _filter.keySet()) hash.put(mat.getId(), mat);
+					Integer[] array = hash.keySet().toArray(new Integer[hash.keySet().size()]);
+					Arrays.sort(array);
+					
+					for(Integer i : array){
+						Material mat = hash.get(i);
+						items += ChatColor.WHITE+""+mat.getId()+includeAmount(_filter.get(_filter.get(mat)))+ChatColor.WHITE+", ";
 					}
 					if(items.length()>0){
 						items = items.substring(0, items.length()-1);
-						rmp.sendMessage(ChatColor.YELLOW+"Filtered items:"+ChatColor.WHITE+items);
+						rmp.sendMessage(ChatColor.YELLOW+"Filtered items:"+items);
 					}
 					else rmp.sendMessage("No items to find.");
 				}
@@ -356,11 +388,11 @@ public class RMGame {
 							if(item!=null){
 								if(item!=Material.AIR){
 									if(!isMaterial(item, _hackMaterials)){
-										if(addRemoveItemToFilter(item)){
-											addedItems+=item+",";
+										if(addRemoveItemToFilter(item, ""+item.getMaxStackSize())){
+											addedItems+=ChatColor.WHITE+item.name()+includeAmount(""+item.getMaxStackSize())+ChatColor.WHITE+", ";
 										}
 										else{
-											removedItems+=item+",";
+											removedItems+=ChatColor.WHITE+item.name()+includeAmount(_lastFilterAmount)+ChatColor.WHITE+", ";
 										}
 									}
 								}
@@ -368,14 +400,14 @@ public class RMGame {
 						}
 					}
 					if(addedItems.length()>0){
-						addedItems = addedItems.substring(0,addedItems.length()-1);
-						rmp.sendMessage(ChatColor.YELLOW+"Added:"+ChatColor.WHITE+addedItems);
+						addedItems = plugin.stripLast(addedItems, ",");
+						rmp.sendMessage(ChatColor.YELLOW+"Added:"+addedItems);
 					}
 					if(removedItems.length()>0){
-						removedItems = removedItems.substring(0,removedItems.length()-1);
-						rmp.sendMessage(ChatColor.GRAY+"Removed:"+ChatColor.WHITE+removedItems);
+						removedItems = plugin.stripLast(removedItems, ",");
+						rmp.sendMessage(ChatColor.GRAY+"Removed:"+removedItems);
 					}
-					sortItemsToFilter();
+					//sortItemsToFilter();
 					updateSigns();
 				}
 				break;
@@ -743,7 +775,7 @@ public class RMGame {
 	private RMTeam addTeam(RMTeam rmt){
 		if(!_teams.contains(rmt)){
 			_teams.add(rmt);
-			//rmt.setGame(this);
+			rmt.setGame(this);
 		}
 		return rmt;
 	}
@@ -1139,9 +1171,10 @@ public class RMGame {
 	}
 	//Options
 	//Filter
-	public List<Material> getFilter(){
+	public HashMap<Material, String> getFilter(){
 		return _filter;
 	}
+	/*
 	public void setFilter(String filter){
 		if(filter!=null){
 			if(filter.length()>1){
@@ -1171,6 +1204,7 @@ public class RMGame {
 		}
 		else _filter.remove(mat);
 	}
+	*/
 	//Amount
 	public int getAmount(){
 		return _amount;
@@ -1214,8 +1248,8 @@ public class RMGame {
 		RMRequestFilter filter = rmp.getRequestFilter();
 		if(filter!=null){
 			Boolean force = filter.getForce();
-			Material[] items = filter.getItems();
-			if((items!=null)&&(items.length!=0)){
+			HashMap<Material, String> items = filter.getItems();
+			if((items!=null)&&(items.size()!=0)){
 				if(!_allowHackMaterials){
 					items = removeHackMaterials(items);
 					if(items==null){
@@ -1225,199 +1259,83 @@ public class RMGame {
 				}
 				if(force!=null){
 					parseFilterArgs(rmp, items, force);
-					sortItemsToFilter();
+					//sortItemsToFilter();
 					return;
 				}
 				else{
 					parseFilterArgs(rmp, items);
-					sortItemsToFilter();
+					//sortItemsToFilter();
 					return;
 				}
 			}
 			FilterType type = filter.getType();
 			if(type!=null){
-				if(force!=null){
-					parseFilterArgs(rmp, type, force);
-					sortItemsToFilter();
-					return;
-				}
-				else{
-					parseFilterArgs(rmp, type);
-					sortItemsToFilter();
+				if(type==FilterType.CLEAR){
+					clearItemsToFilter();
+					rmp.sendMessage("Filter cleared.");
 					return;
 				}
 			}
 		}
 		rmp.sendMessage("No items modified.");
 	}
-	private void parseFilterArgs(RMPlayer rmp,Material[] items){
+	private void parseFilterArgs(RMPlayer rmp, HashMap<Material, String> items){
 		String added = "";
 		String removed = "";
 		String strItem;
 		Boolean getId = false;
-		if(items.length>40) getId=true;
-		for(Material item : items){
+		if(items.size()>40) getId=true;
+		for(Material item : items.keySet()){
 			if(item!=Material.AIR){
 				if(getId) strItem = ""+item.getId();
 				else strItem = item.name();
 				
-				if(addRemoveItemToFilter(item)) added+=strItem+",";
-				else removed+=strItem+",";
+				if(addRemoveItemToFilter(item, items.get(item))) added+=ChatColor.WHITE+strItem+includeAmount(items.get(item))+""+ChatColor.WHITE+", ";
+				else removed+=ChatColor.WHITE+strItem+includeAmount(items.get(item))+""+ChatColor.WHITE+", ";
 			}
 		}
-		if(added.length()>0) rmp.sendMessage(ChatColor.YELLOW+"Added:"+ChatColor.WHITE+plugin.stripLast(added, ","));
-		if(removed.length()>0) rmp.sendMessage(ChatColor.GRAY+"Removed:"+ChatColor.WHITE+plugin.stripLast(removed, ","));
+		if(added.length()>0) rmp.sendMessage(ChatColor.YELLOW+"Added:"+plugin.stripLast(added, ","));
+		if(removed.length()>0) rmp.sendMessage(ChatColor.GRAY+"Removed:"+plugin.stripLast(removed, ","));
 	}
-	private void parseFilterArgs(RMPlayer rmp,Material[] items, Boolean force){
+	private void parseFilterArgs(RMPlayer rmp, HashMap<Material, String> items, Boolean force){
 		String added = "";
 		String removed = "";
 		String strItem;
 		Boolean getId = false;
-		if(items.length>40) getId=true;
+		if(items.size()>40) getId=true;
 		if(force){
-			for(Material item : items){
+			for(Material item : items.keySet()){
 				if(item!=Material.AIR){
 					if(getId) strItem = ""+item.getId();
 					else strItem = item.name();
-					if(addItemToFilter(item)) added+=strItem+",";
+					if(addItemToFilter(item, items.get(item))) added+=ChatColor.WHITE+strItem+includeAmount(items.get(item))+ChatColor.WHITE+", ";
 				}
 			}
-			if(added.length()>0) rmp.sendMessage(ChatColor.YELLOW+"Added:"+ChatColor.WHITE+plugin.stripLast(added, ","));
+			if(added.length()>0) rmp.sendMessage(ChatColor.YELLOW+"Added:"+plugin.stripLast(added, ","));
 		}
 		else{
-			for(Material item : items){
+			for(Material item : items.keySet()){
 				if(item!=Material.AIR){
 					if(getId) strItem = ""+item.getId();
 					else strItem = item.name();
-					if(removeItemToFilter(item)) removed+=strItem+",";
+					if(removeItemToFilter(item)) removed+=ChatColor.WHITE+strItem+includeAmount(_lastFilterAmount)+ChatColor.WHITE+", ";
 				}
 			}
-			if(removed.length()>0) rmp.sendMessage(ChatColor.GRAY+"Removed:"+ChatColor.WHITE+plugin.stripLast(removed, ","));
+			if(removed.length()>0) rmp.sendMessage(ChatColor.GRAY+"Removed:"+plugin.stripLast(removed, ","));
 		}
 	}
-	private void parseFilterArgs(RMPlayer rmp,FilterType type){
-		String added = "";
-		String removed = "";
-		if(type == FilterType.CLEAR){
-			clearItemsToFilter();
-			rmp.sendMessage(ChatColor.YELLOW+"Filter cleared.");
-			return;
+	
+	public String includeAmount(String str){
+		int i = plugin.getIntByString(str);
+		if(i>1){
+			return ChatColor.GRAY+":"+str;
 		}
-		else{
-			Material[] materials = Material.values();
-			if(!_allowHackMaterials) materials = removeHackMaterials(materials);
-			switch(type){
-			case ALL:
-				for(Material mat : materials){
-					if(mat!=Material.AIR){
-						if(addRemoveItemToFilter(mat)) added+=mat.getId()+",";
-						else removed+=mat.getId()+",";
-					}
-				}
-				if(added.length()>0) rmp.sendMessage(ChatColor.YELLOW+"Added:"+ChatColor.WHITE+plugin.stripLast(added, ","));
-				if(removed.length()>0) rmp.sendMessage(ChatColor.GRAY+"Removed:"+ChatColor.WHITE+plugin.stripLast(removed, ","));
-				return;
-			case BLOCK:
-				for(Material mat : materials){
-					if(mat!=Material.AIR){
-						if(mat.isBlock()){
-							if(addRemoveItemToFilter(mat)) added+=mat.getId()+",";
-							else removed+=mat.getId()+",";
-						}
-					}
-				}
-				if(added.length()>0) rmp.sendMessage(ChatColor.YELLOW+"Added:"+ChatColor.WHITE+plugin.stripLast(added, ","));
-				if(removed.length()>0) rmp.sendMessage(ChatColor.GRAY+"Removed:"+ChatColor.WHITE+plugin.stripLast(removed, ","));
-				return;
-			case ITEM:
-				for(Material mat : materials){
-					if(mat!=Material.AIR){
-						if(!mat.isBlock()){
-							if(addRemoveItemToFilter(mat)) added+=mat.getId()+",";
-							else removed+=mat.getId()+",";
-						}
-					}
-				}
-				if(added.length()>0) rmp.sendMessage(ChatColor.YELLOW+"Added:"+ChatColor.WHITE+plugin.stripLast(added, ","));
-				if(removed.length()>0) rmp.sendMessage(ChatColor.GRAY+"Removed:"+ChatColor.WHITE+plugin.stripLast(removed, ","));
-				return;
-			case RAW:
-				return;
-			case CRAFTED:
-				return;
-		}
-		}
+		return "";
 	}
-	private void parseFilterArgs(RMPlayer rmp, FilterType type, Boolean force){
-		String added = "";
-		String removed = "";
-		if(type == FilterType.CLEAR){
-			clearItemsToFilter();
-			rmp.sendMessage(ChatColor.YELLOW+"Filter cleared.");
-			return;
-		}
-		else{
-			Material[] materials = Material.values();
-			if(!_allowHackMaterials) materials = removeHackMaterials(materials);
-			switch(type){
-			case ALL:
-				materials = Material.values();
-				if(!_allowHackMaterials) materials = removeHackMaterials(materials);
-				if(force){
-					for(Material mat : materials){
-						if(mat!=Material.AIR) if(addItemToFilter(mat)) added+=mat.getId()+",";
-					}
-					if(added.length()>0) rmp.sendMessage(ChatColor.YELLOW+"Added:"+ChatColor.WHITE+plugin.stripLast(added, ","));
-					return;
-				}
-				else{
-					for(Material mat : materials){
-						if(mat!=Material.AIR) if(removeItemToFilter(mat)) removed+=mat.getId()+",";
-					}
-					if(added.length()>0) rmp.sendMessage(ChatColor.GRAY+"Removed:"+ChatColor.WHITE+plugin.stripLast(removed, ","));
-					return;
-				}
-			case BLOCK:
-				materials = Material.values();
-				if(!_allowHackMaterials) materials = removeHackMaterials(materials);
-				if(force){
-					for(Material mat : materials){
-						if(mat!=Material.AIR) if(mat.isBlock()) if(addItemToFilter(mat)) added+=mat.getId()+",";
-					}
-					if(added.length()>0) rmp.sendMessage(ChatColor.YELLOW+"Added:"+ChatColor.WHITE+plugin.stripLast(added, ","));
-					return;
-				}
-				else{
-					for(Material mat : materials){
-						if(mat!=Material.AIR) if(mat.isBlock()) if(removeItemToFilter(mat)) removed+=mat.getId()+",";
-					}
-					if(added.length()>0) rmp.sendMessage(ChatColor.GRAY+"Removed:"+ChatColor.WHITE+plugin.stripLast(removed, ","));
-					return;
-				}
-			case ITEM:
-				materials = Material.values();
-				if(!_allowHackMaterials) materials = removeHackMaterials(materials);
-				if(force){
-					for(Material mat : materials){
-						
-						if(mat!=Material.AIR) if(!mat.isBlock()) if(addItemToFilter(mat)) added+=mat.getId()+",";
-					}
-					if(added.length()>0) rmp.sendMessage(ChatColor.YELLOW+"Added:"+ChatColor.WHITE+plugin.stripLast(added, ","));
-					return;
-				}
-				else{
-					for(Material mat : materials){
-						if(mat!=Material.AIR) if(!mat.isBlock()) if(removeItemToFilter(mat)) removed+=mat.getId()+",";
-					}
-					if(added.length()>0) rmp.sendMessage(ChatColor.GRAY+"Removed:"+ChatColor.WHITE+plugin.stripLast(removed, ","));
-					return;
-				}
-			case RAW:
-				return;
-			case CRAFTED:
-				return;
-			}
-		}
+
+	public HashMap<Material, String> removeHackMaterials(HashMap<Material, String> materials){
+		for(Material mat : _hackMaterials) materials.remove(mat);
+		return materials;
 	}
 	
 	public Material[] removeHackMaterials(Material[] materials){
