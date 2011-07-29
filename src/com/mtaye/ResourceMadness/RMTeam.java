@@ -23,26 +23,44 @@ public class RMTeam {
 	private static List<RMTeam> _teams = new ArrayList<RMTeam>();
 	private RMChest _chest;
 	private Sign _sign;
+	private Location _warpLocation;
 	
 	public RMTeam(DyeColor color, Chest chest, RM plugin){
-		this.plugin = plugin;
-		_teamColor = color;
-		_chest = new RMChest(chest);
-		_sign = (Sign)chest.getBlock().getRelative(BlockFace.UP).getState();
+		init(color, chest, plugin);
 	}
 	
 	public RMTeam(DyeColor color, RMGame game, Chest chest, RM plugin){
-		this.plugin = plugin;
 		this._game = game;
+		init(color, chest, plugin);
+	}
+	
+	public void init(DyeColor color, Chest chest, RM plugin){
+		this.plugin = plugin;
 		this._teamColor = color;
-		_chest = new RMChest(chest);
+		_chest = new RMChest(chest, this, plugin);
 		_sign = (Sign)chest.getBlock().getRelative(BlockFace.UP).getState();
+		_warpLocation = findWarpLocation(_sign.getBlock());
+	}
+	
+	public Location findWarpLocation(Block b){
+		BlockFace face = RMDir.getBlockFaceByData(b.getData());
+		face = RMDir.getBlockFaceOpposite(face);
+		Location loc = b.getRelative(face).getLocation();
+		loc = loc.add(0.5, 0.5, 0.5);
+		return loc;
+	}
+	public Location getWarpLocation(){
+		return _warpLocation;
 	}
 	
 	//TeamColor
 	public DyeColor getTeamColor(){
 		return _teamColor;
 	}
+	public String getTeamColorString(){
+		return plugin.getChatColorByDye(getTeamColor()) + _teamColor.name();
+	}
+	
 	public void setTeamColor(DyeColor color){
 		_teamColor = color;
 	}
@@ -62,19 +80,21 @@ public class RMTeam {
 				RMTeam rmTeam = game.getPlayerTeam(rmp);
 				if(rmTeam!=null){
 					if(rmTeam!=this){
-						rmp.sendMessage("You must quit the "+plugin.getChatColorByDye(rmTeam.getTeamColor())+rmTeam.getTeamColor()+ChatColor.WHITE+" team from game id "+ChatColor.YELLOW+game.getId()+ChatColor.WHITE+" first.");
+						rmp.sendMessage("You must quit the "+rmTeam.getTeamColorString()+ChatColor.WHITE+" team from game id "+ChatColor.YELLOW+game.getId()+ChatColor.WHITE+" first.");
 						return;
 					}
 				}
 			}
+			rmp.setTeam(this);
 			_players.put(rmp.getName(), rmp);
-			rmp.sendMessage(ChatColor.YELLOW+"Joined"+ChatColor.WHITE+" the "+plugin.getChatColorByDye(getTeamColor())+getTeamColor()+ChatColor.WHITE+" team.");
+			rmp.sendMessage(ChatColor.YELLOW+"Joined"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.");
 			_game.updateSigns();
 			return;
 		}
 		else{
+			rmp.clearTeam();
 			_players.remove(rmp.getName());
-			rmp.sendMessage(ChatColor.GRAY+"Quit"+ChatColor.WHITE+" the "+plugin.getChatColorByDye(getTeamColor())+getTeamColor()+ChatColor.WHITE+" team.");
+			rmp.sendMessage(ChatColor.GRAY+"Quit"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.");
 			_game.updateSigns();
 			return;
 		}
@@ -139,5 +159,12 @@ public class RMTeam {
 	}
 	public List<Sign> getSigns(){
 		return _game.getSigns();
+	}
+	
+	public void teamMessage(String message){
+		RMPlayer[] players = getPlayers();
+		for(RMPlayer rmp : players){
+			rmp.sendMessage(message);
+		}
 	}
 }

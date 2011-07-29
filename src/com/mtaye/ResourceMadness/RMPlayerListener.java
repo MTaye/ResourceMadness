@@ -14,6 +14,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import com.mtaye.ResourceMadness.RMGame.InterfaceState;
 import com.mtaye.ResourceMadness.RMGame.RMState;
 import com.mtaye.ResourceMadness.RMPlayer.PlayerAction;
 
@@ -38,12 +39,15 @@ public class RMPlayerListener extends PlayerListener{
 						RMGame rmGame = RMGame.getGameByBlock(b);
 						if(rmGame!=null){
 							switch(rmGame.getState()){
-								case SETUP: case COUNTDOWN: case GAMEOVER:
+								case SETUP:
 									if(rmp.getName()!=rmGame.getOwnerName()){
 										e.setCancelled(true);
 									}
 									break;
-								case GAMEPLAY:
+								case COUNTDOWN:
+									e.setCancelled(true);
+									break;
+								case GAMEPLAY: case GAMEOVER:
 									RMTeam rmTeam = rmGame.getPlayerTeam(rmp);
 									if(rmTeam!=null){
 										if(b!=rmTeam.getChest().getChest().getBlock()){
@@ -106,21 +110,15 @@ public class RMPlayerListener extends PlayerListener{
 							}
 							rmp.setPlayerAction(PlayerAction.NONE);
 						}
-						else rmp.sendMessage("This is not a game block");
+						else{
+							rmp.sendMessage("This is not a game block");
+						}
 					}
 					else{
 						RMGame rmGame = RMGame.getGameByBlock(b);
 						if(rmGame!=null){
-							switch(b.getType()){
-								case CHEST:
-									rmGame.tryAddItems(b, rmp);
-									break;
-								case WALL_SIGN:
-									rmGame.trySignInfo(b, rmp);
-									break;
-								case WOOL:
-									rmGame.joinTeamByBlock(b, rmp);
-									break;
+							if(RMGame.isMaterial(b.getType(), RMGame.getMaterials())){
+								rmGame.handleLeftClick(b, rmp);
 							}
 						}
 					}

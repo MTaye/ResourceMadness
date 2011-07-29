@@ -80,6 +80,7 @@ public class RM extends JavaPlugin {
 		PluginManager pm = getServer().getPluginManager();
 		pm.registerEvent(Type.PLAYER_INTERACT, playerListener, Priority.Normal, this);
 		pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Normal, this);
+		pm.registerEvent(Type.BLOCK_PLACE, blockListener, Priority.Normal, this);
 
 		pdfFile = this.getDescription();
 		log.log(Level.INFO, pdfFile.getName() + " v" + pdfFile.getVersion() + " enabled!" );
@@ -236,8 +237,8 @@ public class RM extends JavaPlugin {
 	
 	public void parseFilter(RMPlayer rmp, List<String> args, Boolean viaPlayer){
 		int size = 0;
-		List<Material> items = new ArrayList<Material>();
-		List<String> amount = new ArrayList<String>();
+		List<Integer> items = new ArrayList<Integer>();
+		List<Integer[]> amount = new ArrayList<Integer[]>();
 		FilterType type = null;
 		Boolean force = null;
 		if(args.size()>1){
@@ -270,10 +271,11 @@ public class RM extends JavaPlugin {
 					String[] strSplit = strArgs.get(0).split(":");
 					if(strSplit.length>1){
 						strAmount = strSplit[1];
-						if(checkInt(strAmount)){
+						Integer[] intAmount = checkInt(strAmount);
+						if(intAmount!=null){
 							useDefaultAmount = false;
 							for(int i=0; i<items.size(); i++){							
-								amount.add(strAmount);
+								amount.add(intAmount);
 							}
 						}
 					}
@@ -287,9 +289,10 @@ public class RM extends JavaPlugin {
 						String strAmount = "";
 						String[] strSplit = strArg.split(":");
 						String[] strItems = strSplit[0].split(",");
+						Integer[] intAmount = null;
 						if(strSplit.length>1){
 							strAmount = strSplit[1];
-							if(!checkInt(strAmount)) strAmount="";
+							intAmount = checkInt(strAmount);
 						}
 						for(String str : strItems){
 							if(str.contains("-")){
@@ -305,9 +308,12 @@ public class RM extends JavaPlugin {
 									while(id1<=id2){
 										Material mat = Material.getMaterial(id1);
 										if(mat!=null){
-											items.add(mat);
-											if(strAmount=="") strAmount = Integer.toString(mat.getMaxStackSize());
-											amount.add(strAmount);
+											items.add(mat.getId());
+											if(intAmount==null){
+												intAmount = new Integer[1];
+												intAmount[0] = mat.getMaxStackSize();
+											}
+											amount.add(intAmount);
 										}
 										id1++;
 									}
@@ -318,9 +324,12 @@ public class RM extends JavaPlugin {
 								if(id!=-1){
 									Material mat = Material.getMaterial(id);
 									if(mat!=null){
-										items.add(mat);
-										if(strAmount=="") strAmount = Integer.toString(mat.getMaxStackSize());
-										amount.add(strAmount);
+										items.add(mat.getId());
+										if(intAmount==null){
+											intAmount = new Integer[1];
+											intAmount[0] = mat.getMaxStackSize();
+										}
+										amount.add(intAmount);
 									}
 								}
 							}
@@ -332,7 +341,7 @@ public class RM extends JavaPlugin {
 				syntaxError(rmp);
 				return;
 			}
-			HashMap<Material, String> hashItems = new HashMap<Material, String>();
+			HashMap<Integer, Integer[]> hashItems = new HashMap<Integer, Integer[]>();
 			for(int i=0; i<items.size(); i++){
 				hashItems.put(items.get(i), amount.get(i));
 			}
@@ -344,45 +353,53 @@ public class RM extends JavaPlugin {
 		}
 	}
 	
-	public boolean checkInt(String arg){
-		int val = 0;
+	public Integer[] checkInt(String arg){
+		List<Integer> values = new ArrayList<Integer>();
+		
 		if(arg.contains("-")){
 			String[] split = arg.split("-");
 			int val1 = 0;
 			int val2 = 0;
 			if(split.length>0) val1 = getIntByString(split[0]);
 			if(split.length>1) val2 = getIntByString(split[1]);
-			if((val1==-1)||(val2==-1)) val = -1;
+			if(val1>0) values.add(val1);
+			if(val2>0) values.add(val2);
 		}
-		else val = getIntByString(arg);
-		if(val!=-1){
-			return true;
+		else{
+			int val = getIntByString(arg);
+			if(val>0) values.add(val);
 		}
-		return false;
+		if(values.size()==0) return null;
+		
+		return values.toArray(new Integer[values.size()]);
 	}
 	
-	public List<String> getDefaultAmount(List<Material> items){
-		List<String> amount = new ArrayList<String>();
+	public List<Integer[]> getDefaultAmount(List<Integer> items){
+		List<Integer[]> amount = new ArrayList<Integer[]>();
 		if(items==null) return null;
 		else{
-			for(Material item : items){
-				amount.add(Integer.toString(item.getMaxStackSize()));
+			for(Integer item : items){
+				Material mat = Material.getMaterial(item);
+				Integer[] intAmount = new Integer[1];
+				intAmount[0] = mat.getMaxStackSize();
+				amount.add(intAmount);
 			}
 		}
 		return amount;
 	}
 	
-	public List<Material> getItemsFromFilter(FilterType type){
+	public List<Integer> getItemsFromFilter(FilterType type){
 		List<Material> materials = Arrays.asList(Material.values());
-		List<Material> items = new ArrayList<Material>();
+		List<Integer> items = new ArrayList<Integer>();
 		switch(type){
 		case ALL:
-			return materials;
+			for(Material mat : materials) items.add(mat.getId());
+			return items;
 		case BLOCK:
-			for(Material mat : materials) if(mat.isBlock()) items.add(mat);
+			for(Material mat : materials) if(mat.isBlock()) items.add(mat.getId());
 			return items;
 		case ITEM:
-			for(Material mat : materials) if(mat!=Material.AIR) if(!mat.isBlock()) items.add(mat);
+			for(Material mat : materials) if(mat!=Material.AIR) if(!mat.isBlock()) items.add(mat.getId());
 			return items;
 		case RAW:
 			return items;
@@ -394,21 +411,20 @@ public class RM extends JavaPlugin {
 	
 	public List<String> splitArgs(String listArg){
 		List<String> args = new ArrayList<String>();
-		getServer().broadcastMessage("listArg:"+listArg);
+		//getServer().broadcastMessage("listArg:"+listArg);
 		if(listArg.contains(":")){
 			int pos = 0;
 			int posEnd = 0;
 			while(pos!=-1){
 				posEnd = listArg.indexOf(":",pos);
 				if(posEnd!=-1) posEnd = listArg.indexOf(",",posEnd);
-				getServer().broadcastMessage("lng:"+listArg.length()+"pos:"+pos+"posEnd:"+posEnd);
 				if(posEnd!=-1){
-					getServer().broadcastMessage("add:"+listArg.substring(pos,posEnd));
+					//getServer().broadcastMessage("add:"+listArg.substring(pos,posEnd));
 					args.add(listArg.substring(pos,posEnd));
 					pos = posEnd+1;
 				}
 				else{
-					getServer().broadcastMessage("add:"+listArg.substring(pos));
+					//getServer().broadcastMessage("add:"+listArg.substring(pos));
 					args.add(listArg.substring(pos));
 					pos = -1;
 				}
@@ -517,8 +533,11 @@ public class RM extends JavaPlugin {
 	}
 	
 	public String stripLast(String str, String s){
-		if(str.charAt(str.length()-1)==s.charAt(0)){
-			return str.substring(0, str.length()-1);
+		int pos = str.lastIndexOf(s);
+		if(pos!=-1){
+			String part1 = str.substring(0, pos);
+			String part2 = str.substring(pos+s.length());
+			return part1+part2;
 		}
 		return str;
 	}

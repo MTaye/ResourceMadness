@@ -9,10 +9,12 @@ import java.util.logging.Level;
 
 //import net.minecraft.server.Item;
 
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockListener;
+import org.bukkit.event.block.BlockPlaceEvent;
 
 import com.avaje.ebeaninternal.server.deploy.BeanDescriptor.EntityType;
 import com.nijiko.data.UserStorage;
@@ -52,7 +54,35 @@ public class RMBlockListener extends BlockListener{
 				}
 				*/
 			}
-			
+			for(RMGame rmGame : RMGame.getGames()){
+				if(rmGame!=null){
+					switch(rmGame.getState()){
+					case SETUP:
+						break;
+					case COUNTDOWN: case GAMEPLAY: case GAMEOVER:
+						rmGame.addLog(b);
+						break;
+					}
+				}
+			}
+		}
+	}
+	
+	@Override
+	public void onBlockPlace(BlockPlaceEvent e){
+		Block b = e.getBlock();
+		if(RMGame.getGames().size()!=0){
+			for(RMGame rmGame : RMGame.getGames()){
+				if(rmGame!=null){
+					switch(rmGame.getState()){
+					case SETUP:
+						break;
+					case COUNTDOWN: case GAMEPLAY: case GAMEOVER:
+						rmGame.addLog(b, Material.AIR);
+						break;
+					}
+				}
+			}
 		}
 	}
 }

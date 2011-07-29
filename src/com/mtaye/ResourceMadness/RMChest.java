@@ -11,15 +11,22 @@ import org.bukkit.inventory.ItemStack;
 
 public class RMChest{
 	private Chest _chest;
-	private HashMap<Material, Integer> _items = new HashMap<Material, Integer>();
+	private HashMap<Integer, Integer> _items = new HashMap<Integer, Integer>();
 	private RMTeam _team;
+	private RM plugin;
 	
-	public RMChest(Chest chest){
+	public RMChest(Chest chest, RM plugin){
 		_chest = chest;
+		this.plugin = plugin;
 	}
-	public RMChest(Chest chest, RMTeam team){
+	public RMChest(Chest chest, RMTeam team, RM plugin){
 		_chest = chest;
 		_team = team;
+		this.plugin = plugin;
+	}
+	
+	public RMTeam getTeam(){
+		return _team;
 	}
 	
 	public Chest getChest(){
@@ -45,22 +52,30 @@ public class RMChest{
 		return null;
 	}
 	
+	public void clearItems(){
+		_items.clear();
+	}
+	
 	public int addItem(ItemStack item){
-		Material mat = item.getType();
+		int id = item.getTypeId();
 		int overflow;
 		int newAmount;
-		if(_items.containsKey(mat)){
-			newAmount = _items.get(mat) + item.getAmount();
+		if(_items.containsKey(id)){
+			newAmount = _items.get(id) + item.getAmount();
 		}
 		else newAmount = item.getAmount();
 		
-		overflow = 0;//overflow = _game..get(mat) - newAmount;
+		overflow = getTeam().getGame().getItems().get(id) - newAmount;
+		plugin.getServer().broadcastMessage("itemsid:"+getTeam().getGame().getItems().get(id));
+		plugin.getServer().broadcastMessage("newAmount:"+newAmount);
+
 		if(overflow<0){
 			overflow=-overflow;
 			newAmount-=overflow;
 		}
 		else overflow = 0;
-		_items.put(mat, newAmount);
+		plugin.getServer().broadcastMessage("overflow:"+overflow);
+		_items.put(id, newAmount);
 		return overflow;
 	}
 	
@@ -70,14 +85,28 @@ public class RMChest{
 		}
 		return -1;
 	}
-	public HashMap<Material, Integer> getItems(){
+	public HashMap<Integer, Integer> getItems(){
 		return _items;//_itemsToFind;
 	}
-	public Integer getItemsAmount(){
-		int amount = 0;
-		for(int i : _items.values()){
-			amount+=i;
+	public Integer getItemsTotal(){
+		int total = 0;
+		for(int amount : _items.values()){
+			total+=amount;
 		}
-		return amount;
+		return total;
+	}
+	public int getItemsLeft(){
+		int itemsLeft = 0;
+		HashMap<Integer, Integer> items = getTeam().getGame().getItems();
+		for(Integer item : items.keySet()){
+			int amount = items.get(item);
+			if(_items.containsKey(item)) amount-= _items.get(item);
+			if(amount>0) itemsLeft++;
+		}
+		return itemsLeft;
+	}
+	
+	public int getTotalLeft(){
+		return getTeam().getGame().getItemsTotal() - getItemsTotal();
 	}
 }

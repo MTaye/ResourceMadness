@@ -1,5 +1,6 @@
 package com.mtaye.ResourceMadness;
 
+import org.bukkit.block.BlockFace;
 import org.bukkit.util.Vector;
 
 public enum RMDir{
@@ -20,6 +21,18 @@ public enum RMDir{
 		return RMDir.NONE;
 	}
 	
+	public static BlockFace getBlockFaceByData(int data){
+		switch(data){
+		case 5:	case 13: return BlockFace.NORTH;
+		case 3:	case 11: return BlockFace.EAST;
+		case 4:	case 12: return BlockFace.SOUTH;
+		case 2:	case 10: return BlockFace.WEST;
+		case 1: case 9:	return BlockFace.UP;
+		case 0:	case 8:	return BlockFace.DOWN;
+		}
+		return BlockFace.SELF;
+	}
+	
 	public byte getData(){
 		switch(this){
 			case NORTH: return 5;
@@ -30,6 +43,18 @@ public enum RMDir{
 			case DOWN: return 0;
 		}
 		return 0;
+	}
+	
+	public static BlockFace getBlockFaceOpposite(BlockFace face){
+		switch(face){
+		case NORTH: return BlockFace.SOUTH;
+		case EAST: return BlockFace.WEST;
+		case SOUTH: return BlockFace.NORTH;
+		case WEST: return BlockFace.EAST;
+		case UP: return BlockFace.DOWN;
+		case DOWN: return BlockFace.UP;
+		}
+		return BlockFace.SELF;
 	}
 	
 	public RMDir getOpposite(){

@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
@@ -35,7 +36,7 @@ public class RMPlayer {
 		setPlayer(player);
 	}
 	
-	public void setRequestFilter(HashMap<Material, String> items, FilterType type, Boolean force){
+	public void setRequestFilter(HashMap<Integer, Integer[]> items, FilterType type, Boolean force){
 		_requestFilter = new RMRequestFilter(items,type,force);
 	}
 	public RMRequestFilter getRequestFilter(){
@@ -99,6 +100,13 @@ public class RMPlayer {
 		_team = null;
 	}
 	
+	public void setTeam(RMTeam rmt){
+		_team = rmt;
+	}
+	public void clearTeam(){
+		_team = null;
+	}
+	
 	//Team GET/SET
 	public RMTeam getTeam(){
 		return _team;
@@ -115,5 +123,18 @@ public class RMPlayer {
 	//SendMessage
 	public void sendMessage(String message){
 		getPlayer().sendMessage(message);
+	}
+	
+	public void warpToSafety(){
+		Player p = getPlayer();
+		double pLocX = p.getLocation().getX();
+		double pLocY = p.getLocation().getY();
+		double pLocZ = p.getLocation().getZ();
+		Location loc = _team.getWarpLocation();
+		if((Math.abs(pLocX-loc.getX())>2)||(Math.abs(pLocY-loc.getY())>2)||(Math.abs(pLocZ-loc.getZ())>2)){
+			loc.setPitch(p.getLocation().getPitch());
+			loc.setYaw(p.getLocation().getYaw());
+			getPlayer().teleport(_team.getWarpLocation());
+		}
 	}
 }
