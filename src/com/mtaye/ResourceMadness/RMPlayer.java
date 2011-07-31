@@ -12,14 +12,14 @@ import com.mtaye.ResourceMadness.RMGame.FilterType;
 
 public class RMPlayer {
 	public enum PlayerAction{
-		ADD, REMOVE, SETUP, JOIN, QUIT, START, RESTART, STOP, FILTER, NONE;
+		ADD, REMOVE, SETUP, JOIN, QUIT, START, RESTART, STOP, FILTER, FILTER_ITEM, NONE;
 	}
 	
-	private String _playerName;
-	private Player _player;
+	private String _player;
 	private RMTeam _team;
 	private List<RMGame> _games;
 	private RMRequestFilter _requestFilter;
+	private boolean _sneak = false;
 	
 	public static RM plugin;
 	private static HashMap<String, RMPlayer> _players = new HashMap<String, RMPlayer>();
@@ -27,11 +27,11 @@ public class RMPlayer {
 	private PlayerAction _playerAction = PlayerAction.NONE;
 	
 	//Constructor
-	private RMPlayer(Player player){
+	private RMPlayer(String player){
 		setPlayer(player);
 		setPlayerAction(PlayerAction.NONE);
 	}
-	private RMPlayer(Player player, PlayerAction playerAction, RM plugin){
+	private RMPlayer(String player, PlayerAction playerAction, RM plugin){
 		setPlayerAction(playerAction);
 		setPlayer(player);
 	}
@@ -47,21 +47,19 @@ public class RMPlayer {
 		_requestFilter = null;
 	}
 	
-	//Name GET/SET
-	public String getName(){
-		return _playerName;
-	}
-	private void setName(String name){
-		_playerName = name;
-	}
-	
 	//Player GET/SET
-	public Player getPlayer(){
+	public String getName(){
 		return _player;
 	}
-	private void setPlayer(Player player){
+	public void setName(Player player){
+		_player = player.getName();
+	}
+	
+	public Player getPlayer(){
+		return plugin.getServer().getPlayer(_player);
+	}
+	private void setPlayer(String player){
 		_player = player;
-		setName(player.getName());
 	}
 	public static HashMap<String, RMPlayer> getPlayers(){
 		return _players;
@@ -73,7 +71,7 @@ public class RMPlayer {
 		else{
 			Player p = plugin.getServer().getPlayer(name);
 			if(p!=null){
-				RMPlayer rmp = new RMPlayer(p);
+				RMPlayer rmp = new RMPlayer(p.getName());
 				_players.put(name, rmp);
 				return rmp;
 			}
@@ -136,5 +134,15 @@ public class RMPlayer {
 			loc.setYaw(p.getLocation().getYaw());
 			getPlayer().teleport(_team.getWarpLocation());
 		}
+	}
+	
+	public void sneakOn(){
+		_sneak = true;
+	}
+	public void sneakOff(){
+		_sneak = false;
+	}
+	public boolean isSneaking(){
+		return _sneak;
 	}
 }

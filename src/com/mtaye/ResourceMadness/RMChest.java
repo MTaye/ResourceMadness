@@ -58,23 +58,22 @@ public class RMChest{
 	
 	public int addItem(ItemStack item){
 		int id = item.getTypeId();
-		int overflow;
+		int overflow = 0;
 		int newAmount;
 		if(_items.containsKey(id)){
 			newAmount = _items.get(id) + item.getAmount();
 		}
 		else newAmount = item.getAmount();
 		
-		overflow = getTeam().getGame().getItems().get(id) - newAmount;
-		plugin.getServer().broadcastMessage("itemsid:"+getTeam().getGame().getItems().get(id));
-		plugin.getServer().broadcastMessage("newAmount:"+newAmount);
+		HashMap<Integer, Integer> items = getTeam().getGame().getItems();
+		if(items.containsKey(id)) overflow = items.get(id) - newAmount;
 
 		if(overflow<0){
 			overflow=-overflow;
 			newAmount-=overflow;
 		}
 		else overflow = 0;
-		plugin.getServer().broadcastMessage("overflow:"+overflow);
+
 		_items.put(id, newAmount);
 		return overflow;
 	}
@@ -95,7 +94,7 @@ public class RMChest{
 		}
 		return total;
 	}
-	public int getItemsLeft(){
+	public int getItemsLeftInt(){
 		int itemsLeft = 0;
 		HashMap<Integer, Integer> items = getTeam().getGame().getItems();
 		for(Integer item : items.keySet()){
@@ -104,6 +103,19 @@ public class RMChest{
 			if(amount>0) itemsLeft++;
 		}
 		return itemsLeft;
+	}
+	public HashMap<Integer, Integer> getItemsLeft(){
+		HashMap<Integer, Integer> itemsLeft = new HashMap<Integer, Integer>();
+		HashMap<Integer, Integer> items = getTeam().getGame().getItems();
+		for(Integer item : items.keySet()){
+			itemsLeft.put(item, items.get(item));
+		}
+		return itemsLeft;
+	}
+	
+	public Integer getItemLeft(Integer item){
+		HashMap<Integer, Integer> items = getTeam().getGame().getItems();
+		return items.get(item) - _items.get(item);
 	}
 	
 	public int getTotalLeft(){

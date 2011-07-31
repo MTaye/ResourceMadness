@@ -14,12 +14,9 @@ import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import org.bukkit.entity.Player;
 import org.bukkit.DyeColor;
-import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.PluginManager;
@@ -30,12 +27,12 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import java.io.*;
 
 import com.mtaye.ResourceMadness.RMGame.FilterType;
+import com.mtaye.ResourceMadness.RMGame.RMState;
 import com.mtaye.ResourceMadness.RMPlayer.PlayerAction;
 import com.nijikokun.bukkit.Permissions.Permissions;
 import com.nijiko.permissions.PermissionHandler;
@@ -74,7 +71,7 @@ public class RM extends JavaPlugin {
 		log = getServer().getLogger();
 		
 		watcher = new RMWatcher(this);
-		watcherid = getServer().getScheduler().scheduleSyncRepeatingTask(this, watcher, 10,10);
+		watcherid = getServer().getScheduler().scheduleSyncRepeatingTask(this, watcher, 5,5);
 	
 		//setupPermissions();
 		PluginManager pm = getServer().getPluginManager();
@@ -99,136 +96,194 @@ public class RM extends JavaPlugin {
 		if(sender.getClass().getName().contains("Player")){
 			p = (Player)sender;
 			RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
-			
-			if(cmd.getName().equals("resourcemadness")){
-				boolean syntaxError=false;
-				if(args.length==0){
-					syntaxError(rmp);
-				}
-				else{
-					//ADD
-					if(args[0].equalsIgnoreCase("add")){
-						rmp.setPlayerAction(PlayerAction.ADD);
-						rmp.sendMessage("Left click a game block to create your new game.");
+			if(rmp!=null){
+				if(cmd.getName().equals("resourcemadness")){
+					boolean syntaxError=false;
+					if(args.length==0){
+						syntaxError(rmp);
 					}
-					//REMOVE
-					else if(args[0].equalsIgnoreCase("remove")){
-						if(args.length==2){
-							RMGame rmGame = getGameById(args[1]);
-							if(rmGame!=null){
-								RMGame.tryRemoveGame(rmGame, rmp);
+					else{
+						//ADD
+						if(args[0].equalsIgnoreCase("add")){
+							rmp.setPlayerAction(PlayerAction.ADD);
+							rmp.sendMessage("Left click a game block to create your new game.");
+						}
+						//REMOVE
+						else if(args[0].equalsIgnoreCase("remove")){
+							if(args.length==2){
+								RMGame rmGame = getGameById(args[1]);
+								if(rmGame!=null){
+									RMGame.tryRemoveGame(rmGame, rmp);
+								}
+								else syntaxError(rmp);
 							}
-							else syntaxError(rmp);
+							else{
+								rmp.setPlayerAction(PlayerAction.REMOVE);
+								rmp.sendMessage("Left click a game block to remove your game.");
+							}
 						}
-						else{
-							rmp.setPlayerAction(PlayerAction.REMOVE);
-							rmp.sendMessage("Left click a game block to remove your game.");
+						//LIST
+						else if(args[0].equalsIgnoreCase("list")){
+							if(args.length==2){
+								sendListById(args[1], rmp);
+							}
+							else sendListById("0", rmp);
 						}
-					}
-					//LIST
-					else if(args[0].equalsIgnoreCase("list")){
-						if(args.length==2){
-							sendListById(args[1], rmp);
+						//INFO
+						else if(args[0].equalsIgnoreCase("info")){
 						}
-						else sendListById("0", rmp);
-					}
-					//INFO
-					else if(args[0].equalsIgnoreCase("info")){
-					}
-					//JOIN
-					else if(args[0].equalsIgnoreCase("join")){
-						if(args.length==3){
-							RMGame rmGame = getGameById(args[1]);
-							if(rmGame!=null){
-								RMTeam rmTeam = getTeamById(args[2], rmGame);
-								if(rmTeam!=null) rmGame.joinTeam(rmTeam, rmp);
+						//JOIN
+						else if(args[0].equalsIgnoreCase("join")){
+							if(args.length==3){
+								RMGame rmGame = getGameById(args[1]);
+								if(rmGame!=null){
+									RMTeam rmTeam = getTeamById(args[2], rmGame);
+									if(rmTeam!=null) rmGame.joinTeam(rmTeam, rmp);
+									else syntaxError(rmp);
+								}
+								else syntaxError(rmp);
+							}
+							else{
+								rmp.setPlayerAction(PlayerAction.JOIN);
+								rmp.sendMessage("Left click a chest, sign or wool block to join the team.");
+							}
+						}
+						//QUIT
+						else if(args[0].equalsIgnoreCase("quit")){
+							if(args.length==2){
+								RMGame rmGame = getGameById(args[1]);
+								if(rmGame!=null){
+									rmGame.quitTeam(rmGame, rmp);
+								}
+								else syntaxError(rmp);
+							}
+							else{
+								rmp.setPlayerAction(PlayerAction.QUIT);
+								rmp.sendMessage("Left click a chest, sign or wool block to quit the team.");
+							}
+						}
+						//START
+						else if(args[0].equalsIgnoreCase("start")){
+							if(args.length==2){
+								RMGame rmGame = getGameById(args[1]);
+								if(rmGame!=null){
+									rmGame.startGame(rmp);
+								}
+								else syntaxError(rmp);
+							}
+							else{
+								rmp.setPlayerAction(PlayerAction.START);
+								rmp.sendMessage("Left click a chest, sign or wool block to start the game.");
+							}
+						}
+						//RESTART
+						else if(args[0].equalsIgnoreCase("restart")){
+							if(args.length==2){
+								RMGame rmGame = getGameById(args[1]);
+								if(rmGame!=null){
+									rmGame.restartGame(rmp);
+								}
+								else syntaxError(rmp);
+							}
+							else{
+								rmp.setPlayerAction(PlayerAction.RESTART);
+								rmp.sendMessage("Left click a chest, sign or wool block to restart the game.");
+							}
+						}
+						//STOP
+						else if(args[0].equalsIgnoreCase("stop")){
+							if(args.length==2){
+								RMGame rmGame = getGameById(args[1]);
+								if(rmGame!=null){
+									rmGame.stopGame(rmp);
+								}
+								else syntaxError(rmp);
+							}
+							else{
+								rmp.setPlayerAction(PlayerAction.STOP);
+								rmp.sendMessage("Left click a chest, sign or wool block to stop the game.");
+							}
+						}
+						//ITEMS
+						else if(args[0].equalsIgnoreCase("items")){
+							RMTeam rmTeam = rmp.getTeam();
+							if(rmTeam!=null){
+								RMGame rmGame = rmTeam.getGame();
+								if(rmGame!=null){
+									if(rmGame.getState()==RMState.GAMEPLAY){
+										rmGame.updateGameplayInfo(rmp);
+										return true;
+									}
+								}
+							}
+							rmp.sendMessage("You must be in a game to use this command.");
+							return false;
+						}
+						//FILTER
+						else if(args[0].equalsIgnoreCase("filter")){
+							if(args.length>1){
+								List<String> listArgs = new ArrayList<String>();
+								for(int i=1; i<args.length; i++){
+									listArgs.add(args[i]);
+								}
+								if(listArgs.size()>0){
+									RMGame rmGame = getGameById(args[1]);
+									if(rmGame!=null){
+										parseFilter(rmp, listArgs.subList(1, listArgs.size()), false);
+										rmGame.tryParseFilter(rmp);
+									}
+									else{
+										parseFilter(rmp, listArgs, true);
+									}
+								}
 								else syntaxError(rmp);
 							}
 							else syntaxError(rmp);
 						}
 						else{
-							rmp.setPlayerAction(PlayerAction.JOIN);
-							rmp.sendMessage("Left click a chest, sign or wool block to join the team.");
-						}
-					}
-					//QUIT
-					else if(args[0].equalsIgnoreCase("quit")){
-						if(args.length==2){
-							RMGame rmGame = getGameById(args[1]);
-							if(rmGame!=null){
-								rmGame.quitTeam(rmGame, rmp);
-							}
-							else syntaxError(rmp);
-						}
-						else{
-							rmp.setPlayerAction(PlayerAction.QUIT);
-							rmp.sendMessage("Left click a chest, sign or wool block to quit the team.");
-						}
-					}
-					//START
-					else if(args[0].equalsIgnoreCase("start")){
-						if(args.length==2){
-							RMGame rmGame = getGameById(args[1]);
-							if(rmGame!=null){
-								rmGame.startGame(rmp);
-							}
-							else syntaxError(rmp);
-						}
-						else{
-							rmp.setPlayerAction(PlayerAction.START);
-							rmp.sendMessage("Left click a chest, sign or wool block to start the game.");
-						}
-					}
-					//RESTART
-					else if(args[0].equalsIgnoreCase("restart")){
-						if(args.length==2){
-							RMGame rmGame = getGameById(args[1]);
-							if(rmGame!=null){
-								rmGame.restartGame(rmp);
-							}
-							else syntaxError(rmp);
-						}
-						else{
-							rmp.setPlayerAction(PlayerAction.RESTART);
-							rmp.sendMessage("Left click a chest, sign or wool block to restart the game.");
-						}
-					}
-					//STOP
-					else if(args[0].equalsIgnoreCase("stop")){
-						if(args.length==2){
-							RMGame rmGame = getGameById(args[1]);
-							if(rmGame!=null){
-								rmGame.stopGame(rmp);
-							}
-							else syntaxError(rmp);
-						}
-						else{
-							rmp.setPlayerAction(PlayerAction.STOP);
-							rmp.sendMessage("Left click a chest, sign or wool block to stop the game.");
-						}
-					}
-					//FILTER
-					else if(args[0].equalsIgnoreCase("filter")){
-						if(args.length>1){
-							List<String> listArgs = new ArrayList<String>();
-							for(int i=1; i<args.length; i++){
-								listArgs.add(args[i]);
-							}
-							if(listArgs.size()>0){
-								RMGame rmGame = getGameById(args[1]);
-								if(rmGame!=null){
-									parseFilter(rmp, listArgs.subList(1, listArgs.size()), false);
-									rmGame.tryParseFilter(rmp);
-								}
-								else{
-									parseFilter(rmp, listArgs, true);
+							List<String> items = new ArrayList<String>();
+							for(String str : args){
+								String[] strItems = str.split(",");
+								for(String strItem : strItems){
+									for(Material mat : Material.values()){
+										if(strItem.equalsIgnoreCase(mat.name())){
+											if(!items.contains(mat))items.add(ChatColor.WHITE+mat.name()+":"+ChatColor.YELLOW+mat.getId());
+										}
+									}
+									if(strItem.contains("-")){
+										String[] strItems2 = strItem.split("-");
+										int id1=getIntByString(strItems2[0]);
+										int id2=getIntByString(strItems2[1]);
+										if((id1!=-1)&&(id2!=-1)){
+											if(id1>id2){
+												int id3=id1;
+												id1=id2;
+												id2=id3;
+											}
+											while(id1<=id2){
+												Material mat = Material.getMaterial(id1);
+												if(mat!=null){
+													if(!items.contains(mat))items.add(""+ChatColor.WHITE+id1+":"+ChatColor.YELLOW+Material.getMaterial(id1).name());
+												}
+												id1++;
+											}
+										}
+									}
+									else{
+										int id = getIntByString(strItem);
+										if(id!=-1){
+											Material mat = Material.getMaterial(id);
+											if(mat!=null) if(!items.contains(mat)) items.add(""+ChatColor.WHITE+id+":"+ChatColor.YELLOW+Material.getMaterial(id).name());
+										}
+									}
 								}
 							}
+							if(items.size()>0){
+								rmp.sendMessage(getFormattedStringByList(items));
+							}
 							else syntaxError(rmp);
 						}
-						else syntaxError(rmp);
 					}
-					else syntaxError(rmp);
 				}
 			}
 		}
@@ -241,12 +296,18 @@ public class RM extends JavaPlugin {
 		List<Integer[]> amount = new ArrayList<Integer[]>();
 		FilterType type = null;
 		Boolean force = null;
+		for(String arg : args){
+			arg = arg.replace(" ", "");
+		}
+		
 		if(args.size()>1){
+			/*
 			if(args.get(0).equalsIgnoreCase("add")){
 				force = true;
 				size+=1;
 			}
-			else if(args.get(0).equalsIgnoreCase("remove")){
+			*/
+			if(args.get(0).equalsIgnoreCase("remove")){
 				force = false;
 				size+=1;
 			}
@@ -262,10 +323,11 @@ public class RM extends JavaPlugin {
 			else if(arg0.contains("crafted")) type = FilterType.CRAFTED;
 
 			if((type!=null)&&(type!=FilterType.CLEAR)){
-				boolean useDefaultAmount = true;
+				boolean useDefaultAmount = false;
 				items = getItemsFromFilter(type);
 				amount.clear();
-				if(arg0.contains(":")){
+				if(arg0.contains("stack")) useDefaultAmount = true;
+				else if(arg0.contains(":")){
 					List<String> strArgs = splitArgs(arg0);
 					String strAmount = ""; 
 					String[] strSplit = strArgs.get(0).split(":");
@@ -273,11 +335,18 @@ public class RM extends JavaPlugin {
 						strAmount = strSplit[1];
 						Integer[] intAmount = checkInt(strAmount);
 						if(intAmount!=null){
-							useDefaultAmount = false;
 							for(int i=0; i<items.size(); i++){							
 								amount.add(intAmount);
 							}
 						}
+						else items.clear();
+					}
+				}
+				else{
+					Integer[] intAmount = new Integer[1];
+					intAmount[0] = 1;
+					for(int i=0; i<items.size(); i++){							
+						amount.add(intAmount);
 					}
 				}
 				if(useDefaultAmount) amount = getDefaultAmount(items);
@@ -308,11 +377,14 @@ public class RM extends JavaPlugin {
 									while(id1<=id2){
 										Material mat = Material.getMaterial(id1);
 										if(mat!=null){
-											items.add(mat.getId());
 											if(intAmount==null){
 												intAmount = new Integer[1];
-												intAmount[0] = mat.getMaxStackSize();
+												if(strArg.contains("stack")){
+													intAmount[0] = mat.getMaxStackSize();
+												}
+												else intAmount[0] = 1;
 											}
+											items.add(mat.getId());
 											amount.add(intAmount);
 										}
 										id1++;
@@ -324,11 +396,14 @@ public class RM extends JavaPlugin {
 								if(id!=-1){
 									Material mat = Material.getMaterial(id);
 									if(mat!=null){
-										items.add(mat.getId());
 										if(intAmount==null){
 											intAmount = new Integer[1];
-											intAmount[0] = mat.getMaxStackSize();
+											if(strArg.contains("stack")){
+												intAmount[0] = mat.getMaxStackSize();
+											}
+											else intAmount[0] = 1;
 										}
+										items.add(mat.getId());
 										amount.add(intAmount);
 									}
 								}
@@ -367,7 +442,7 @@ public class RM extends JavaPlugin {
 		}
 		else{
 			int val = getIntByString(arg);
-			if(val>0) values.add(val);
+			if(val>=0) values.add(val);
 		}
 		if(values.size()==0) return null;
 		
@@ -540,5 +615,22 @@ public class RM extends JavaPlugin {
 			return part1+part2;
 		}
 		return str;
+	}
+	
+	public String getFormattedStringByList(List<String> strList){
+		String line = "";
+		for(String str : strList){
+			line+=str+ChatColor.WHITE+", ";
+		}
+		line = stripLast(line, ",");
+		return line;
+	}
+	public String getFormattedStringByListMaterial(List<Material> materials){
+		String line = "";
+		for(Material mat : materials){
+			line+=mat.name()+", ";
+		}
+		line = stripLast(line, ",");
+		return line;
 	}
 }

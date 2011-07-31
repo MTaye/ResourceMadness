@@ -13,6 +13,7 @@ import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerToggleSneakEvent;
 
 import com.mtaye.ResourceMadness.RMGame.InterfaceState;
 import com.mtaye.ResourceMadness.RMGame.RMState;
@@ -107,11 +108,18 @@ public class RMPlayerListener extends PlayerListener{
 									rmGame.tryParseFilter(rmp);
 								}
 								break;
+							case FILTER_ITEM:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null){
+									rmGame.tryAddItemToFilter(rmp);
+								}
+								break;
 							}
-							rmp.setPlayerAction(PlayerAction.NONE);
+							if(rmp.getPlayerAction()!=PlayerAction.FILTER_ITEM) rmp.setPlayerAction(PlayerAction.NONE);
 						}
 						else{
 							rmp.sendMessage("This is not a game block");
+							rmp.setPlayerAction(PlayerAction.NONE);
 						}
 					}
 					else{
