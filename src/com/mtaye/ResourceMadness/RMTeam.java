@@ -151,7 +151,7 @@ public class RMTeam {
 	public RMChest getChest(){
 		return _chest;
 	}
-	public List<RMChest> getChests(){
+	public RMChest[] getChests(){
 		return _game.getChests();
 	}
 	public Sign getSign(){

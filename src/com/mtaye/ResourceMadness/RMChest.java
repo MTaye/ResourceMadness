@@ -11,7 +11,7 @@ import org.bukkit.inventory.ItemStack;
 
 public class RMChest{
 	private Chest _chest;
-	private HashMap<Integer, Integer> _items = new HashMap<Integer, Integer>();
+	private HashMap<Integer, RMItem> _items = new HashMap<Integer, RMItem>();
 	private RMTeam _team;
 	private RM plugin;
 	
@@ -61,12 +61,12 @@ public class RMChest{
 		int overflow = 0;
 		int newAmount;
 		if(_items.containsKey(id)){
-			newAmount = _items.get(id) + item.getAmount();
+			newAmount = _items.get(id).getAmount() + item.getAmount();
 		}
 		else newAmount = item.getAmount();
 		
-		HashMap<Integer, Integer> items = getTeam().getGame().getItems();
-		if(items.containsKey(id)) overflow = items.get(id) - newAmount;
+		HashMap<Integer, RMItem> items = getTeam().getGame().getItems();
+		if(items.containsKey(id)) overflow = items.get(id).getAmount() - newAmount;
 
 		if(overflow<0){
 			overflow=-overflow;
@@ -74,48 +74,49 @@ public class RMChest{
 		}
 		else overflow = 0;
 
-		_items.put(id, newAmount);
+		_items.put(id, new RMItem(id, newAmount));
 		return overflow;
 	}
 	
-	public Integer getItemAmount(Material mat){
+	public int getItemAmount(Material mat){
 		if(_items.containsKey(mat)){
-			return _items.get(mat);
+			return _items.get(mat).getAmount();
 		}
 		return -1;
 	}
-	public HashMap<Integer, Integer> getItems(){
+	public HashMap<Integer, RMItem> getItems(){
 		return _items;//_itemsToFind;
 	}
-	public Integer getItemsTotal(){
+	public int getItemsTotal(){
 		int total = 0;
-		for(int amount : _items.values()){
-			total+=amount;
+		for(RMItem rmItem : _items.values()){
+			total+=rmItem.getAmount();
 		}
 		return total;
 	}
 	public int getItemsLeftInt(){
 		int itemsLeft = 0;
-		HashMap<Integer, Integer> items = getTeam().getGame().getItems();
+		HashMap<Integer, RMItem> items = getTeam().getGame().getItems();
 		for(Integer item : items.keySet()){
-			int amount = items.get(item);
-			if(_items.containsKey(item)) amount-= _items.get(item);
+			RMItem rmItem = items.get(item);
+			int amount = rmItem.getAmount();
+			if(_items.containsKey(item)) amount -= _items.get(item).getAmount();
 			if(amount>0) itemsLeft++;
 		}
 		return itemsLeft;
 	}
-	public HashMap<Integer, Integer> getItemsLeft(){
-		HashMap<Integer, Integer> itemsLeft = new HashMap<Integer, Integer>();
-		HashMap<Integer, Integer> items = getTeam().getGame().getItems();
+	public HashMap<Integer, RMItem> getItemsLeft(){
+		HashMap<Integer, RMItem> itemsLeft = new HashMap<Integer, RMItem>();
+		HashMap<Integer, RMItem> items = getTeam().getGame().getItems();
 		for(Integer item : items.keySet()){
 			itemsLeft.put(item, items.get(item));
 		}
 		return itemsLeft;
 	}
 	
-	public Integer getItemLeft(Integer item){
-		HashMap<Integer, Integer> items = getTeam().getGame().getItems();
-		return items.get(item) - _items.get(item);
+	public RMItem getItemLeft(Integer item){
+		HashMap<Integer, RMItem> items = getTeam().getGame().getItems();
+		return new RMItem(item, items.get(item).getAmount() - _items.get(item).getAmount());
 	}
 	
 	public int getTotalLeft(){

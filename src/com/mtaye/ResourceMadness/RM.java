@@ -416,11 +416,26 @@ public class RM extends JavaPlugin {
 				syntaxError(rmp);
 				return;
 			}
-			HashMap<Integer, Integer[]> hashItems = new HashMap<Integer, Integer[]>();
+			//HashMap<Integer, Integer[]> hashItems = new HashMap<Integer, Integer[]>();
+			HashMap<Integer, RMItem> rmItems = new HashMap<Integer, RMItem>();
 			for(int i=0; i<items.size(); i++){
-				hashItems.put(items.get(i), amount.get(i));
+				//hashItems.put(items.get(i), amount.get(i));
+				
+				Integer iItem = items.get(i);
+				Integer[] iAmount = amount.get(i);
+				int amount1 = -1;
+				int amount2 = -1;
+				if(iAmount.length>0) amount1 = iAmount[0];
+				if(iAmount.length>1) amount2 = iAmount[0];
+				
+				RMItem rmItem = new RMItem(iItem);
+				if(amount1 > -1) rmItem.setAmount(amount1);
+				if(amount2 > -1) rmItem.setAmountHigh(amount2);
+				
+				rmItems.put(items.get(i), rmItem);
 			}
-			rmp.setRequestFilter(hashItems, type, force);
+			//rmp.setRequestFilter(hashItems, type, force);
+			rmp.setRequestFilter(rmItems, type, force);
 			if(viaPlayer){
 				rmp.setPlayerAction(PlayerAction.FILTER);
 				rmp.sendMessage("Left click a chest, sign or wool block to modify the filter.");

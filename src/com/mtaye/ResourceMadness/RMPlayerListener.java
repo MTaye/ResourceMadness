@@ -44,6 +44,12 @@ public class RMPlayerListener extends PlayerListener{
 									if(rmp.getName()!=rmGame.getOwnerName()){
 										e.setCancelled(true);
 									}
+									else{
+										if(p.isSneaking()){
+											e.setCancelled(true);
+											rmGame.handleRightClick(b, rmp);
+										}
+									}
 									break;
 								case COUNTDOWN:
 									e.setCancelled(true);
@@ -111,7 +117,7 @@ public class RMPlayerListener extends PlayerListener{
 							case FILTER_ITEM:
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null){
-									rmGame.tryAddItemToFilter(rmp);
+									//rmGame.tryAddItemToFilter(rmp);
 								}
 								break;
 							}
