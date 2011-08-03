@@ -9,10 +9,11 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
 import com.mtaye.ResourceMadness.RMGame.FilterType;
+import com.mtaye.ResourceMadness.RMGame.ForceState;
 
 public class RMPlayer {
 	public enum PlayerAction{
-		ADD, REMOVE, SETUP, JOIN, QUIT, START, RESTART, STOP, FILTER, FILTER_ITEM, NONE;
+		ADD, REMOVE, SETUP, INFO, MAX_PLAYERS, MAX_TEAM_PLAYERS, MAX_ITEMS, RESTORE_WORLD, AUTO_RESTORE_WORLD, JOIN, QUIT, START, RESTART, STOP, FILTER, FILTER_ITEM, NONE;
 	}
 	
 	private String _player;
@@ -20,6 +21,14 @@ public class RMPlayer {
 	private List<RMGame> _games;
 	private RMRequestFilter _requestFilter;
 	private boolean _sneak = false;
+	private int _requestInt = 0;
+	
+	public void setRequestInt(int value){
+		_requestInt = value;
+	}
+	public int getRequestInt(){
+		return _requestInt;
+	}
 	
 	public static RM plugin;
 	private static HashMap<String, RMPlayer> _players = new HashMap<String, RMPlayer>();
@@ -36,8 +45,8 @@ public class RMPlayer {
 		setPlayer(player);
 	}
 	
-	public void setRequestFilter(HashMap<Integer, RMItem> items, FilterType type, Boolean force){
-		_requestFilter = new RMRequestFilter(items,type,force);
+	public void setRequestFilter(HashMap<Integer, RMItem> items, FilterType type, ForceState force, int randomize){
+		_requestFilter = new RMRequestFilter(items,type,force,randomize);
 	}
 	public RMRequestFilter getRequestFilter(){
 		if(_requestFilter!=null) return _requestFilter;

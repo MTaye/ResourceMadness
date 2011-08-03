@@ -16,6 +16,7 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
@@ -34,7 +35,7 @@ public class RMGame {
 	private static Material[] _materials = {Material.GLASS, Material.STONE, Material.CHEST, Material.WALL_SIGN, Material.WOOL};
 	private static Material[] _hackMaterials = {
 		Material.AIR, Material.GRASS, Material.BEDROCK, Material.WATER,	Material.STATIONARY_WATER, Material.LAVA, Material.STATIONARY_LAVA,
-		Material.COAL_ORE, Material.SPONGE, Material.LAPIS_ORE, Material.BED, Material.WEB, Material.LONG_GRASS, Material.DEAD_BUSH, Material.DOUBLE_STEP,
+		Material.COAL_ORE, Material.SPONGE, Material.LAPIS_ORE, Material.BED, Material.PISTON_EXTENSION, Material.PISTON_MOVING_PIECE, Material.WEB, Material.LONG_GRASS, Material.DEAD_BUSH, Material.DOUBLE_STEP,
 		Material.FIRE, Material.MOB_SPAWNER, Material.REDSTONE_WIRE, Material.DIAMOND_ORE, Material.CROPS, Material.SOIL, Material.BURNING_FURNACE,
 		Material.SIGN_POST, Material.WOODEN_DOOR, Material.WALL_SIGN, Material.IRON_DOOR_BLOCK, Material.REDSTONE_ORE, Material.GLOWING_REDSTONE_ORE,
 		Material.REDSTONE_TORCH_OFF, Material.SNOW_BLOCK, Material.ICE, Material.SUGAR_CANE_BLOCK, Material.PORTAL, Material.CAKE_BLOCK,
@@ -42,15 +43,34 @@ public class RMGame {
 		Material.CHAINMAIL_LEGGINGS, Material.CHAINMAIL_BOOTS
 	};
 	
+	private static Material[] _floorMaterials = { Material.BED_BLOCK, Material.BROWN_MUSHROOM, Material.CACTUS, Material.CROPS, Material.DEAD_BUSH,
+		Material.DETECTOR_RAIL, Material.DIODE_BLOCK_OFF, Material.DIODE_BLOCK_ON, Material.IRON_DOOR_BLOCK, Material.LEVER, Material.LONG_GRASS,
+		Material.POWERED_RAIL, Material.RAILS, Material.RED_MUSHROOM, Material.RED_ROSE, Material.REDSTONE, Material.REDSTONE_WIRE,
+		Material.REDSTONE_TORCH_OFF, Material.REDSTONE_TORCH_ON, Material.SAPLING, Material.SIGN_POST, Material.SNOW, Material.STONE_PLATE,
+		Material.SUGAR_CANE_BLOCK, Material.TORCH, Material.WOODEN_DOOR, Material.WOOD_PLATE, Material.YELLOW_FLOWER};
+	private static Material[] _sideMaterials = { Material.LADDER, Material.LEVER, Material.PAINTING, Material.REDSTONE_TORCH_OFF, Material.REDSTONE_TORCH_ON,
+		Material.TORCH, Material.TRAP_DOOR, Material.WALL_SIGN, Material.WEB};
+	
+	private static Material[] _blockItemMaterials = {Material.BED_BLOCK, Material.BROWN_MUSHROOM, Material.CACTUS, Material.CROPS, Material.DEAD_BUSH,
+		Material.DETECTOR_RAIL, Material.DIODE_BLOCK_OFF, Material.DIODE_BLOCK_ON, Material.IRON_DOOR_BLOCK, Material.LEVER, Material.LONG_GRASS,
+		Material.POWERED_RAIL, Material.RAILS, Material.RED_MUSHROOM, Material.RED_ROSE, Material.REDSTONE, Material.REDSTONE_WIRE, Material.SAPLING,
+		Material.SIGN_POST, Material.SNOW, Material.STONE_PLATE, Material.SUGAR_CANE_BLOCK, Material.TORCH, Material.WOODEN_DOOR, Material.WOOD_PLATE,
+		Material.YELLOW_FLOWER, Material.LADDER, Material.PAINTING, Material.REDSTONE_TORCH_OFF, Material.REDSTONE_TORCH_ON, Material.TRAP_DOOR,
+		Material.WALL_SIGN, Material.WEB};
+	
 	//private List<Block> _preBlockList = new ArrayList<Block>();
 	//private List<Block> _afterBlockList = new ArrayList<Block>();
 	private List<List<Block>> _blockList = new ArrayList<List<Block>>();
-	private List<RMBlock> _logBlockList = new ArrayList<RMBlock>();
-	private boolean _restoreWorld = true;
+	private HashMap<Location, RMBlock> _logBlockList = new HashMap<Location, RMBlock>();
+	private HashMap<Location, RMBlock> _logBlockItemList = new HashMap<Location, RMBlock>();
 	private boolean _warpToSafety = true;
 	private boolean _addWholeStack = false;
 	private boolean _addOnlyOneStack = false;
 	private boolean _warnHackMaterials = true;
+	private Boolean _autoRestoreWorld = true;
+	private int _maxPlayers = 0;
+	private int _maxTeamPlayers = 0;
+	private int _maxItems = 0;
 	private List<Material> _lastHackMaterials = new ArrayList<Material>();
 	
 	private int _id;
@@ -78,6 +98,7 @@ public class RMGame {
 	public enum FilterType { ALL, CLEAR, BLOCK, ITEM, RAW, CRAFTED};
 	public enum ClickState { LEFT, RIGHT, NONE };
 	public enum ItemHandleState { ADD, MODIFY, REMOVE, NONE };
+	public enum ForceState { ADD, REMOVE, RANDOMIZE, NONE};
 	
 	private final int cdTimerLimit = 300; //3 seconds
 	private int cdTimer = cdTimerLimit;
@@ -114,6 +135,15 @@ public class RMGame {
 		for(RMItem rmItem : _filter.values()){
 			//for(Integer intAmount : amount){
 				total+=rmItem.getAmount();
+			//}
+		}
+		return total;
+	}
+	public int getFilterItemsTotalHigh(){
+		int total = 0;
+		for(RMItem rmItem : _filter.values()){
+			//for(Integer intAmount : amount){
+				total+=rmItem.getAmountHigh();
 			//}
 		}
 		return total;
@@ -183,11 +213,11 @@ public class RMGame {
 	public void stopGame(RMPlayer rmp){
 		if(rmp.getName()==getOwnerName()){
 			rmp.sendMessage("Stopping game...");
-			
 			for(RMChest rmChest : getChests()){
 				rmChest.clearItems();
 			}
 			setState(RMState.SETUP);
+			updateSigns();
 		}
 		else rmp.sendMessage("Only the owner "+getOwnerName()+" can stop the game.");
 	}
@@ -223,11 +253,19 @@ public class RMGame {
 				_filter.put(i, rmItem);
 				return ItemHandleState.MODIFY;
 			}
-			else{
+			else if(amount<=0){
 				_lastFilterRMItem = _filter.get(i);
 				_filter.remove(i);
 				return ItemHandleState.REMOVE;
 			}
+		}
+		return ItemHandleState.NONE;
+	}
+	private ItemHandleState removeAlwaysItemToFilter(Integer i, RMItem rmItem){
+		if(_filter.containsKey(i)){
+			_lastFilterRMItem = _filter.get(i);
+			_filter.remove(i);
+			return ItemHandleState.REMOVE;
 		}
 		return ItemHandleState.NONE;
 	}
@@ -370,22 +408,34 @@ public class RMGame {
 				case MAIN:
 					int items = getFilterItems().size();
 					int total = getFilterItemsTotal();
+					int totalHigh = getFilterItemsTotalHigh();
+					String lineTotal = ""+total;
+					if(totalHigh>0) lineTotal+="-"+totalHigh;
+					int length = lineTotal.length();
+					if(length<9) lineTotal = "Total: "+lineTotal;
+					else if(length<11) lineTotal = "Ttl: "+lineTotal;
+					else if(length<13) lineTotal = "T: "+lineTotal;
+					String maxPlayers = "";
+					if(getMaxPlayers()!=0) maxPlayers = "/"+getMaxPlayers();
+					String maxTeamPlayers = "";
+					if(getMaxTeamPlayers()!=0) maxTeamPlayers = "/"+getMaxTeamPlayers();
+					
 					for(RMTeam rmTeam : getTeams()){
 						Sign sign = rmTeam.getSign();
 						sign.setLine(0, "Filtered: "+items);
-						sign.setLine(1, "Total: "+total);
-						sign.setLine(2, "Players: "+rmTeam.getPlayers().length);
-						sign.setLine(3, ""+rmTeam.getPlayers().length);
+						sign.setLine(1, lineTotal);
+						sign.setLine(2, "Joined: "+rmTeam.getPlayers().length+maxTeamPlayers);
+						sign.setLine(3, "Total: "+RMTeam.getAllPlayers().length+maxPlayers);
 						sign.update();
 					}
 					break;
 				case FILTER_CLEAR:
 					for(RMTeam rmTeam : getTeams()){
 						Sign sign = rmTeam.getSign();
-						sign.setLine(0, "Clear filter items?");
-						sign.setLine(1, "Wool = NO");
-						sign.setLine(2, "Sign = YES");
-						sign.setLine(3, "Chest = NO");
+						sign.setLine(0, "Click sign to");
+						sign.setLine(1, "CLEAR ALL ITEMS");
+						sign.setLine(2, "or chest to");
+						sign.setLine(3, "CANCEL");
 						sign.update();
 					}
 					break;
@@ -444,8 +494,8 @@ public class RMGame {
 		RMTeam rmTeam = getTeamByBlock(b);
 		RMPlayer rmPlayer = rmTeam.getPlayer(rmp.getName());
 		if((rmTeam!=null)&&(rmPlayer!=null)){
-			updateSigns();
 			updateGameplayInfo(rmp);
+			updateSigns();
 		}
 	}
 	
@@ -464,7 +514,7 @@ public class RMGame {
 			RMItem rmItem = _items.get(i);
 			int amount = rmItem.getAmount();
 			if(items.containsKey(i)) amount -= items.get(i).getAmount();
-			if(amount>0) strItems += ChatColor.WHITE+""+Material.getMaterial(i)+includeItem(rmItem)+ChatColor.WHITE+", ";
+			if(amount>0) strItems += ChatColor.WHITE+""+Material.getMaterial(i)+includeItem(new RMItem(i, amount))+ChatColor.WHITE+", ";
 		}
 		if(strItems.length()>0){
 			strItems = strItems.substring(0, strItems.length()-2);
@@ -491,17 +541,21 @@ public class RMGame {
 	}
 	
 	//Try Add Items
-	public void tryAddItemsToFilter(RMPlayer rmp, ClickState clickState){
+	public void tryAddItemsToFilter(Block b, RMPlayer rmp, ClickState clickState){
 		if(rmp.getName() == getOwnerName()){
 			List<ItemStack> items = new ArrayList<ItemStack>();
-			items = getItemsFromChests(getChests());
+			boolean force;
+			if(clickState!=ClickState.NONE){
+				items = getItemsFromChests(getChestByBlock(b));
+				force = true;
+			}
+			else{
+				items = getItemsFromChests(getChests());
+				force = false;
+			}
 			String addedItems = "";
 			String modifiedItems = "";
 			String removedItems = "";
-			
-			boolean force;
-			if(clickState!=ClickState.NONE) force = true;
-			else force = false;
 			
 			if(items.size()>0){
 				for(int i=0; i<items.size(); i++){
@@ -559,8 +613,10 @@ public class RMGame {
 			}
 			else if(_filter.size()>0){
 				if(clickState == clickState.NONE){
-					rmp.sendMessage(ChatColor.GRAY+"Removed all filter items.");
-					clearItemsToFilter();
+					rmp.sendMessage("Click sign to clear all items.");
+					setInterfaceState(InterfaceState.FILTER_CLEAR);
+					//rmp.sendMessage(ChatColor.GRAY+"Removed all filter items.");
+					//clearItemsToFilter();
 				}
 				/*
 				List<String> clearedItems = new ArrayList<String>();
@@ -653,6 +709,7 @@ public class RMGame {
 									added.put(id, rmItem);
 								}
 								returned.put(id, rmChest.getItemLeft(id));
+								rmp.sendMessage("getItemLeft:"+rmChest.getItemLeft(id));
 							}
 							if(overflow>0){
 								item.setAmount(overflow);
@@ -667,6 +724,8 @@ public class RMGame {
 			if(added.size()>0){
 				for(Integer id : _items.keySet()){
 					if(!returned.containsKey(id)){
+						//RMItem rmItem = _items.get(id).clone();
+						//rmItem.setAmount(-1);
 						returned.put(id, new RMItem(id, -1));
 					}
 				}
@@ -689,7 +748,7 @@ public class RMGame {
 				case MAIN:
 					switch(mat){
 					case CHEST:
-						tryAddItemsToFilter(rmp, ClickState.RIGHT);
+						tryAddItemsToFilter(b, rmp, ClickState.RIGHT);
 						break;
 					case WALL_SIGN:
 						trySignSetupInfo(rmp);
@@ -711,11 +770,11 @@ public class RMGame {
 			// Setup State
 			case SETUP:
 				switch(getInterfaceState()){
-				case MAIN:
+				case MAIN: //MAIN
 					switch(mat){
 					case CHEST:
-						if(rmp.getPlayer().isSneaking()) tryAddItemsToFilter(rmp, ClickState.LEFT);
-						else tryAddItemsToFilter(rmp, ClickState.NONE);
+						if(rmp.getPlayer().isSneaking()) tryAddItemsToFilter(b, rmp, ClickState.LEFT);
+						else tryAddItemsToFilter(b, rmp, ClickState.NONE);
 						break;
 					case WALL_SIGN:
 						trySignSetupInfo(rmp);
@@ -725,9 +784,9 @@ public class RMGame {
 						break;
 					}
 					break;
-				case FILTER_CLEAR:
+				case FILTER_CLEAR: //FILTER CLEAR
 					switch(mat){
-					case CHEST:
+					case CHEST: case GLASS: case STONE:
 						if(rmp.getName() == getOwnerName()){
 							rmp.sendMessage(ChatColor.GRAY+"Canceled.");
 							setInterfaceState(InterfaceState.MAIN);
@@ -834,6 +893,7 @@ public class RMGame {
 								updateGameplayInfo(rmp);
 							}
 						}
+						warpPlayersToSafety();
 						updateSigns();
 					}
 					break;
@@ -842,7 +902,7 @@ public class RMGame {
 				case GAMEOVER:
 					setState(RMState.SETUP);
 					if(_warpToSafety) warpPlayersToSafety();
-					if(_restoreWorld) restoreLog();
+					if(_autoRestoreWorld) restoreLog();
 					updateSigns();
 					break;
 			}
@@ -1659,7 +1719,8 @@ public class RMGame {
 	private void parseFilter(RMPlayer rmp){
 		RMRequestFilter filter = rmp.getRequestFilter();
 		if(filter!=null){
-			Boolean force = filter.getForce();
+			ForceState force = filter.getForce();
+			int randomize = filter.getRandomize();
 			HashMap<Integer, RMItem> items = filter.getItems();
 			if((items!=null)&&(items.size()!=0)){
 				if(!_allowHackMaterials){
@@ -1671,6 +1732,20 @@ public class RMGame {
 					}
 				}
 				if(force!=null){
+					if((randomize>0)&&(items.size()>randomize)){
+						Integer[] arrayItems = items.keySet().toArray(new Integer[items.size()]);
+						List<Integer> listItems = new ArrayList<Integer>();
+						for(Integer i : arrayItems){
+							listItems.add(i);
+						}
+						int size = listItems.size();
+						while(size>randomize){
+							int random = (int)Math.round((Math.random()*(size-1)));
+							items.remove(listItems.get(random));
+							listItems.remove(random);
+							size--;
+						}
+					}
 					parseFilterArgs(rmp, items, force);
 					return;
 				}
@@ -1730,7 +1805,7 @@ public class RMGame {
 		if(modified.size()>0) rmp.sendMessage(ChatColor.YELLOW+"Modified: "+plugin.getFormattedStringByList(modified));
 		if(removed.size()>0) rmp.sendMessage(ChatColor.GRAY+"Removed: "+plugin.getFormattedStringByList(removed));
 	}
-	private void parseFilterArgs(RMPlayer rmp, HashMap<Integer, RMItem> items, Boolean force){
+	private void parseFilterArgs(RMPlayer rmp, HashMap<Integer, RMItem> items, ForceState force){
 		List<String> added = new ArrayList<String>();
 		List<String> removed = new ArrayList<String>();
 		String strItem;
@@ -1738,7 +1813,9 @@ public class RMGame {
 		if(items.size()>_amountLimit) getId=true;
 		Integer[] arrayItems = items.keySet().toArray(new Integer[items.size()]);
 		Arrays.sort(arrayItems);
-		if(force){
+
+		switch(force){
+		case ADD: case RANDOMIZE:
 			for(Integer item : arrayItems){
 				Material mat = Material.getMaterial(item);
 				if(mat!=Material.AIR){
@@ -1752,14 +1829,14 @@ public class RMGame {
 				}
 			}
 			if(added.size()>0) rmp.sendMessage(ChatColor.YELLOW+"Added: "+plugin.getFormattedStringByList(added));
-		}
-		else{
+			break;
+		case REMOVE:
 			for(Integer item : arrayItems){
 				Material mat = Material.getMaterial(item);
 				if(mat!=Material.AIR){
 					if(getId) strItem = ""+item;
 					else strItem = mat.name();
-					switch(removeItemToFilter(item, items.get(item), false)){
+					switch(removeAlwaysItemToFilter(item, items.get(item))){
 						case REMOVE:
 							removed.add(ChatColor.WHITE+strItem+includeItem(_lastFilterRMItem)+ChatColor.WHITE);
 							break;
@@ -1767,6 +1844,7 @@ public class RMGame {
 				}
 			}
 			if(removed.size()>0) rmp.sendMessage(ChatColor.GRAY+"Removed: "+plugin.getFormattedStringByList(removed));
+			break;
 		}
 	}
 	
@@ -1777,13 +1855,15 @@ public class RMGame {
 			RMItem rmItem = items.get(item);
 			int amount = rmItem.getAmount(); 
 			if(amount!=-1){
-				if(amount!=0) line+=ChatColor.GREEN+Material.getMaterial(item).name()+includeItem(rmItem)+ChatColor.WHITE+", ";
+				if(amount!=0){
+					line+=ChatColor.GREEN+Material.getMaterial(item).name()+includeItem(rmItem)+ChatColor.WHITE+", ";
+				}
 				else line+=ChatColor.DARK_GREEN+Material.getMaterial(item).name()+":0"+ChatColor.WHITE+", ";
 			}
 			else{
 				if(rmChest.getItems().containsKey(item)) amount = rmChest.getItemLeft(item).getAmount();
 				else amount = _items.get(item).getAmount();
-				if(amount!=0) line+=ChatColor.WHITE+Material.getMaterial(item).name()+includeItem(rmItem)+ChatColor.WHITE+", ";
+				if(amount!=0) line+=ChatColor.WHITE+Material.getMaterial(item).name()+includeItem(new RMItem(item, amount))+ChatColor.WHITE+", ";
 			}
 		}
 		line = plugin.stripLast(line, ",");
@@ -1791,9 +1871,11 @@ public class RMGame {
 	}
 	
 	public String includeItem(RMItem rmItem, boolean... less){
-		int i = rmItem.getAmount();
-		if((i!=1)&&(less.length==0)){
-			return ChatColor.GRAY+":"+i;
+		int i1 = rmItem.getAmount();
+		int i2 = rmItem.getAmountHigh();
+		if((i1!=1)&&(less.length==0)){
+			if(i2>0) return ChatColor.GRAY+":"+i1+"-"+i2;
+			return ChatColor.GRAY+":"+i1;
 		}
 		return "";
 	}
@@ -1829,7 +1911,6 @@ public class RMGame {
 			Material mat = item.getType();
 			if(materials.contains(mat)) list.add(mat);
 		}
-		
 		return list;
 	}
 	
@@ -1910,24 +1991,68 @@ public class RMGame {
 		return newItems;
 	}
 			
-	public void addLog(Block b){
-		if(!_logBlockList.contains(b)){
-			_logBlockList.add(new RMBlock(b));
+	public void addLog(BlockState bState){
+		Block b = bState.getBlock();
+		Material mat = bState.getType();
+		if(isMaterial(mat, _blockItemMaterials)){
+			if(!_logBlockItemList.containsKey(bState.getBlock().getLocation())) _logBlockItemList.put(b.getLocation(), new RMBlock(bState));
 		}
+		else if(!_logBlockList.containsKey(bState.getBlock().getLocation())) _logBlockList.put(b.getLocation(), new RMBlock(bState));
+		checkLog(b);
 	}
-	public void addLog(Block b, Material mat){
-		if(!_logBlockList.contains(b)){
-			_logBlockList.add(new RMBlock(b, mat));
+	
+	public void checkLog(Block b){
+		if(b!=null){
+			List<Block> blocks = new ArrayList<Block>();
+			blocks.add(b.getRelative(BlockFace.NORTH));
+			blocks.add(b.getRelative(BlockFace.EAST));
+			blocks.add(b.getRelative(BlockFace.SOUTH));
+			blocks.add(b.getRelative(BlockFace.WEST));
+			blocks.add(b.getRelative(BlockFace.DOWN));
+			blocks.add(b.getRelative(BlockFace.UP));
+			for(int i=0; i<blocks.size(); i++){
+				Block block = blocks.get(i);
+				Location loc = block.getLocation();
+				Material mat = block.getType();
+				if(i<5){ //NORTH,EAST,SOUTH,WEST
+					//if(isMaterial(mat, Material.TORCH, Material.REDSTONE_TORCH_ON, Material.REDSTONE_TORCH_OFF, Material.LEVER, Material.LADDER, Material.PAINTING, Material.STONE_BUTTON, Material.WALL_SIGN)){
+					if(isMaterial(mat, _blockItemMaterials)){
+						if(!_logBlockItemList.containsKey(loc)) _logBlockItemList.put(loc, new RMBlock(block));
+					}
+					else if(!_logBlockList.containsKey(loc)) _logBlockList.put(loc, new RMBlock(block));
+					//}
+				}
+				else{
+					if(isMaterial(mat, Material.CACTUS, Material.CROPS, Material.SUGAR_CANE_BLOCK, Material.GRAVEL, Material.SAND)){
+						if(isMaterial(mat, _blockItemMaterials)){
+							if(!_logBlockItemList.containsKey(loc)) _logBlockItemList.put(loc, new RMBlock(block));
+						}
+						else if(!_logBlockList.containsKey(loc)) _logBlockList.put(loc, new RMBlock(block));
+						checkLog(block);
+					}
+					else{
+						if(isMaterial(mat, _blockItemMaterials)){
+							if(!_logBlockItemList.containsKey(loc)) _logBlockItemList.put(loc, new RMBlock(block));
+						}
+						else if(!_logBlockList.containsKey(loc)) _logBlockList.put(loc, new RMBlock(block));
+					}
+				}
+			}
 		}
 	}
 	public void clearLog(){
 		_logBlockList.clear();
+		_logBlockItemList.clear();
 	}
 	public void restoreLog(){
-		for(RMBlock rmb : _logBlockList){
-			rmb.restore();
+		for(RMBlock rmBlock : _logBlockList.values()){
+			rmBlock.restore();
 		}
 		_logBlockList.clear();
+		for(RMBlock rmBlock : _logBlockItemList.values()){
+			rmBlock.restore();
+		}
+		_logBlockItemList.clear();
 		broadcastMessage("World restored.");
 	}
 	
@@ -1945,5 +2070,49 @@ public class RMGame {
 	}
 	public void warnHackMaterialsMessage(String message){
 		if(message.length()>0) getOwner().sendMessage(ChatColor.RED+"Not allowed: "+message);
+	}
+	
+	public int getMaxPlayers(){
+		return _maxPlayers;
+	}
+	public void setMaxPlayers(RMPlayer rmp, int maxPlayers){
+		_maxPlayers = maxPlayers;
+		if(_maxPlayers<-1) _maxPlayers = 0;
+		rmp.sendMessage("Max players: "+_maxPlayers);
+		updateSigns();
+	}
+	public int getMaxTeamPlayers(){
+		return _maxTeamPlayers;
+	}
+	public void setMaxTeamPlayers(RMPlayer rmp, int maxTeamPlayers){
+		_maxTeamPlayers = maxTeamPlayers;
+		if(_maxTeamPlayers<-1) _maxTeamPlayers = 0;
+		rmp.sendMessage("Max team players: "+_maxTeamPlayers);
+		updateSigns();
+	}
+	public int getMaxItems(){
+		return _maxItems;
+	}
+	public void setMaxItems(RMPlayer rmp, int maxItems){
+		_maxItems = maxItems;
+		if(_maxItems<-1) _maxItems = 0;
+		updateSigns();
+	}
+	public void toggleAutoRestoreWorld(RMPlayer rmp){
+		if(_autoRestoreWorld) _autoRestoreWorld = false;
+		else _autoRestoreWorld = true;
+		rmp.sendMessage("Auto restore: "+_autoRestoreWorld);
+	}
+	public void restoreWorld(RMPlayer rmp){
+		restoreLog();
+	}
+	public void sendInfo(RMPlayer rmp){
+		rmp.sendMessage("Game id: "+ChatColor.YELLOW+getId());
+		rmp.sendMessage(ChatColor.GRAY+"Owner:"+getOwnerName()+ChatColor.WHITE+" Teams:"+getTeamsPlayers());
+		rmp.sendMessage("maxplayers: "+getMaxPlayers());
+		rmp.sendMessage("maxteamplayers: "+getMaxTeamPlayers());
+		rmp.sendMessage("warptosafety: "+_warpToSafety);
+		rmp.sendMessage("warnhackmaterials: "+_warnHackMaterials);
+		rmp.sendMessage("autorestoreworld: "+_autoRestoreWorld);
 	}
 }

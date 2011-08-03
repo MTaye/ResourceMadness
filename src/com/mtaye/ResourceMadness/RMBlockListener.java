@@ -11,6 +11,7 @@ import java.util.logging.Level;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockListener;
@@ -60,7 +61,7 @@ public class RMBlockListener extends BlockListener{
 					case SETUP:
 						break;
 					case COUNTDOWN: case GAMEPLAY: case GAMEOVER:
-						rmGame.addLog(b);
+						rmGame.addLog(b.getState());
 						break;
 					}
 				}
@@ -78,7 +79,8 @@ public class RMBlockListener extends BlockListener{
 					case SETUP:
 						break;
 					case COUNTDOWN: case GAMEPLAY: case GAMEOVER:
-						rmGame.addLog(b, Material.AIR);
+						e.getBlockReplacedState().getBlock();
+						rmGame.addLog(e.getBlockReplacedState());
 						break;
 					}
 				}

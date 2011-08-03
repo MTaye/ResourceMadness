@@ -40,6 +40,7 @@ public class RMTeam {
 		_chest = new RMChest(chest, this, plugin);
 		_sign = (Sign)chest.getBlock().getRelative(BlockFace.UP).getState();
 		_warpLocation = findWarpLocation(_sign.getBlock());
+		if(!_teams.contains(this))_teams.add(this);
 	}
 	
 	public Location findWarpLocation(Block b){
@@ -85,10 +86,17 @@ public class RMTeam {
 					}
 				}
 			}
-			rmp.setTeam(this);
-			_players.put(rmp.getName(), rmp);
-			rmp.sendMessage(ChatColor.YELLOW+"Joined"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.");
-			_game.updateSigns();
+			RMGame game = getGame();
+			if((game.getMaxTeamPlayers()==0)||(_players.size()<game.getMaxTeamPlayers())){
+				if((game.getMaxPlayers()==0)||(RMTeam.getAllPlayers().length<game.getMaxPlayers())){
+					rmp.setTeam(this);
+					_players.put(rmp.getName(), rmp);
+					rmp.sendMessage(ChatColor.YELLOW+"Joined"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.");
+					_game.updateSigns();
+				}
+				else rmp.sendMessage("All players slots in this game are already full.");
+			}
+			else rmp.sendMessage("This team is already full.");
 			return;
 		}
 		else{
@@ -145,6 +153,7 @@ public class RMTeam {
 		_players = null;
 		_teams = null;
 		*/
+		if(_teams.contains(this)) _teams.remove(this);
 	}
 	
 	//Chest

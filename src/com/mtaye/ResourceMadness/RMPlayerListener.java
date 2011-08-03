@@ -82,6 +82,10 @@ public class RMPlayerListener extends PlayerListener{
 							case REMOVE:
 								if(!RMGame.tryRemoveGame(b, rmp, true)) rmp.sendMessage("You can't remove this game.");
 								break;
+							case INFO:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.sendInfo(rmp);
+								break;
 							case JOIN:
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.joinTeamByBlock(b, rmp);
@@ -92,33 +96,39 @@ public class RMPlayerListener extends PlayerListener{
 								break;
 							case START:
 								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null){
-									rmGame.startGame(rmp);
-								}
+								if(rmGame!=null) rmGame.startGame(rmp);
 								break;
 							case RESTART:
 								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null){
-									rmGame.restartGame(rmp);
-								}
+								if(rmGame!=null) rmGame.restartGame(rmp);
 								break;
 							case STOP:
 								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null){
-									rmGame.stopGame(rmp);
-								}
+								if(rmGame!=null) rmGame.stopGame(rmp);
 								break;
 							case FILTER:
 								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null){
-									rmGame.tryParseFilter(rmp);
-								}
+								if(rmGame!=null) rmGame.tryParseFilter(rmp);
 								break;
-							case FILTER_ITEM:
+							case MAX_PLAYERS:
 								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null){
-									//rmGame.tryAddItemToFilter(rmp);
-								}
+								if(rmGame!=null) rmGame.setMaxPlayers(rmp, rmp.getRequestInt());
+								break;
+							case MAX_TEAM_PLAYERS:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.setMaxTeamPlayers(rmp, rmp.getRequestInt());
+								break;
+							case MAX_ITEMS:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.setMaxItems(rmp, rmp.getRequestInt());
+								break;
+							case RESTORE_WORLD:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.restoreWorld(rmp);
+								break;
+							case AUTO_RESTORE_WORLD:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.toggleAutoRestoreWorld(rmp);
 								break;
 							}
 							if(rmp.getPlayerAction()!=PlayerAction.FILTER_ITEM) rmp.setPlayerAction(PlayerAction.NONE);

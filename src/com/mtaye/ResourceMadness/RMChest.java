@@ -109,13 +109,17 @@ public class RMChest{
 		HashMap<Integer, RMItem> itemsLeft = new HashMap<Integer, RMItem>();
 		HashMap<Integer, RMItem> items = getTeam().getGame().getItems();
 		for(Integer item : items.keySet()){
-			itemsLeft.put(item, items.get(item));
+			RMItem rmItem = items.get(item);
+			int amount = rmItem.getAmount();
+			if(_items.containsKey(item)) amount -= _items.get(item).getAmount();
+			if(amount>0) itemsLeft.put(item, new RMItem(item, amount));
 		}
 		return itemsLeft;
 	}
 	
 	public RMItem getItemLeft(Integer item){
 		HashMap<Integer, RMItem> items = getTeam().getGame().getItems();
+		plugin.getServer().broadcastMessage("items:"+items.get(item).getAmount()+",_items:"+_items.get(item).getAmount()+"="+(items.get(item).getAmount() - _items.get(item).getAmount()));
 		return new RMItem(item, items.get(item).getAmount() - _items.get(item).getAmount());
 	}
 	

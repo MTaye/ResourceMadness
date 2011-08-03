@@ -33,6 +33,7 @@ import java.io.*;
 
 import com.mtaye.ResourceMadness.RMGame.FilterType;
 import com.mtaye.ResourceMadness.RMGame.RMState;
+import com.mtaye.ResourceMadness.RMGame.ForceState;
 import com.mtaye.ResourceMadness.RMPlayer.PlayerAction;
 import com.nijikokun.bukkit.Permissions.Permissions;
 import com.nijiko.permissions.PermissionHandler;
@@ -103,8 +104,12 @@ public class RM extends JavaPlugin {
 						syntaxError(rmp);
 					}
 					else{
+						if(args[0].equalsIgnoreCase("examples")){
+							showExamples(rmp);
+							return true;
+						}
 						//ADD
-						if(args[0].equalsIgnoreCase("add")){
+						else if(args[0].equalsIgnoreCase("add")){
 							rmp.setPlayerAction(PlayerAction.ADD);
 							rmp.sendMessage("Left click a game block to create your new game.");
 						}
@@ -114,38 +119,156 @@ public class RM extends JavaPlugin {
 								RMGame rmGame = getGameById(args[1]);
 								if(rmGame!=null){
 									RMGame.tryRemoveGame(rmGame, rmp);
+									return true;
 								}
-								else syntaxError(rmp);
 							}
 							else{
 								rmp.setPlayerAction(PlayerAction.REMOVE);
 								rmp.sendMessage("Left click a game block to remove your game.");
+								return true;
 							}
 						}
 						//LIST
 						else if(args[0].equalsIgnoreCase("list")){
 							if(args.length==2){
 								sendListById(args[1], rmp);
+								return true;
 							}
-							else sendListById("0", rmp);
+							else{
+								sendListById("0", rmp);
+								return true;
+							}
 						}
 						//INFO
 						else if(args[0].equalsIgnoreCase("info")){
+							if(args.length==2){
+								RMGame rmGame = getGameById(args[1]);
+								if(rmGame!=null){
+									rmGame.sendInfo(rmp);
+									return true;
+								}
+							}
+							if(args.length==1){
+								rmp.setPlayerAction(PlayerAction.INFO);
+								rmp.sendMessage("Left click a game block to get info.");
+								return true;
+							}
+						}
+						//MAX PLAYERS
+						else if(args[0].equalsIgnoreCase("maxplayers")){
+							if(args.length==3){
+								RMGame rmGame = getGameById(args[1]);
+								if(rmGame!=null){
+									int amount = getIntByString(args[2]);
+									if(amount>-1){
+										rmGame.setMaxPlayers(rmp, amount);
+										return true;
+									}
+								}
+							}
+							if(args.length==2){
+								rmp.setRequestInt(getIntByString(args[1]));
+								rmp.setPlayerAction(PlayerAction.MAX_PLAYERS);
+								rmp.sendMessage("Left click a game block to set max players.");
+								return true;
+							}
+						}
+						//MAX TEAM PLAYERS
+						else if(args[0].equalsIgnoreCase("maxteamplayers")){
+							if(args.length==3){
+								RMGame rmGame = getGameById(args[1]);
+								if(rmGame!=null){
+									int amount = getIntByString(args[2]);
+									if(amount>-1){
+										rmGame.setMaxTeamPlayers(rmp, amount);
+										return true;
+									}
+								}
+							}
+							if(args.length==2){
+								rmp.setRequestInt(getIntByString(args[1]));
+								rmp.setPlayerAction(PlayerAction.MAX_TEAM_PLAYERS);
+								rmp.sendMessage("Left click a game block to set max team players.");
+								return true;
+							}
+						}
+						//MAX ITEMS
+						else if(args[0].equalsIgnoreCase("maxitems")){
+							if(args.length==3){
+								RMGame rmGame = getGameById(args[1]);
+								if(rmGame!=null){
+									int amount = getIntByString(args[2]);
+									if(amount>-1){									
+										rmGame.setMaxItems(rmp, amount);
+										return true;
+									}
+								}
+							}
+							if(args.length==2){
+								rmp.setRequestInt(getIntByString(args[1]));
+								rmp.setPlayerAction(PlayerAction.MAX_ITEMS);
+								rmp.sendMessage("Left click a game block to set max items.");
+								return true;
+							}
+						}
+						//RESTORE WORLD
+						else if(args[0].equalsIgnoreCase("restore")){
+							if(args.length==2){
+								RMGame rmGame = getGameById(args[1]);
+								if(rmGame!=null){
+									rmGame.restoreWorld(rmp);
+									return true;
+								}
+							}
+							if(args.length==1){
+								rmp.setPlayerAction(PlayerAction.RESTORE_WORLD);
+								rmp.sendMessage("Left click a game block to restore world changes.");
+								return true;
+							}
+						}
+						//AUTO RESTORE WORLD
+						else if(args[0].equalsIgnoreCase("autorestore")){
+							if(args.length==2){
+								RMGame rmGame = getGameById(args[1]);
+								if(rmGame!=null){
+									rmGame.toggleAutoRestoreWorld(rmp);
+									return true;
+								}
+							}
+							if(args.length==1){
+								rmp.setPlayerAction(PlayerAction.AUTO_RESTORE_WORLD);
+								rmp.sendMessage("Left click a game block to toggle auto restore world.");
+								return true;
+							}
 						}
 						//JOIN
 						else if(args[0].equalsIgnoreCase("join")){
 							if(args.length==3){
 								RMGame rmGame = getGameById(args[1]);
 								if(rmGame!=null){
+									for(RMTeam rmTeam : rmGame.getTeams()){
+										if(rmTeam!=null){
+											if(args[2].equalsIgnoreCase(rmTeam.getTeamColor().name())){
+												rmGame.joinTeam(rmTeam, rmp);
+												return true;
+											}
+										}
+									}
 									RMTeam rmTeam = getTeamById(args[2], rmGame);
-									if(rmTeam!=null) rmGame.joinTeam(rmTeam, rmp);
-									else syntaxError(rmp);
+									if(rmTeam!=null){
+										rmGame.joinTeam(rmTeam, rmp);
+										return true;
+									}
+									
+									//RMTeam rmTeam = getTeamById(args[2], rmGame);
+									//if(rmTeam!=null) rmGame.joinTeam(rmTeam, rmp);
+									//else syntaxError(rmp);
 								}
-								else syntaxError(rmp);
 							}
 							else{
 								rmp.setPlayerAction(PlayerAction.JOIN);
-								rmp.sendMessage("Left click a chest, sign or wool block to join the team.");
+								rmp.sendMessage("Left click a game block to join the team.");
+								return true;
 							}
 						}
 						//QUIT
@@ -154,12 +277,13 @@ public class RM extends JavaPlugin {
 								RMGame rmGame = getGameById(args[1]);
 								if(rmGame!=null){
 									rmGame.quitTeam(rmGame, rmp);
+									return true;
 								}
-								else syntaxError(rmp);
 							}
 							else{
 								rmp.setPlayerAction(PlayerAction.QUIT);
-								rmp.sendMessage("Left click a chest, sign or wool block to quit the team.");
+								rmp.sendMessage("Left click a game block to quit the team.");
+								return true;
 							}
 						}
 						//START
@@ -168,12 +292,13 @@ public class RM extends JavaPlugin {
 								RMGame rmGame = getGameById(args[1]);
 								if(rmGame!=null){
 									rmGame.startGame(rmp);
+									return true;
 								}
-								else syntaxError(rmp);
 							}
 							else{
 								rmp.setPlayerAction(PlayerAction.START);
-								rmp.sendMessage("Left click a chest, sign or wool block to start the game.");
+								rmp.sendMessage("Left click a game block to start the game.");
+								return true;
 							}
 						}
 						//RESTART
@@ -182,12 +307,13 @@ public class RM extends JavaPlugin {
 								RMGame rmGame = getGameById(args[1]);
 								if(rmGame!=null){
 									rmGame.restartGame(rmp);
+									return true;
 								}
-								else syntaxError(rmp);
 							}
 							else{
 								rmp.setPlayerAction(PlayerAction.RESTART);
-								rmp.sendMessage("Left click a chest, sign or wool block to restart the game.");
+								rmp.sendMessage("Left click a game block to restart the game.");
+								return true;
 							}
 						}
 						//STOP
@@ -196,12 +322,13 @@ public class RM extends JavaPlugin {
 								RMGame rmGame = getGameById(args[1]);
 								if(rmGame!=null){
 									rmGame.stopGame(rmp);
+									return true;
 								}
-								else syntaxError(rmp);
 							}
 							else{
 								rmp.setPlayerAction(PlayerAction.STOP);
-								rmp.sendMessage("Left click a chest, sign or wool block to stop the game.");
+								rmp.sendMessage("Left click a game block to stop the game.");
+								return true;
 							}
 						}
 						//ITEMS
@@ -231,14 +358,14 @@ public class RM extends JavaPlugin {
 									if(rmGame!=null){
 										parseFilter(rmp, listArgs.subList(1, listArgs.size()), false);
 										rmGame.tryParseFilter(rmp);
+										return true;
 									}
 									else{
 										parseFilter(rmp, listArgs, true);
+										return true;
 									}
 								}
-								else syntaxError(rmp);
 							}
-							else syntaxError(rmp);
 						}
 						else{
 							List<String> items = new ArrayList<String>();
@@ -273,15 +400,18 @@ public class RM extends JavaPlugin {
 										int id = getIntByString(strItem);
 										if(id!=-1){
 											Material mat = Material.getMaterial(id);
-											if(mat!=null) if(!items.contains(mat)) items.add(""+ChatColor.WHITE+id+":"+ChatColor.YELLOW+Material.getMaterial(id).name());
+											if(mat!=null) if(!items.contains(mat)){
+												items.add(""+ChatColor.WHITE+id+":"+ChatColor.YELLOW+Material.getMaterial(id).name());
+											}
 										}
 									}
 								}
 							}
 							if(items.size()>0){
 								rmp.sendMessage(getFormattedStringByList(items));
+								return true;
 							}
-							else syntaxError(rmp);
+							syntaxError(rmp);
 						}
 					}
 				}
@@ -295,7 +425,8 @@ public class RM extends JavaPlugin {
 		List<Integer> items = new ArrayList<Integer>();
 		List<Integer[]> amount = new ArrayList<Integer[]>();
 		FilterType type = null;
-		Boolean force = null;
+		ForceState force = null;
+		int randomize = 0;
 		for(String arg : args){
 			arg = arg.replace(" ", "");
 		}
@@ -303,13 +434,20 @@ public class RM extends JavaPlugin {
 		if(args.size()>1){
 			/*
 			if(args.get(0).equalsIgnoreCase("add")){
-				force = true;
+				force = ForceState.ADD;
 				size+=1;
 			}
 			*/
 			if(args.get(0).equalsIgnoreCase("remove")){
-				force = false;
+				force = ForceState.REMOVE;
 				size+=1;
+			}
+			if(args.get(0).equalsIgnoreCase("random")){
+				randomize = getIntByString(args.get(1));
+				if(randomize>0){
+					force = ForceState.RANDOMIZE;
+					size+=2;
+				}
 			}
 		}
 		if(args.size()>0){
@@ -426,7 +564,7 @@ public class RM extends JavaPlugin {
 				int amount1 = -1;
 				int amount2 = -1;
 				if(iAmount.length>0) amount1 = iAmount[0];
-				if(iAmount.length>1) amount2 = iAmount[0];
+				if(iAmount.length>1) amount2 = iAmount[1];
 				
 				RMItem rmItem = new RMItem(iItem);
 				if(amount1 > -1) rmItem.setAmount(amount1);
@@ -435,10 +573,10 @@ public class RM extends JavaPlugin {
 				rmItems.put(items.get(i), rmItem);
 			}
 			//rmp.setRequestFilter(hashItems, type, force);
-			rmp.setRequestFilter(rmItems, type, force);
+			rmp.setRequestFilter(rmItems, type, force, randomize);
 			if(viaPlayer){
 				rmp.setPlayerAction(PlayerAction.FILTER);
-				rmp.sendMessage("Left click a chest, sign or wool block to modify the filter.");
+				rmp.sendMessage("Left click a game block to modify the filter.");
 			}
 		}
 	}
@@ -526,7 +664,6 @@ public class RM extends JavaPlugin {
 	
 	public void sendListById(String arg, RMPlayer rmp){
 		int id = getIntByString(arg, 0);
-		String list = "";
 		List<RMGame> rmGames = RMGame.getGames();
 		if(rmGames.size()==0){
 			rmp.sendMessage("No games yet");
@@ -534,7 +671,7 @@ public class RM extends JavaPlugin {
 		}
 		if(id<0) id=0;
 		int i=id*10;
-		rmp.sendMessage("Page "+id+" of " +(int)(rmGames.size()/5));
+		if(rmGames.size()>0) rmp.sendMessage("Page "+id+" of " +(int)(rmGames.size()/5));
 		while(i<rmGames.size()){
 			RMGame rmGame = rmGames.get(i);
 			rmp.sendMessage("Game "+ChatColor.YELLOW+rmGame.getId()+ChatColor.WHITE+" - "+ChatColor.GRAY+"Owner:"+rmGame.getOwnerName()+ChatColor.WHITE+" Teams:"+rmGame.getTeamsPlayers());
@@ -608,18 +745,29 @@ public class RM extends JavaPlugin {
 	}
 	
 	public void syntaxError(RMPlayer rmp){
-		rmp.sendMessage("ResourceMadness Commands:");
-		rmp.sendMessage(ChatColor.GRAY+"(Gray colored text is optional)");
-		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"add "+ChatColor.GRAY+"Create a new game.");
-		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"remove "+ChatColor.DARK_PURPLE+"[game] "+ChatColor.GRAY+"Remove an existing game");
-		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"list "+ChatColor.GRAY+"[page=1] "+ChatColor.WHITE+"List of games");
-		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"join "+ChatColor.GRAY+"[page=1] "+ChatColor.WHITE+"Join a team");
-		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"quit "+ChatColor.GRAY+"[page=1] "+ChatColor.WHITE+"Quit a team");
-		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"start "+ChatColor.GRAY+"[gameid] "+ChatColor.WHITE+"Start the game");
-		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"restart "+ChatColor.GRAY+"[gameid] "+ChatColor.WHITE+"Restart the game");
-		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"stop "+ChatColor.GRAY+"[gameid] "+ChatColor.WHITE+"Stop the game");
-		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"filter "+ChatColor.GRAY+"[gameid] "+ChatColor.BLUE+"[items(id)/all/clear] "+ChatColor.WHITE+"Modify the item filter");
-		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"filter "+ChatColor.GRAY+"[gameid] "+ChatColor.LIGHT_PURPLE+"[add/remove] "+ChatColor.BLUE+"[items(id)/all/clear]"+ChatColor.WHITE+"Modify the item filter");
+		rmp.sendMessage("ResourceMadness Commands: "+ChatColor.GRAY+"(Gray colored text is optional)");
+		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"add "+ChatColor.WHITE+"Create a new game.");
+		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"remove "+ChatColor.GRAY+"[id] "+ChatColor.WHITE+"Remove an existing game");
+		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"list "+ChatColor.GRAY+"[page=0] "+ChatColor.WHITE+"List of games");
+		rmp.sendMessage(" /rm "+ChatColor.AQUA+"[items(id/name)] "+ChatColor.WHITE+"Get the item's name or id");
+		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"join "+ChatColor.GRAY+"[id] "+ChatColor.AQUA+"[team(id/color)] "+ChatColor.WHITE+"Join a team");
+		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"quit "+ChatColor.WHITE+"Quit a team");
+		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"start "+ChatColor.GRAY+"[id] "+ChatColor.WHITE+"Start the game");
+		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"restart "+ChatColor.GRAY+"[id] "+ChatColor.WHITE+"Restart the game");
+		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"stop "+ChatColor.GRAY+"[id] "+ChatColor.WHITE+"Stop the game");
+		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"items "+ChatColor.WHITE+"Get items left to find. (ingame)");
+		rmp.sendMessage("Filter: ");
+		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"filter "+ChatColor.GRAY+"[id] "+ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear"+ChatColor.BLUE+":[amount/stack]");
+		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"filter "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"remove "+ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear"+ChatColor.BLUE+":[amount/stack]");
+		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"filter "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"random "+ChatColor.GREEN+"[amount] "+ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear"+ChatColor.BLUE+":[amount/stack]");
+	}
+	
+	public void showExamples(RMPlayer rmp){
+		rmp.sendMessage("Examples:");
+		rmp.sendMessage(" /rm filter "+ChatColor.YELLOW+"clear");
+		rmp.sendMessage(" /rm filter "+ChatColor.AQUA+"1-5 6-9"+ChatColor.BLUE+":32 "+ChatColor.AQUA+"10-20,22,24"+ChatColor.BLUE+":stack "+ChatColor.AQUA+"27-35"+ChatColor.BLUE+":8-32");
+		rmp.sendMessage(" /rm filter "+ChatColor.YELLOW+"remove "+ChatColor.AQUA+"1-10,20,288");
+		rmp.sendMessage(" /rm filter "+ChatColor.YELLOW+"random "+ChatColor.GREEN+"20 "+ChatColor.AQUA+"all"+ChatColor.BLUE+":100-200");
 	}
 	
 	public String stripLast(String str, String s){
