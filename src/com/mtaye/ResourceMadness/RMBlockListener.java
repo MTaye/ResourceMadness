@@ -9,9 +9,9 @@ import java.util.logging.Level;
 
 //import net.minecraft.server.Item;
 
+import com.mtaye.ResourceMadness.RMBlock;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockState;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockListener;

@@ -154,6 +154,94 @@ public class RM extends JavaPlugin {
 								return true;
 							}
 						}
+						//JOIN
+						else if(args[0].equalsIgnoreCase("join")){
+							if(args.length==3){
+								RMGame rmGame = getGameById(args[1]);
+								if(rmGame!=null){
+									for(RMTeam rmTeam : rmGame.getTeams()){
+										if(rmTeam!=null){
+											if(args[2].equalsIgnoreCase(rmTeam.getTeamColor().name())){
+												rmGame.joinTeam(rmTeam, rmp);
+												return true;
+											}
+										}
+									}
+									RMTeam rmTeam = getTeamById(args[2], rmGame);
+									if(rmTeam!=null){
+										rmGame.joinTeam(rmTeam, rmp);
+										return true;
+									}
+									
+									//RMTeam rmTeam = getTeamById(args[2], rmGame);
+									//if(rmTeam!=null) rmGame.joinTeam(rmTeam, rmp);
+									//else syntaxError(rmp);
+								}
+							}
+							else{
+								rmp.setPlayerAction(PlayerAction.JOIN);
+								rmp.sendMessage("Left click a game block to join the team.");
+								return true;
+							}
+						}
+						//QUIT
+						else if(args[0].equalsIgnoreCase("quit")){
+							for(RMTeam rmTeam : RMTeam.getTeams()){
+								RMPlayer rmPlayer = rmTeam.getPlayer(rmp.getName());
+								if(rmPlayer!=null){
+									rmTeam.removePlayer(rmPlayer);
+									return true;
+								}
+							}
+							rmp.sendMessage("You did not yet join any team.");
+							return true;
+							
+						}
+						//START
+						else if(args[0].equalsIgnoreCase("start")){
+							if(args.length==2){
+								RMGame rmGame = getGameById(args[1]);
+								if(rmGame!=null){
+									rmGame.startGame(rmp);
+									return true;
+								}
+							}
+							else{
+								rmp.setPlayerAction(PlayerAction.START);
+								rmp.sendMessage("Left click a game block to start the game.");
+								return true;
+							}
+						}
+						//RESTART
+						else if(args[0].equalsIgnoreCase("restart")){
+							if(args.length==2){
+								RMGame rmGame = getGameById(args[1]);
+								if(rmGame!=null){
+									rmGame.restartGame(rmp);
+									return true;
+								}
+							}
+							else{
+								rmp.setPlayerAction(PlayerAction.RESTART);
+								rmp.sendMessage("Left click a game block to restart the game.");
+								return true;
+							}
+						}
+						//STOP
+						else if(args[0].equalsIgnoreCase("stop")){
+							if(args.length==2){
+								RMGame rmGame = getGameById(args[1]);
+								if(rmGame!=null){
+									rmGame.stopGame(rmp);
+									return true;
+								}
+							}
+							else{
+								rmp.setPlayerAction(PlayerAction.STOP);
+								rmp.sendMessage("Left click a game block to stop the game.");
+								return true;
+							}
+						}
 						//MAX PLAYERS
 						else if(args[0].equalsIgnoreCase("maxplayers")){
 							if(args.length==3){
@@ -241,93 +329,33 @@ public class RM extends JavaPlugin {
 								return true;
 							}
 						}
-						//JOIN
-						else if(args[0].equalsIgnoreCase("join")){
-							if(args.length==3){
-								RMGame rmGame = getGameById(args[1]);
-								if(rmGame!=null){
-									for(RMTeam rmTeam : rmGame.getTeams()){
-										if(rmTeam!=null){
-											if(args[2].equalsIgnoreCase(rmTeam.getTeamColor().name())){
-												rmGame.joinTeam(rmTeam, rmp);
-												return true;
-											}
-										}
-									}
-									RMTeam rmTeam = getTeamById(args[2], rmGame);
-									if(rmTeam!=null){
-										rmGame.joinTeam(rmTeam, rmp);
-										return true;
-									}
-									
-									//RMTeam rmTeam = getTeamById(args[2], rmGame);
-									//if(rmTeam!=null) rmGame.joinTeam(rmTeam, rmp);
-									//else syntaxError(rmp);
-								}
-							}
-							else{
-								rmp.setPlayerAction(PlayerAction.JOIN);
-								rmp.sendMessage("Left click a game block to join the team.");
-								return true;
-							}
-						}
-						//QUIT
-						else if(args[0].equalsIgnoreCase("quit")){
+						//WARN HACK ITEMS
+						else if(args[0].equalsIgnoreCase("warnhackeditems")){
 							if(args.length==2){
 								RMGame rmGame = getGameById(args[1]);
 								if(rmGame!=null){
-									rmGame.quitTeam(rmGame, rmp);
+									rmGame.toggleWarnHackedItems(rmp);
 									return true;
 								}
 							}
-							else{
-								rmp.setPlayerAction(PlayerAction.QUIT);
-								rmp.sendMessage("Left click a game block to quit the team.");
+							if(args.length==1){
+								rmp.setPlayerAction(PlayerAction.WARN_HACKED_ITEMS);
+								rmp.sendMessage("Left click a game block to toggle auto restore world.");
 								return true;
 							}
 						}
-						//START
-						else if(args[0].equalsIgnoreCase("start")){
+						//ALLOW HACK ITEMS
+						else if(args[0].equalsIgnoreCase("allowhackeditems")){
 							if(args.length==2){
 								RMGame rmGame = getGameById(args[1]);
 								if(rmGame!=null){
-									rmGame.startGame(rmp);
+									rmGame.toggleAllowHackedItems(rmp);
 									return true;
 								}
 							}
-							else{
-								rmp.setPlayerAction(PlayerAction.START);
-								rmp.sendMessage("Left click a game block to start the game.");
-								return true;
-							}
-						}
-						//RESTART
-						else if(args[0].equalsIgnoreCase("restart")){
-							if(args.length==2){
-								RMGame rmGame = getGameById(args[1]);
-								if(rmGame!=null){
-									rmGame.restartGame(rmp);
-									return true;
-								}
-							}
-							else{
-								rmp.setPlayerAction(PlayerAction.RESTART);
-								rmp.sendMessage("Left click a game block to restart the game.");
-								return true;
-							}
-						}
-						//STOP
-						else if(args[0].equalsIgnoreCase("stop")){
-							if(args.length==2){
-								RMGame rmGame = getGameById(args[1]);
-								if(rmGame!=null){
-									rmGame.stopGame(rmp);
-									return true;
-								}
-							}
-							else{
-								rmp.setPlayerAction(PlayerAction.STOP);
-								rmp.sendMessage("Left click a game block to stop the game.");
+							if(args.length==1){
+								rmp.setPlayerAction(PlayerAction.ALLOW_HACKED_ITEMS);
+								rmp.sendMessage("Left click a game block to toggle auto restore world.");
 								return true;
 							}
 						}
@@ -674,7 +702,7 @@ public class RM extends JavaPlugin {
 		if(rmGames.size()>0) rmp.sendMessage("Page "+id+" of " +(int)(rmGames.size()/5));
 		while(i<rmGames.size()){
 			RMGame rmGame = rmGames.get(i);
-			rmp.sendMessage("Game "+ChatColor.YELLOW+rmGame.getId()+ChatColor.WHITE+" - "+ChatColor.GRAY+"Owner:"+rmGame.getOwnerName()+ChatColor.WHITE+" Teams:"+rmGame.getTeamsPlayers());
+			rmp.sendMessage("Game: "+ChatColor.YELLOW+rmGame.getId()+ChatColor.WHITE+" - "+"Owner: "+ChatColor.YELLOW+rmGame.getOwnerName()+ChatColor.WHITE+" Teams: "+rmGame.getTeamsPlayers());
 			if(i==id*10+10) break;
 			i++;
 		}

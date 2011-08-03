@@ -47,7 +47,6 @@ public class RMTeam {
 		BlockFace face = RMDir.getBlockFaceByData(b.getData());
 		face = RMDir.getBlockFaceOpposite(face);
 		Location loc = b.getRelative(face).getLocation();
-		loc = loc.add(0.5, 0.5, 0.5);
 		return loc;
 	}
 	public Location getWarpLocation(){
@@ -86,12 +85,12 @@ public class RMTeam {
 					}
 				}
 			}
-			RMGame game = getGame();
-			if((game.getMaxTeamPlayers()==0)||(_players.size()<game.getMaxTeamPlayers())){
-				if((game.getMaxPlayers()==0)||(RMTeam.getAllPlayers().length<game.getMaxPlayers())){
+			if((_game.getMaxTeamPlayers()==0)||(_players.size()<_game.getMaxTeamPlayers())){
+				if((_game.getMaxPlayers()==0)||(RMTeam.getAllPlayers().length<_game.getMaxPlayers())){
 					rmp.setTeam(this);
 					_players.put(rmp.getName(), rmp);
 					rmp.sendMessage(ChatColor.YELLOW+"Joined"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.");
+					_game.broadcastMessage(rmp.getName()+ChatColor.YELLOW+" joined"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.", rmp);
 					_game.updateSigns();
 				}
 				else rmp.sendMessage("All players slots in this game are already full.");
@@ -100,16 +99,17 @@ public class RMTeam {
 			return;
 		}
 		else{
-			rmp.clearTeam();
-			_players.remove(rmp.getName());
-			rmp.sendMessage(ChatColor.GRAY+"Quit"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.");
-			_game.updateSigns();
+			removePlayer(rmp);
 			return;
 		}
 	}
 	public void removePlayer(RMPlayer rmp){
 		if(_players.containsKey(rmp.getName())){
+			rmp.clearTeam();
 			_players.remove(rmp.getName());
+			rmp.sendMessage(ChatColor.GRAY+"Quit"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.");
+			_game.broadcastMessage(rmp.getName()+ChatColor.GRAY+" quit"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.", rmp);
+			_game.updateSigns();
 		}
 	}
 	public RMPlayer getPlayer(String name){
@@ -121,11 +121,15 @@ public class RMTeam {
 	}
 	public String getPlayersNames(){
 		RMPlayer[] rmplayers = _players.values().toArray(new RMPlayer[_players.values().size()]);
-		String names = "";
+		String names = "[";
 		for(RMPlayer rmp : rmplayers){
 			names+=rmp.getName()+",";
 		}
-		if(names.length()>1) return names.substring(0, names.length()-1);
+		if(names.length()>1){
+			names = plugin.stripLast(names, ",");
+			names += "]";
+			return names;
+		}
 		return "[]";
 	}
 

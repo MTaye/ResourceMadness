@@ -130,8 +130,16 @@ public class RMPlayerListener extends PlayerListener{
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.toggleAutoRestoreWorld(rmp);
 								break;
+							case WARN_HACKED_ITEMS:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.toggleWarnHackedItems(rmp);
+								break;
+							case ALLOW_HACKED_ITEMS:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.toggleAllowHackedItems(rmp);
+								break;
 							}
-							if(rmp.getPlayerAction()!=PlayerAction.FILTER_ITEM) rmp.setPlayerAction(PlayerAction.NONE);
+							rmp.setPlayerAction(PlayerAction.NONE);
 						}
 						else{
 							rmp.sendMessage("This is not a game block");

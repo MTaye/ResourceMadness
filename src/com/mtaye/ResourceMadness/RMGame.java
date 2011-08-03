@@ -43,6 +43,7 @@ public class RMGame {
 		Material.CHAINMAIL_LEGGINGS, Material.CHAINMAIL_BOOTS
 	};
 	
+	/*
 	private static Material[] _floorMaterials = { Material.BED_BLOCK, Material.BROWN_MUSHROOM, Material.CACTUS, Material.CROPS, Material.DEAD_BUSH,
 		Material.DETECTOR_RAIL, Material.DIODE_BLOCK_OFF, Material.DIODE_BLOCK_ON, Material.IRON_DOOR_BLOCK, Material.LEVER, Material.LONG_GRASS,
 		Material.POWERED_RAIL, Material.RAILS, Material.RED_MUSHROOM, Material.RED_ROSE, Material.REDSTONE, Material.REDSTONE_WIRE,
@@ -50,6 +51,7 @@ public class RMGame {
 		Material.SUGAR_CANE_BLOCK, Material.TORCH, Material.WOODEN_DOOR, Material.WOOD_PLATE, Material.YELLOW_FLOWER};
 	private static Material[] _sideMaterials = { Material.LADDER, Material.LEVER, Material.PAINTING, Material.REDSTONE_TORCH_OFF, Material.REDSTONE_TORCH_ON,
 		Material.TORCH, Material.TRAP_DOOR, Material.WALL_SIGN, Material.WEB};
+	*/
 	
 	private static Material[] _blockItemMaterials = {Material.BED_BLOCK, Material.BROWN_MUSHROOM, Material.CACTUS, Material.CROPS, Material.DEAD_BUSH,
 		Material.DETECTOR_RAIL, Material.DIODE_BLOCK_OFF, Material.DIODE_BLOCK_ON, Material.IRON_DOOR_BLOCK, Material.LEVER, Material.LONG_GRASS,
@@ -66,8 +68,9 @@ public class RMGame {
 	private boolean _warpToSafety = true;
 	private boolean _addWholeStack = false;
 	private boolean _addOnlyOneStack = false;
-	private boolean _warnHackMaterials = true;
 	private Boolean _autoRestoreWorld = true;
+	private boolean _warnHackedItems = true;
+	private boolean _allowHackedItems = false;
 	private int _maxPlayers = 0;
 	private int _maxTeamPlayers = 0;
 	private int _maxItems = 0;
@@ -87,7 +90,6 @@ public class RMGame {
 	private int _amount;
 	private final int _amountLimit = 40;
 	private boolean _random = true;
-	private boolean _allowHackMaterials = false;
 	
 	private RMItem _lastFilterRMItem;
 	
@@ -207,6 +209,8 @@ public class RMGame {
 		if(rmp.getName()==getOwnerName()){
 			rmp.sendMessage("Restarting game...");
 			startGame(rmp);
+			if(_warpToSafety) warpPlayersToSafety();
+			if(_autoRestoreWorld) restoreLog();
 		}
 		else rmp.sendMessage("Only the owner "+getOwnerName()+" can restart the game.");
 	}
@@ -216,6 +220,8 @@ public class RMGame {
 			for(RMChest rmChest : getChests()){
 				rmChest.clearItems();
 			}
+			if(_warpToSafety) warpPlayersToSafety();
+			if(_autoRestoreWorld) restoreLog();
 			setState(RMState.SETUP);
 			updateSigns();
 		}
@@ -290,8 +296,8 @@ public class RMGame {
 	}
 	public List<Integer> addItemsToFilter(HashMap<Integer, RMItem> items){
 		List<Integer> addedItems = new ArrayList<Integer>();
-		if(!_allowHackMaterials){
-			//if(_warnHackMaterials) warnHackMaterials(items);
+		if(!_allowHackedItems){
+			//if(_warnHackedItems) warnHackMaterials(items);
 			items = removeHackMaterials(items);
 		}
 		for(Integer item : items.keySet()){
@@ -303,8 +309,8 @@ public class RMGame {
 	}
 	public List<Integer> removeItemsToFilter(HashMap<Integer, RMItem> items){
 		List<Integer> removedItems = new ArrayList<Integer>();
-		if(!_allowHackMaterials){
-			//if(_warnHackMaterials) warnHackMaterials(items);
+		if(!_allowHackedItems){
+			//if(_warnHackedItems) warnHackMaterials(items);
 			items = removeHackMaterials(items);
 		}
 		for(Integer item : items.keySet()){
@@ -317,8 +323,8 @@ public class RMGame {
 	public List<Integer>[] addRemoveItemsToFilter(HashMap<Integer, RMItem> items){
 		List<Integer> addedItems = new ArrayList<Integer>();
 		List<Integer> removedItems = new ArrayList<Integer>();
-		if(!_allowHackMaterials){
-			//if(_warnHackMaterials) warnHackMaterials(items);
+		if(!_allowHackedItems){
+			//if(_warnHackedItems) warnHackMaterials(items);
 			items = removeHackMaterials(items);
 		}
 		for(Integer item : items.keySet()){
@@ -415,17 +421,13 @@ public class RMGame {
 					if(length<9) lineTotal = "Total: "+lineTotal;
 					else if(length<11) lineTotal = "Ttl: "+lineTotal;
 					else if(length<13) lineTotal = "T: "+lineTotal;
-					String maxPlayers = "";
-					if(getMaxPlayers()!=0) maxPlayers = "/"+getMaxPlayers();
-					String maxTeamPlayers = "";
-					if(getMaxTeamPlayers()!=0) maxTeamPlayers = "/"+getMaxTeamPlayers();
 					
 					for(RMTeam rmTeam : getTeams()){
 						Sign sign = rmTeam.getSign();
 						sign.setLine(0, "Filtered: "+items);
 						sign.setLine(1, lineTotal);
-						sign.setLine(2, "Joined: "+rmTeam.getPlayers().length+maxTeamPlayers);
-						sign.setLine(3, "Total: "+RMTeam.getAllPlayers().length+maxPlayers);
+						sign.setLine(2, "Joined: "+rmTeam.getPlayers().length+getStringPlayersOfMax());
+						sign.setLine(3, "Total: "+getTeamPlayers().length+getStringTeamPlayersOfMax());
 						sign.update();
 					}
 					break;
@@ -535,7 +537,7 @@ public class RMGame {
 			if(_addWholeStack) items = addDuplicates(items, true);
 			else items = addDuplicates(items, false);
 		}
-		if(_warnHackMaterials) warnHackMaterialsListItemStack(items);
+		if(_warnHackedItems) warnHackMaterialsListItemStack(items);
 		items = removeHackMaterialsListItemStack(items);
 		return items;
 	}
@@ -674,7 +676,7 @@ public class RMGame {
 				else{
 					_lastHackMaterials.clear();
 					_lastHackMaterials.add(mat);
-					if(_warnHackMaterials) warnHackMaterials(_lastHackMaterials); 
+					if(_warnHackedItems) warnHackMaterials(_lastHackMaterials); 
 				}
 			}
 		}
@@ -869,43 +871,41 @@ public class RMGame {
 	
 	//UPDATE
 	public void update(){
-		for(RMChest rmChest : getChests()){
-			switch(getState()){
-				case SETUP:
-					break;
-				case COUNTDOWN:
-					//cdTimer = 0; //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-					if(cdTimer%100==0){
-						if(cdTimer!=0){
-							sendMessage(""+cdTimer/100);
-							updateSigns(""+cdTimer/100);
-						}
-					}
-					if(cdTimer>0){
-						cdTimer-=10;
-					}
-					else{
-						sendMessage("LET THE RESOURCE MADNESS BEGIN!");
-						cdTimer = cdTimerLimit;
-						setState(RMState.GAMEPLAY);
-						for(RMTeam rmt : getTeams()){
-							for(RMPlayer rmp : rmt.getPlayers()){
-								updateGameplayInfo(rmp);
-							}
-						}
-						warpPlayersToSafety();
-						updateSigns();
-					}
-					break;
-				case GAMEPLAY:
-					break;
-				case GAMEOVER:
-					setState(RMState.SETUP);
-					if(_warpToSafety) warpPlayersToSafety();
-					if(_autoRestoreWorld) restoreLog();
-					updateSigns();
-					break;
+		switch(getState()){
+		case SETUP:
+			break;
+		case COUNTDOWN:
+			//cdTimer = 0; //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			if(cdTimer%100==0){
+				if(cdTimer!=0){
+					sendMessage(""+cdTimer/100);
+					updateSigns(""+cdTimer/100);
+				}
 			}
+			if(cdTimer>0){
+				cdTimer-=10;
+			}
+			else{
+				sendMessage("LET THE RESOURCE MADNESS BEGIN!");
+				cdTimer = cdTimerLimit;
+				setState(RMState.GAMEPLAY);
+				for(RMTeam rmt : getTeams()){
+					for(RMPlayer rmp : rmt.getPlayers()){
+						updateGameplayInfo(rmp);
+					}
+				}
+				warpPlayersToSafety();
+				updateSigns();
+			}
+			break;
+		case GAMEPLAY:
+			break;
+		case GAMEOVER:
+			setState(RMState.SETUP);
+			if(_warpToSafety) warpPlayersToSafety();
+			if(_autoRestoreWorld) restoreLog();
+			updateSigns();
+			break;
 		}
 	}
 	
@@ -1182,6 +1182,15 @@ public class RMGame {
 			}
 		}
 	}
+	public void broadcastMessage(String message, RMPlayer ignorePlayer){
+		List<RMTeam> teams = getTeams();
+		for(RMTeam rmt : teams){
+			RMPlayer[] players = rmt.getPlayers();
+			for(RMPlayer rmp : players){
+				if(rmp!=ignorePlayer) rmp.sendMessage(message);
+			}
+		}
+	}
 	//Team
 	public void teamMessage(RMTeam rmt, String message){
 		rmt.teamMessage(message);
@@ -1265,6 +1274,15 @@ public class RMGame {
 	}
 	public static List<RMTeam> getTeams(RMGame rmGame){
 		return rmGame._teams;
+	}
+	public RMPlayer[] getTeamPlayers(){
+		List<RMPlayer> list = new ArrayList<RMPlayer>();
+		for(RMTeam rmTeam : _teams){
+			for(RMPlayer rmPlayer : rmTeam.getPlayers()){
+				list.add(rmPlayer);
+			}
+		}
+		return list.toArray(new RMPlayer[list.size()]);
 	}
 	
 	//Chest
@@ -1695,10 +1713,10 @@ public class RMGame {
 	}
 	//HackMaterials
 	public boolean getAllowHackMaterials(){
-		return _allowHackMaterials;
+		return _allowHackedItems;
 	}
 	public void setAllowHackMaterials(Boolean allow){
-		_allowHackMaterials = allow;
+		_allowHackedItems = allow;
 	}
 	
 	//ParseFilter
@@ -1723,8 +1741,8 @@ public class RMGame {
 			int randomize = filter.getRandomize();
 			HashMap<Integer, RMItem> items = filter.getItems();
 			if((items!=null)&&(items.size()!=0)){
-				if(!_allowHackMaterials){
-					if(_warnHackMaterials) warnHackMaterials(items);
+				if(!_allowHackedItems){
+					if(_warnHackedItems) warnHackMaterials(items);
 					items = removeHackMaterials(items);
 					if(items==null){
 						rmp.sendMessage(ChatColor.GRAY+"No items modified.");
@@ -2076,43 +2094,92 @@ public class RMGame {
 		return _maxPlayers;
 	}
 	public void setMaxPlayers(RMPlayer rmp, int maxPlayers){
-		_maxPlayers = maxPlayers;
-		if(_maxPlayers<-1) _maxPlayers = 0;
-		rmp.sendMessage("Max players: "+_maxPlayers);
-		updateSigns();
+		if(rmp.getName() == getOwnerName()){
+			_maxPlayers = maxPlayers;
+			if(_maxPlayers<-1) _maxPlayers = 0;
+			rmp.sendMessage("Max players: "+_maxPlayers);
+			updateSigns();
+		}
 	}
 	public int getMaxTeamPlayers(){
 		return _maxTeamPlayers;
 	}
 	public void setMaxTeamPlayers(RMPlayer rmp, int maxTeamPlayers){
-		_maxTeamPlayers = maxTeamPlayers;
-		if(_maxTeamPlayers<-1) _maxTeamPlayers = 0;
-		rmp.sendMessage("Max team players: "+_maxTeamPlayers);
-		updateSigns();
+		if(rmp.getName() == getOwnerName()){
+			_maxTeamPlayers = maxTeamPlayers;
+			if(_maxTeamPlayers<-1) _maxTeamPlayers = 0;
+			rmp.sendMessage("Max team players: "+_maxTeamPlayers);
+			updateSigns();
+		}
 	}
 	public int getMaxItems(){
 		return _maxItems;
 	}
 	public void setMaxItems(RMPlayer rmp, int maxItems){
-		_maxItems = maxItems;
-		if(_maxItems<-1) _maxItems = 0;
-		updateSigns();
+		if(rmp.getName() == getOwnerName()){
+			_maxItems = maxItems;
+			if(_maxItems<-1) _maxItems = 0;
+			updateSigns();
+		}
 	}
 	public void toggleAutoRestoreWorld(RMPlayer rmp){
-		if(_autoRestoreWorld) _autoRestoreWorld = false;
-		else _autoRestoreWorld = true;
-		rmp.sendMessage("Auto restore: "+_autoRestoreWorld);
+		if(rmp.getName() == getOwnerName()){
+			if(_autoRestoreWorld) _autoRestoreWorld = false;
+			else _autoRestoreWorld = true;
+			rmp.sendMessage("Auto restore world after match: "+isTrueFalse(_autoRestoreWorld));
+		}
+	}
+	public void toggleWarnHackedItems(RMPlayer rmp){
+		if(rmp.getName() == getOwnerName()){
+			if(_warnHackedItems) _warnHackedItems = false;
+			else _warnHackedItems = true;
+			rmp.sendMessage("Warn when user adds hacked items: "+isTrueFalse(_warnHackedItems));
+		}
+	}
+	public void toggleAllowHackedItems(RMPlayer rmp){
+		if(rmp.getName() == getOwnerName()){
+			if(_allowHackedItems) _allowHackedItems = false;
+			else _allowHackedItems = true;
+			rmp.sendMessage("Allow user to add hacked items: "+isTrueFalse(_allowHackedItems));
+		}
 	}
 	public void restoreWorld(RMPlayer rmp){
-		restoreLog();
+		if(rmp.getName() == getOwnerName()){
+			restoreLog();
+		}
 	}
 	public void sendInfo(RMPlayer rmp){
 		rmp.sendMessage("Game id: "+ChatColor.YELLOW+getId());
-		rmp.sendMessage(ChatColor.GRAY+"Owner:"+getOwnerName()+ChatColor.WHITE+" Teams:"+getTeamsPlayers());
-		rmp.sendMessage("maxplayers: "+getMaxPlayers());
-		rmp.sendMessage("maxteamplayers: "+getMaxTeamPlayers());
-		rmp.sendMessage("warptosafety: "+_warpToSafety);
-		rmp.sendMessage("warnhackmaterials: "+_warnHackMaterials);
-		rmp.sendMessage("autorestoreworld: "+_autoRestoreWorld);
+		rmp.sendMessage("Owner: "+ChatColor.YELLOW+getOwnerName());
+		rmp.sendMessage("Teams: "+getTeamsPlayers());
+		rmp.sendMessage("Players: "+ChatColor.YELLOW+getTeamPlayers().length);
+		rmp.sendMessage("Max Players: "+getStringMaxPlayers());
+		rmp.sendMessage("Max Team Players: "+getStringMaxTeamPlayers());
+		rmp.sendMessage("Warp before and after match: "+isTrueFalse(_warpToSafety));
+		rmp.sendMessage("Auto restore world after match: "+isTrueFalse(_autoRestoreWorld));
+		rmp.sendMessage("Warn when user adds hacked items: "+isTrueFalse(_warnHackedItems));
+		rmp.sendMessage("Allow user to add hacked items: "+isTrueFalse(_allowHackedItems));
+	}
+	
+	public String isTrueFalse(boolean bool){
+		return (bool?(ChatColor.GREEN+"True"):(ChatColor.GRAY+"False"));
+	}
+	public String getStringMaxPlayers(){
+		return (getMaxPlayers()>0?(ChatColor.GREEN+""+getMaxPlayers()):(ChatColor.GRAY+"No limit"));
+	}
+	public String getStringMaxTeamPlayers(){
+		return (getMaxTeamPlayers()>0?(ChatColor.GREEN+""+getMaxTeamPlayers()):(ChatColor.GRAY+"No limit"));
+	}
+	
+	public String getStringPlayersOfMax(){
+		String maxPlayers = "";
+		if(getMaxPlayers()!=0) maxPlayers = "/"+getMaxPlayers();
+		return maxPlayers;
+	}
+	
+	public String getStringTeamPlayersOfMax(){
+		String maxTeamPlayers = "";
+		if(getMaxTeamPlayers()!=0) maxTeamPlayers = "/"+getMaxTeamPlayers();
+		return maxTeamPlayers;
 	}
 }

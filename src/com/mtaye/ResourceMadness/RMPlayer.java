@@ -7,13 +7,21 @@ import java.util.logging.Level;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
 
 import com.mtaye.ResourceMadness.RMGame.FilterType;
 import com.mtaye.ResourceMadness.RMGame.ForceState;
 
 public class RMPlayer {
 	public enum PlayerAction{
-		ADD, REMOVE, SETUP, INFO, MAX_PLAYERS, MAX_TEAM_PLAYERS, MAX_ITEMS, RESTORE_WORLD, AUTO_RESTORE_WORLD, JOIN, QUIT, START, RESTART, STOP, FILTER, FILTER_ITEM, NONE;
+		ADD, REMOVE, SETUP, INFO,
+		JOIN, QUIT,
+		START, RESTART, STOP,
+		FILTER,
+		MAX_PLAYERS, MAX_TEAM_PLAYERS, MAX_ITEMS,
+		RESTORE_WORLD, AUTO_RESTORE_WORLD,
+		WARN_HACKED_ITEMS, ALLOW_HACKED_ITEMS,
+		NONE;
 	}
 	
 	private String _player;
@@ -138,10 +146,10 @@ public class RMPlayer {
 		double pLocY = p.getLocation().getY();
 		double pLocZ = p.getLocation().getZ();
 		Location loc = _team.getWarpLocation();
-		if((Math.abs(pLocX-loc.getX())>2)||(Math.abs(pLocY-loc.getY())>2)||(Math.abs(pLocZ-loc.getZ())>2)){
+		if((Math.abs(pLocX-loc.getX())>4)||(Math.abs(pLocY-loc.getY())>4)||(Math.abs(pLocZ-loc.getZ())>4)){
 			loc.setPitch(p.getLocation().getPitch());
 			loc.setYaw(p.getLocation().getYaw());
-			getPlayer().teleport(_team.getWarpLocation());
+			getPlayer().teleport(loc.add(0.5, -2+p.getEyeHeight(), 0.5));
 		}
 	}
 	
