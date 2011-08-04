@@ -98,6 +98,13 @@ public class RMPlayerListener extends PlayerListener{
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.startGame(rmp);
 								break;
+							case START_RANDOMIZE:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null){
+									rmGame.setRandomizeAmount(rmp, rmp.getRequestInt());
+									rmGame.startGame(rmp);
+								}
+								break;
 							case RESTART:
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.restartGame(rmp);
@@ -121,6 +128,10 @@ public class RMPlayerListener extends PlayerListener{
 							case MAX_ITEMS:
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.setMaxItems(rmp, rmp.getRequestInt());
+								break;
+							case AUTO_RANDOMIZE_ITEMS:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.setAutoRandomizeAmount(rmp, rmp.getRequestInt());
 								break;
 							case RESTORE_WORLD:
 								rmGame = RMGame.getGameByBlock(b);

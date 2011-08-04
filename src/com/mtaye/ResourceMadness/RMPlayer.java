@@ -16,9 +16,10 @@ public class RMPlayer {
 	public enum PlayerAction{
 		ADD, REMOVE, SETUP, INFO,
 		JOIN, QUIT,
-		START, RESTART, STOP,
+		START, START_RANDOMIZE, RESTART, STOP,
 		FILTER,
 		MAX_PLAYERS, MAX_TEAM_PLAYERS, MAX_ITEMS,
+		AUTO_RANDOMIZE_ITEMS,
 		RESTORE_WORLD, AUTO_RESTORE_WORLD,
 		WARN_HACKED_ITEMS, ALLOW_HACKED_ITEMS,
 		NONE;
@@ -35,7 +36,12 @@ public class RMPlayer {
 		_requestInt = value;
 	}
 	public int getRequestInt(){
-		return _requestInt;
+		int requestInt = _requestInt;
+		clearRequestInt();
+		return requestInt;
+	}
+	public void clearRequestInt(){
+		_requestInt = 0;
 	}
 	
 	public static RM plugin;

@@ -72,7 +72,7 @@ public class RM extends JavaPlugin {
 		log = getServer().getLogger();
 		
 		watcher = new RMWatcher(this);
-		watcherid = getServer().getScheduler().scheduleSyncRepeatingTask(this, watcher, 5,5);
+		watcherid = getServer().getScheduler().scheduleSyncRepeatingTask(this, watcher, 25,25);
 	
 		//setupPermissions();
 		PluginManager pm = getServer().getPluginManager();
@@ -104,6 +104,18 @@ public class RM extends JavaPlugin {
 						syntaxError(rmp);
 					}
 					else{
+						RMGame rmGame = null;
+						if(args.length>1){
+							int gameid = getIntByString(args[0]);
+							if(gameid!=-1){
+								rmGame = getGameById(gameid);
+								if(rmGame!=null){
+									List<String> argsList = Arrays.asList(args);
+									argsList = argsList.subList(1, argsList.size());
+									args = argsList.toArray(new String[argsList.size()]);
+								}
+							}
+						}
 						if(args[0].equalsIgnoreCase("examples")){
 							showExamples(rmp);
 							return true;
@@ -115,12 +127,9 @@ public class RM extends JavaPlugin {
 						}
 						//REMOVE
 						else if(args[0].equalsIgnoreCase("remove")){
-							if(args.length==2){
-								RMGame rmGame = getGameById(args[1]);
-								if(rmGame!=null){
-									RMGame.tryRemoveGame(rmGame, rmp);
-									return true;
-								}
+							if(rmGame!=null){
+								RMGame.tryRemoveGame(rmGame, rmp);
+								return true;
 							}
 							else{
 								rmp.setPlayerAction(PlayerAction.REMOVE);
@@ -135,20 +144,17 @@ public class RM extends JavaPlugin {
 								return true;
 							}
 							else{
-								sendListById("0", rmp);
+								sendListByInt(0, rmp);
 								return true;
 							}
 						}
 						//INFO
 						else if(args[0].equalsIgnoreCase("info")){
-							if(args.length==2){
-								RMGame rmGame = getGameById(args[1]);
-								if(rmGame!=null){
-									rmGame.sendInfo(rmp);
-									return true;
-								}
+							if(rmGame!=null){
+								rmGame.sendInfo(rmp);
+								return true;
 							}
-							if(args.length==1){
+							else{
 								rmp.setPlayerAction(PlayerAction.INFO);
 								rmp.sendMessage("Left click a game block to get info.");
 								return true;
@@ -156,26 +162,11 @@ public class RM extends JavaPlugin {
 						}
 						//JOIN
 						else if(args[0].equalsIgnoreCase("join")){
-							if(args.length==3){
-								RMGame rmGame = getGameById(args[1]);
-								if(rmGame!=null){
-									for(RMTeam rmTeam : rmGame.getTeams()){
-										if(rmTeam!=null){
-											if(args[2].equalsIgnoreCase(rmTeam.getTeamColor().name())){
-												rmGame.joinTeam(rmTeam, rmp);
-												return true;
-											}
-										}
-									}
-									RMTeam rmTeam = getTeamById(args[2], rmGame);
-									if(rmTeam!=null){
-										rmGame.joinTeam(rmTeam, rmp);
-										return true;
-									}
-									
-									//RMTeam rmTeam = getTeamById(args[2], rmGame);
-									//if(rmTeam!=null) rmGame.joinTeam(rmTeam, rmp);
-									//else syntaxError(rmp);
+							if(rmGame!=null){
+								RMTeam rmTeam = getTeamById(args[1], rmGame);
+								if(rmTeam!=null){
+									rmGame.joinTeam(rmTeam, rmp);
+									return true;
 								}
 							}
 							else{
@@ -200,26 +191,38 @@ public class RM extends JavaPlugin {
 						//START
 						else if(args[0].equalsIgnoreCase("start")){
 							if(args.length==2){
-								RMGame rmGame = getGameById(args[1]);
+								int amount = getIntByString(args[1]);
+								if(amount!=-1){
+									if(rmGame!=null){
+										rmGame.setRandomizeAmount(rmp, amount);
+										rmGame.startGame(rmp);
+										return true;
+									}
+									else{
+										rmp.setRequestInt(amount);
+										rmp.setPlayerAction(PlayerAction.START_RANDOMIZE);
+										rmp.sendMessage("Left click a game block to start the game.");
+										return true;
+									}
+								}
+							}
+							else{
 								if(rmGame!=null){
 									rmGame.startGame(rmp);
 									return true;
 								}
-							}
-							else{
-								rmp.setPlayerAction(PlayerAction.START);
-								rmp.sendMessage("Left click a game block to start the game.");
-								return true;
+								else{
+									rmp.setPlayerAction(PlayerAction.START);
+									rmp.sendMessage("Left click a game block to start the game.");
+									return true;
+								}
 							}
 						}
 						//RESTART
 						else if(args[0].equalsIgnoreCase("restart")){
-							if(args.length==2){
-								RMGame rmGame = getGameById(args[1]);
-								if(rmGame!=null){
-									rmGame.restartGame(rmp);
-									return true;
-								}
+							if(rmGame!=null){
+								rmGame.restartGame(rmp);
+								return true;
 							}
 							else{
 								rmp.setPlayerAction(PlayerAction.RESTART);
@@ -229,12 +232,9 @@ public class RM extends JavaPlugin {
 						}
 						//STOP
 						else if(args[0].equalsIgnoreCase("stop")){
-							if(args.length==2){
-								RMGame rmGame = getGameById(args[1]);
-								if(rmGame!=null){
-									rmGame.stopGame(rmp);
-									return true;
-								}
+							if(rmGame!=null){
+								rmGame.stopGame(rmp);
+								return true;
 							}
 							else{
 								rmp.setPlayerAction(PlayerAction.STOP);
@@ -244,71 +244,86 @@ public class RM extends JavaPlugin {
 						}
 						//MAX PLAYERS
 						else if(args[0].equalsIgnoreCase("maxplayers")){
-							if(args.length==3){
-								RMGame rmGame = getGameById(args[1]);
+							if(args.length==2){
 								if(rmGame!=null){
-									int amount = getIntByString(args[2]);
+									int amount = getIntByString(args[1]);
 									if(amount>-1){
 										rmGame.setMaxPlayers(rmp, amount);
 										return true;
 									}
 								}
-							}
-							if(args.length==2){
-								rmp.setRequestInt(getIntByString(args[1]));
-								rmp.setPlayerAction(PlayerAction.MAX_PLAYERS);
-								rmp.sendMessage("Left click a game block to set max players.");
-								return true;
+								else{
+									rmp.setRequestInt(getIntByString(args[1]));
+									rmp.setPlayerAction(PlayerAction.MAX_PLAYERS);
+									rmp.sendMessage("Left click a game block to set max players.");
+									return true;
+								}
 							}
 						}
 						//MAX TEAM PLAYERS
 						else if(args[0].equalsIgnoreCase("maxteamplayers")){
-							if(args.length==3){
-								RMGame rmGame = getGameById(args[1]);
+							if(args.length==2){
 								if(rmGame!=null){
-									int amount = getIntByString(args[2]);
+									int amount = getIntByString(args[1]);
 									if(amount>-1){
 										rmGame.setMaxTeamPlayers(rmp, amount);
 										return true;
 									}
 								}
-							}
-							if(args.length==2){
-								rmp.setRequestInt(getIntByString(args[1]));
-								rmp.setPlayerAction(PlayerAction.MAX_TEAM_PLAYERS);
-								rmp.sendMessage("Left click a game block to set max team players.");
-								return true;
+								else{
+									rmp.setRequestInt(getIntByString(args[1]));
+									rmp.setPlayerAction(PlayerAction.MAX_TEAM_PLAYERS);
+									rmp.sendMessage("Left click a game block to set max team players.");
+									return true;
+								}
 							}
 						}
 						//MAX ITEMS
 						else if(args[0].equalsIgnoreCase("maxitems")){
-							if(args.length==3){
-								RMGame rmGame = getGameById(args[1]);
+							if(args.length==2){
 								if(rmGame!=null){
-									int amount = getIntByString(args[2]);
+									int amount = getIntByString(args[1]);
 									if(amount>-1){									
 										rmGame.setMaxItems(rmp, amount);
 										return true;
 									}
 								}
+								else{
+									rmp.setRequestInt(getIntByString(args[1]));
+									rmp.setPlayerAction(PlayerAction.MAX_ITEMS);
+									rmp.sendMessage("Left click a game block to set max items.");
+									return true;
+								}
 							}
+						}
+						//AUTO RANDOM ITEMS
+						else if(args[0].equalsIgnoreCase("random")){
 							if(args.length==2){
-								rmp.setRequestInt(getIntByString(args[1]));
-								rmp.setPlayerAction(PlayerAction.MAX_ITEMS);
-								rmp.sendMessage("Left click a game block to set max items.");
-								return true;
+								if(rmGame!=null){
+									int amount = getIntByString(args[1]);
+									if(amount!=-1){
+										rmGame.setAutoRandomizeAmount(rmp, amount);
+										return true;
+									}
+								}
+								else{
+									int amount = getIntByString(args[1]);
+									if(amount!=-1){
+										rmp.setRequestInt(amount);
+										rmp.setPlayerAction(PlayerAction.AUTO_RANDOMIZE_ITEMS);
+										rmp.sendMessage("Left click a game block to restore world changes.");
+										return true;
+									}
+								}
 							}
 						}
 						//RESTORE WORLD
 						else if(args[0].equalsIgnoreCase("restore")){
-							if(args.length==2){
-								RMGame rmGame = getGameById(args[1]);
-								if(rmGame!=null){
-									rmGame.restoreWorld(rmp);
-									return true;
-								}
+							if(rmGame!=null){
+								rmGame.restoreWorld(rmp);
+								return true;
 							}
-							if(args.length==1){
+							else{
 								rmp.setPlayerAction(PlayerAction.RESTORE_WORLD);
 								rmp.sendMessage("Left click a game block to restore world changes.");
 								return true;
@@ -316,44 +331,35 @@ public class RM extends JavaPlugin {
 						}
 						//AUTO RESTORE WORLD
 						else if(args[0].equalsIgnoreCase("autorestore")){
-							if(args.length==2){
-								RMGame rmGame = getGameById(args[1]);
-								if(rmGame!=null){
-									rmGame.toggleAutoRestoreWorld(rmp);
-									return true;
-								}
+							if(rmGame!=null){
+								rmGame.toggleAutoRestoreWorld(rmp);
+								return true;
 							}
-							if(args.length==1){
+							else{
 								rmp.setPlayerAction(PlayerAction.AUTO_RESTORE_WORLD);
 								rmp.sendMessage("Left click a game block to toggle auto restore world.");
 								return true;
 							}
 						}
 						//WARN HACK ITEMS
-						else if(args[0].equalsIgnoreCase("warnhackeditems")){
-							if(args.length==2){
-								RMGame rmGame = getGameById(args[1]);
-								if(rmGame!=null){
-									rmGame.toggleWarnHackedItems(rmp);
-									return true;
-								}
+						else if(args[0].equalsIgnoreCase("warnhacked")){
+							if(rmGame!=null){
+								rmGame.toggleWarnHackedItems(rmp);
+								return true;
 							}
-							if(args.length==1){
+							else{
 								rmp.setPlayerAction(PlayerAction.WARN_HACKED_ITEMS);
 								rmp.sendMessage("Left click a game block to toggle auto restore world.");
 								return true;
 							}
 						}
 						//ALLOW HACK ITEMS
-						else if(args[0].equalsIgnoreCase("allowhackeditems")){
-							if(args.length==2){
-								RMGame rmGame = getGameById(args[1]);
-								if(rmGame!=null){
-									rmGame.toggleAllowHackedItems(rmp);
-									return true;
-								}
+						else if(args[0].equalsIgnoreCase("allowhacked")){
+							if(rmGame!=null){
+								rmGame.toggleAllowHackedItems(rmp);
+								return true;
 							}
-							if(args.length==1){
+							else{
 								rmp.setPlayerAction(PlayerAction.ALLOW_HACKED_ITEMS);
 								rmp.sendMessage("Left click a game block to toggle auto restore world.");
 								return true;
@@ -363,7 +369,6 @@ public class RM extends JavaPlugin {
 						else if(args[0].equalsIgnoreCase("items")){
 							RMTeam rmTeam = rmp.getTeam();
 							if(rmTeam!=null){
-								RMGame rmGame = rmTeam.getGame();
 								if(rmGame!=null){
 									if(rmGame.getState()==RMState.GAMEPLAY){
 										rmGame.updateGameplayInfo(rmp);
@@ -371,8 +376,10 @@ public class RM extends JavaPlugin {
 									}
 								}
 							}
-							rmp.sendMessage("You must be in a game to use this command.");
-							return false;
+							else{
+								rmp.sendMessage("You must be in a game to use this command.");
+								return false;
+							}
 						}
 						//FILTER
 						else if(args[0].equalsIgnoreCase("filter")){
@@ -382,63 +389,74 @@ public class RM extends JavaPlugin {
 									listArgs.add(args[i]);
 								}
 								if(listArgs.size()>0){
-									RMGame rmGame = getGameById(args[1]);
 									if(rmGame!=null){
-										parseFilter(rmp, listArgs.subList(1, listArgs.size()), false);
+										parseFilter(rmp, listArgs);
 										rmGame.tryParseFilter(rmp);
 										return true;
 									}
 									else{
-										parseFilter(rmp, listArgs, true);
+										parseFilter(rmp, listArgs);
+										rmp.setPlayerAction(PlayerAction.FILTER);
+										rmp.sendMessage("Left click a game block to modify the filter.");
 										return true;
 									}
 								}
 							}
 						}
 						else{
-							List<String> items = new ArrayList<String>();
-							for(String str : args){
-								String[] strItems = str.split(",");
-								for(String strItem : strItems){
-									for(Material mat : Material.values()){
-										if(strItem.equalsIgnoreCase(mat.name())){
-											if(!items.contains(mat))items.add(ChatColor.WHITE+mat.name()+":"+ChatColor.YELLOW+mat.getId());
-										}
-									}
-									if(strItem.contains("-")){
-										String[] strItems2 = strItem.split("-");
-										int id1=getIntByString(strItems2[0]);
-										int id2=getIntByString(strItems2[1]);
-										if((id1!=-1)&&(id2!=-1)){
-											if(id1>id2){
-												int id3=id1;
-												id1=id2;
-												id2=id3;
-											}
-											while(id1<=id2){
-												Material mat = Material.getMaterial(id1);
-												if(mat!=null){
-													if(!items.contains(mat))items.add(""+ChatColor.WHITE+id1+":"+ChatColor.YELLOW+Material.getMaterial(id1).name());
-												}
-												id1++;
-											}
-										}
-									}
-									else{
-										int id = getIntByString(strItem);
-										if(id!=-1){
-											Material mat = Material.getMaterial(id);
-											if(mat!=null) if(!items.contains(mat)){
-												items.add(""+ChatColor.WHITE+id+":"+ChatColor.YELLOW+Material.getMaterial(id).name());
-											}
-										}
-									}
+							//if(args.length>1){
+								/*
+								List<String> listArgs = new ArrayList<String>();
+								for(int i=1; i<args.length; i++){
+									listArgs.add(args[i]);
 								}
-							}
-							if(items.size()>0){
-								rmp.sendMessage(getFormattedStringByList(items));
-								return true;
-							}
+								if(listArgs.size()>0){
+								*/
+									List<String> items = new ArrayList<String>();
+									for(String str : args){
+										String[] strItems = str.split(",");
+										for(String strItem : strItems){
+											for(Material mat : Material.values()){
+												if(strItem.equalsIgnoreCase(mat.name())){
+													if(!items.contains(mat))items.add(ChatColor.WHITE+mat.name()+":"+ChatColor.YELLOW+mat.getId());
+												}
+											}
+											if(strItem.contains("-")){
+												String[] strItems2 = strItem.split("-");
+												int id1=getIntByString(strItems2[0]);
+												int id2=getIntByString(strItems2[1]);
+												if((id1!=-1)&&(id2!=-1)){
+													if(id1>id2){
+														int id3=id1;
+														id1=id2;
+														id2=id3;
+													}
+													while(id1<=id2){
+														Material mat = Material.getMaterial(id1);
+														if(mat!=null){
+															if(!items.contains(mat))items.add(""+ChatColor.WHITE+id1+":"+ChatColor.YELLOW+Material.getMaterial(id1).name());
+														}
+														id1++;
+													}
+												}
+											}
+											else{
+												int id = getIntByString(strItem);
+												if(id!=-1){
+													Material mat = Material.getMaterial(id);
+													if(mat!=null) if(!items.contains(mat)){
+														items.add(""+ChatColor.WHITE+id+":"+ChatColor.YELLOW+Material.getMaterial(id).name());
+													}
+												}
+											}
+										}
+									}
+									if(items.size()>0){
+										rmp.sendMessage(getFormattedStringByList(items));
+										return true;
+									}
+								//}
+							//}
 							syntaxError(rmp);
 						}
 					}
@@ -448,7 +466,7 @@ public class RM extends JavaPlugin {
 		return true;
 	}
 	
-	public void parseFilter(RMPlayer rmp, List<String> args, Boolean viaPlayer){
+	public void parseFilter(RMPlayer rmp, List<String> args){
 		int size = 0;
 		List<Integer> items = new ArrayList<Integer>();
 		List<Integer[]> amount = new ArrayList<Integer[]>();
@@ -602,10 +620,6 @@ public class RM extends JavaPlugin {
 			}
 			//rmp.setRequestFilter(hashItems, type, force);
 			rmp.setRequestFilter(rmItems, type, force, randomize);
-			if(viaPlayer){
-				rmp.setPlayerAction(PlayerAction.FILTER);
-				rmp.sendMessage("Left click a game block to modify the filter.");
-			}
 		}
 	}
 	
@@ -692,6 +706,11 @@ public class RM extends JavaPlugin {
 	
 	public void sendListById(String arg, RMPlayer rmp){
 		int id = getIntByString(arg, 0);
+		if(id<0) id=0;
+		sendListByInt(id, rmp);
+	}
+	public void sendListByInt(int id, RMPlayer rmp){
+		if(id<0) id=0;
 		List<RMGame> rmGames = RMGame.getGames();
 		if(rmGames.size()==0){
 			rmp.sendMessage("No games yet");
@@ -702,7 +721,7 @@ public class RM extends JavaPlugin {
 		if(rmGames.size()>0) rmp.sendMessage("Page "+id+" of " +(int)(rmGames.size()/5));
 		while(i<rmGames.size()){
 			RMGame rmGame = rmGames.get(i);
-			rmp.sendMessage("Game: "+ChatColor.YELLOW+rmGame.getId()+ChatColor.WHITE+" - "+"Owner: "+ChatColor.YELLOW+rmGame.getOwnerName()+ChatColor.WHITE+" Teams: "+rmGame.getTeamsPlayers());
+			rmp.sendMessage("Game: "+ChatColor.YELLOW+rmGame.getId()+ChatColor.WHITE+" - "+"Owner: "+ChatColor.YELLOW+rmGame.getOwnerName()+ChatColor.WHITE+" Teams: "+rmGame.getTextTeamPlayers());
 			if(i==id*10+10) break;
 			i++;
 		}
@@ -710,6 +729,9 @@ public class RM extends JavaPlugin {
 	
 	public RMGame getGameById(String arg){
 		return RMGame.getGame(getIntByString(arg));
+	}
+	public RMGame getGameById(int arg){
+		return RMGame.getGame(arg);
 	}
 	public RMTeam getTeamById(String arg, RMGame rmGame){
 		return rmGame.getTeam(getIntByString(arg));
@@ -775,19 +797,19 @@ public class RM extends JavaPlugin {
 	public void syntaxError(RMPlayer rmp){
 		rmp.sendMessage("ResourceMadness Commands: "+ChatColor.GRAY+"(Gray colored text is optional)");
 		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"add "+ChatColor.WHITE+"Create a new game.");
-		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"remove "+ChatColor.GRAY+"[id] "+ChatColor.WHITE+"Remove an existing game");
+		rmp.sendMessage(" /rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"remove "+ChatColor.WHITE+"Remove an existing game");
 		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"list "+ChatColor.GRAY+"[page=0] "+ChatColor.WHITE+"List of games");
 		rmp.sendMessage(" /rm "+ChatColor.AQUA+"[items(id/name)] "+ChatColor.WHITE+"Get the item's name or id");
-		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"join "+ChatColor.GRAY+"[id] "+ChatColor.AQUA+"[team(id/color)] "+ChatColor.WHITE+"Join a team");
+		rmp.sendMessage(" /rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"join "+ChatColor.AQUA+"[team(id/color)] "+ChatColor.WHITE+"Join a team");
 		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"quit "+ChatColor.WHITE+"Quit a team");
-		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"start "+ChatColor.GRAY+"[id] "+ChatColor.WHITE+"Start the game");
-		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"restart "+ChatColor.GRAY+"[id] "+ChatColor.WHITE+"Restart the game");
-		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"stop "+ChatColor.GRAY+"[id] "+ChatColor.WHITE+"Stop the game");
+		rmp.sendMessage(" /rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"start "+ChatColor.WHITE+"Start the game");
+		rmp.sendMessage(" /rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"restart "+ChatColor.WHITE+"Restart the game");
+		rmp.sendMessage(" /rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"stop "+ChatColor.WHITE+"Stop the game");
 		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"items "+ChatColor.WHITE+"Get items left to find. (ingame)");
 		rmp.sendMessage("Filter: ");
-		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"filter "+ChatColor.GRAY+"[id] "+ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear"+ChatColor.BLUE+":[amount/stack]");
-		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"filter "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"remove "+ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear"+ChatColor.BLUE+":[amount/stack]");
-		rmp.sendMessage(" /rm "+ChatColor.YELLOW+"filter "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"random "+ChatColor.GREEN+"[amount] "+ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear"+ChatColor.BLUE+":[amount/stack]");
+		rmp.sendMessage(" /rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear"+ChatColor.BLUE+":[amount/stack]");
+		rmp.sendMessage(" /rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.YELLOW+"remove "+ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear"+ChatColor.BLUE+":[amount/stack]");
+		rmp.sendMessage(" /rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.YELLOW+"random "+ChatColor.GREEN+"[amount] "+ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear"+ChatColor.BLUE+":[amount/stack]");
 	}
 	
 	public void showExamples(RMPlayer rmp){
