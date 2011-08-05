@@ -1,7 +1,10 @@
 package com.mtaye.ResourceMadness;
 
-import org.bukkit.util.Vector;
-
+/**
+ * ResourceMadness for Bukkit
+ *
+ * @author M-Taye
+ */
 public enum RMAxis{
 	X,Y,Z,NONE;
 	

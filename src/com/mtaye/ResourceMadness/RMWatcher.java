@@ -1,19 +1,10 @@
 package com.mtaye.ResourceMadness;
 
-import java.util.Date;
-import java.util.HashMap;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.entity.Entity;
-import org.bukkit.block.Block;
-import org.bukkit.block.Chest;
-
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.Vector;
-
-import org.bukkit.entity.Item;
-
+/**
+ * ResourceMadness for Bukkit
+ *
+ * @author M-Taye
+ */
 public class RMWatcher implements Runnable {
 	private RM plugin;
 	

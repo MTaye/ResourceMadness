@@ -9,17 +9,20 @@ import java.util.logging.Level;
 
 //import net.minecraft.server.Item;
 
-import com.mtaye.ResourceMadness.RMBlock;
-import org.bukkit.Material;
+//import com.mtaye.ResourceMadness.RMBlock;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPlaceEvent;
 
-import com.avaje.ebeaninternal.server.deploy.BeanDescriptor.EntityType;
 import com.nijiko.data.UserStorage;
 
+/**
+ * ResourceMadness for Bukkit
+ *
+ * @author M-Taye
+ */
 public class RMBlockListener extends BlockListener{
 	
 	private final RM plugin;
@@ -36,24 +39,11 @@ public class RMBlockListener extends BlockListener{
 			if(RMGame.isMaterial(b.getType(), RMGame.getMaterials())){
 				Player p = e.getPlayer();
 				RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
-				if(!RMGame.tryRemoveGame(b, rmp, false)){
-					e.setCancelled(true);
+				switch(RMGame.tryRemoveGame(b, rmp, false)){
+					case NOCHANGE:
+						e.setCancelled(true);
+						break;
 				}
-				/*
-				for(RMGame rmGame : RMGame.getGames()){
-					List<Block> blocks = rmGame.getSimpleBlockList();
-					for(Block block : blocks){
-						if(block == b){
-							if(rmGame.getOwnerName() != p.getName()){
-								p.sendMessage("This is a game id "+rmGame.getId()+" block.");
-								p.sendMessage("Only the owner "+rmGame.getOwnerName()+" can destroy it.");
-								e.setCancelled(true);
-							}
-							else RMGame.tryRemoveGame(b, rmGame.getOwner());
-						}
-					}
-				}
-				*/
 			}
 			for(RMGame rmGame : RMGame.getGames()){
 				if(rmGame!=null){

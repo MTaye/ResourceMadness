@@ -1,8 +1,41 @@
 package com.mtaye.ResourceMadness;
 
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.bukkit.block.Block;
+/**
+ * ResourceMadness for Bukkit
+ *
+ * @author M-Taye
+ */
 public class RMConfig {
-	private RMConfig(){
+	private List<List<Block>> _blockList = new ArrayList<List<Block>>();
+	private int _id;
+	private String _ownerName;
+	private int _maxPlayers = 0;
+	private int _maxTeamPlayers = 0;
+	private int _autoRandomizeAmount = 0;
+	private boolean _warpToSafety = true;
+	private boolean _autoRestoreWorld = true;
+	private boolean _warnHackedItems = true;
+	private boolean _allowHackedItems = false;
+	private List<RMTeam> _teams = new ArrayList<RMTeam>();
+	private RMFilter _filter = new RMFilter();
+	
+	//private boolean _addWholeStack = false;
+	//private boolean _addOnlyOneStack = false;
+	//private int _maxItems = 0;
+	//private int _randomizeAmount = 0;
+	
+	//Stats
+	private RMStats _gameStats = new RMStats();
+	
+	public RMConfig(){
 	}
+	
+	
 	
 	public static void save(){
 		/*

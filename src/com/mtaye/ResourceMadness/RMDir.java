@@ -3,6 +3,11 @@ package com.mtaye.ResourceMadness;
 import org.bukkit.block.BlockFace;
 import org.bukkit.util.Vector;
 
+/**
+ * ResourceMadness for Bukkit
+ *
+ * @author M-Taye
+ */
 public enum RMDir{
 	NORTH,EAST,SOUTH,WEST,UP,DOWN,NONE;
 	

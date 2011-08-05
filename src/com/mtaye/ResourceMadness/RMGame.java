@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 
 import java.util.Hashtable;
@@ -13,21 +12,21 @@ import java.util.Hashtable;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.Vector;
 import org.bukkit.ChatColor;
 
-import com.mtaye.ResourceMadness.RMPlayer.PlayerAction;
-
+/**
+ * ResourceMadness for Bukkit
+ *
+ * @author M-Taye
+ */
 public class RMGame {
 
 	private static List<RMGame> _games = new ArrayList<RMGame>();
@@ -40,18 +39,8 @@ public class RMGame {
 		Material.SIGN_POST, Material.WOODEN_DOOR, Material.WALL_SIGN, Material.IRON_DOOR_BLOCK, Material.REDSTONE_ORE, Material.GLOWING_REDSTONE_ORE,
 		Material.REDSTONE_TORCH_OFF, Material.SNOW_BLOCK, Material.ICE, Material.SUGAR_CANE_BLOCK, Material.PORTAL, Material.CAKE_BLOCK,
 		Material.DIODE_BLOCK_OFF, Material.DIODE_BLOCK_ON, Material.LOCKED_CHEST, Material.CHAINMAIL_HELMET, Material.CHAINMAIL_CHESTPLATE,
-		Material.CHAINMAIL_LEGGINGS, Material.CHAINMAIL_BOOTS
-	};
-	
-	/*
-	private static Material[] _floorMaterials = { Material.BED_BLOCK, Material.BROWN_MUSHROOM, Material.CACTUS, Material.CROPS, Material.DEAD_BUSH,
-		Material.DETECTOR_RAIL, Material.DIODE_BLOCK_OFF, Material.DIODE_BLOCK_ON, Material.IRON_DOOR_BLOCK, Material.LEVER, Material.LONG_GRASS,
-		Material.POWERED_RAIL, Material.RAILS, Material.RED_MUSHROOM, Material.RED_ROSE, Material.REDSTONE, Material.REDSTONE_WIRE,
-		Material.REDSTONE_TORCH_OFF, Material.REDSTONE_TORCH_ON, Material.SAPLING, Material.SIGN_POST, Material.SNOW, Material.STONE_PLATE,
-		Material.SUGAR_CANE_BLOCK, Material.TORCH, Material.WOODEN_DOOR, Material.WOOD_PLATE, Material.YELLOW_FLOWER};
-	private static Material[] _sideMaterials = { Material.LADDER, Material.LEVER, Material.PAINTING, Material.REDSTONE_TORCH_OFF, Material.REDSTONE_TORCH_ON,
-		Material.TORCH, Material.TRAP_DOOR, Material.WALL_SIGN, Material.WEB};
-	*/
+		Material.CHAINMAIL_LEGGINGS, Material.CHAINMAIL_BOOTS};
+	private List<Material> _lastHackMaterials = new ArrayList<Material>();
 	
 	private static Material[] _blockItemMaterials = {Material.BED_BLOCK, Material.BROWN_MUSHROOM, Material.CACTUS, Material.CROPS, Material.DEAD_BUSH,
 		Material.DETECTOR_RAIL, Material.DIODE_BLOCK_OFF, Material.DIODE_BLOCK_ON, Material.IRON_DOOR_BLOCK, Material.LEVER, Material.LONG_GRASS,
@@ -60,15 +49,13 @@ public class RMGame {
 		Material.YELLOW_FLOWER, Material.LADDER, Material.PAINTING, Material.REDSTONE_TORCH_OFF, Material.REDSTONE_TORCH_ON, Material.TRAP_DOOR,
 		Material.WALL_SIGN, Material.WEB};
 	
-	//private List<Block> _preBlockList = new ArrayList<Block>();
-	//private List<Block> _afterBlockList = new ArrayList<Block>();
-	private List<List<Block>> _blockList = new ArrayList<List<Block>>();
+	private RMPartList _partList = new RMPartList(plugin);
 	private HashMap<Location, RMBlock> _logBlockList = new HashMap<Location, RMBlock>();
 	private HashMap<Location, RMBlock> _logBlockItemList = new HashMap<Location, RMBlock>();
 	private boolean _warpToSafety = true;
 	private boolean _addWholeStack = false;
 	private boolean _addOnlyOneStack = false;
-	private Boolean _autoRestoreWorld = true;
+	private boolean _autoRestoreWorld = true;
 	private boolean _warnHackedItems = true;
 	private boolean _allowHackedItems = false;
 	private int _maxPlayers = 0;
@@ -76,8 +63,9 @@ public class RMGame {
 	private int _maxItems = 0;
 	private int _randomizeAmount = 0;
 	private int _autoRandomizeAmount = 0;
-	private List<Material> _lastHackMaterials = new ArrayList<Material>();
+	private RMConfig _config = new RMConfig();
 	
+	private RMStats _gameStats;
 	private int _id;
 	private String _ownerName;
 	private RMPlayer _owner;
@@ -90,29 +78,40 @@ public class RMGame {
 	private RMFilter _filter = new RMFilter();
 	private RMFilter _items = new RMFilter();
 	private static RMPlayer _requestPlayer;
-	private int _amount;
-	private final int _amountLimit = 40;
-	private boolean _random = true;
+	private final int _wordLimit = 40;
+	private int _menuItems = 0;
 	
 	private enum Part { GLASS, STONE, CHEST, WALL_SIGN, WOOL; }
-	public enum RMState { SETUP, COUNTDOWN, GAMEPLAY, GAMEOVER; }
+	public enum RMState { MODIFY, SETUP, COUNTDOWN, GAMEPLAY, GAMEOVER; }
 	public enum InterfaceState { MAIN, FILTER_CLEAR };
-	public int _menuItems = 0;
 	public enum FilterType { ALL, CLEAR, BLOCK, ITEM, RAW, CRAFTED};
 	public enum ClickState { LEFT, RIGHT, NONE };
 	public enum ItemHandleState { ADD, MODIFY, REMOVE, NONE };
+	public enum HandleState { ADD, MODIFY, REMOVE, NOCHANGE, NONE };
 	public enum ForceState { ADD, REMOVE, RANDOMIZE, NONE};
 	
 	private final int cdTimerLimit = 30; //3 seconds
 	private int cdTimer = cdTimerLimit;
+
+	private RMTeam _winTeam;
+	private RMPlayer _winPlayer;
 	
-	private RMPlayer _winner;
-	
-	public RMPlayer getWinner(){
-		return _winner;
+	public RMTeam getWinTeam(){
+		return _winTeam;
 	}
-	public void setWinner(RMPlayer rmp){
-		_winner = rmp;
+	public void setWinTeam(RMTeam rmTeam){
+		_winTeam = rmTeam;
+	}
+	
+	public RMPlayer getWinPlayer(){
+		return _winPlayer;
+	}
+	public void setWinPlayer(RMPlayer rmp){
+		_winPlayer = rmp;
+	}
+	
+	public RMStats getGameStats(){
+		return _gameStats;
 	}
 	
 	public static RMPlayer getRequestPlayer(){
@@ -257,7 +256,7 @@ public class RMGame {
 		Integer[] array = _filter.keySet().toArray(new Integer[_filter.keySet().size()]);
 		Arrays.sort(array);
 		
-		if(array.length>_amountLimit){
+		if(array.length>_wordLimit){
 			for(Integer i : array){
 				items += ChatColor.WHITE+""+i+includeItem(_filter.getItem(i))+ChatColor.WHITE+", ";
 			}
@@ -396,21 +395,11 @@ public class RMGame {
 				if(clickState!=ClickState.NONE) tryAddItemToFilter(rmp, clickState);
 			}
 			else if(_filter.size()>0){
-				if(clickState == clickState.NONE){
+				if(clickState == ClickState.NONE){
 					rmp.sendMessage("Click sign to clear all items.");
 					setInterfaceState(InterfaceState.FILTER_CLEAR);
-					//rmp.sendMessage(ChatColor.GRAY+"Removed all filter items.");
-					//clearItemsToFilter();
 				}
-				/*
-				List<String> clearedItems = new ArrayList<String>();
-				for(Integer i : _filter.keySet()){
-					clearedItems.add(ChatColor.WHITE+Material.getMaterial(i).name()+includeItem(_filter.get(i))+ChatColor.WHITE+", ");
-				}
-				if(clearedItems.size()>0) rmp.sendMessage(ChatColor.GRAY+"Removed: "+plugin.getFormattedStringByList(clearedItems));
-				*/
 			}
-			//else if(_filter.size()>0) setInterfaceState(InterfaceState.FILTER_CLEAR);
 			updateSigns();
 		}
 	}
@@ -471,7 +460,7 @@ public class RMGame {
 			RMChest rmChest = rmTeam.getChest();
 			HashMap<Integer, RMItem> added = new HashMap<Integer, RMItem>();
 			HashMap<Integer, RMItem> returned = new HashMap<Integer, RMItem>();
-			HashMap<Integer, RMItem> left = new HashMap<Integer, RMItem>();
+			int totalFound = 0;
 			Inventory inv = rmChest.getChest().getInventory();
 			returned = _items.cloneItems(-1);
 			for(int i=0; i<inv.getSize(); i++){
@@ -493,36 +482,25 @@ public class RMGame {
 									rmItem = new RMItem(id, item.getAmount()-overflow);
 									added.put(id, rmItem);
 								}
+								totalFound+=item.getAmount()-overflow;
 								returned.put(id, rmChest.getItemLeft(id));
 								rmp.sendMessage("getItemLeft:"+rmChest.getItemLeft(id));
 							}
 							if(overflow>0){
 								item.setAmount(overflow);
-								//if(returned.containsKey(id)) returned.put(id, returned.get(id)+overflow);
-								//else returned.put(id, overflow);
 							}
 							else inv.clear(i);
 						}
 					}
 				}
 			}
+			rmp.getStats().addItemsFoundTotal(totalFound);
+			_gameStats.addItemsFoundTotal(totalFound);
+			RMStats.addServerItemsFoundTotal(totalFound);
 			if(added.size()>0){
-				/*
-				for(Integer id : _items.keySet()){
-					if(!returned.containsKey(id)){
-						//RMItem rmItem = _items.get(id).clone();
-						//rmItem.setAmount(-1);
-						returned.put(id, new RMItem(id, -1));
-					}
-				}
-				*/
-				//trySignGameplayInfo(b, rmp);
-				//rmp.sendMessage(ChatColor.YELLOW+"Items added: "+getFormattedStringByHash(added));
 				if(returned.size()>0) rmp.sendMessage(ChatColor.YELLOW+"Items left: "+getFormattedStringByHash(returned, rmp));
-				//rmTeam.teamMessage(rmChest.getItemsLeft()+" items left. "+rmChest.getTotalLeft()+" total.");
 			}
 			else updateGameplayInfo(rmp);
-			//if(returned.size()>0) rmp.sendMessage(ChatColor.YELLOW+"Items overflown: "+getFormattedStringByHash(returned));
 		}
 		updateSigns();
 	}
@@ -647,7 +625,29 @@ public class RMGame {
 				RMTeam rmTeam = rmChest.getTeam();
 				setState(RMState.GAMEOVER);
 				broadcastMessage(rmTeam.getTeamColorString()+ChatColor.WHITE+" team has won the match!");
-				setWinner(rmp);
+				
+				for(RMTeam rmt : getTeams()){
+					if(rmt!=rmTeam){
+						for(RMPlayer rmPlayer : rmt.getPlayers()){
+							rmPlayer.getStats().addLosses();
+							rmPlayer.getStats().addTimesPlayed();
+							_gameStats.addLosses();
+							_gameStats.addTimesPlayed();
+							RMStats.addServerLosses();
+							RMStats.addServerTimesPlayed();
+						}
+					}
+				}
+				for(RMPlayer rmPlayer : rmTeam.getPlayers()){
+					rmPlayer.getStats().addWins();
+					rmPlayer.getStats().addTimesPlayed();
+					_gameStats.addWins();
+					_gameStats.addTimesPlayed();
+					RMStats.addServerWins();
+					RMStats.addServerTimesPlayed();
+				}
+				setWinTeam(rmTeam);
+				setWinPlayer(rmp);
 				update();
 				return;
 			}
@@ -703,11 +703,11 @@ public class RMGame {
 	}
 
 	//Constructor
-	public RMGame(List<List<Block>> blockList, RMPlayer rmp, RM plugin){
+	public RMGame(RMPartList partList, RMPlayer rmp, RM plugin){
+		_partList = partList;
 		_players = RMPlayer.getPlayers();
 		setId(_games.size());
 		setOwner(rmp);
-		_blockList = blockList;
 	}
 	
 	//Id GET-SET
@@ -738,69 +738,62 @@ public class RMGame {
 		}
 		return rmGame;
 	}
-	public static Boolean tryAddGame(Block b, RMPlayer rmp, Block bRemove){
-		RMGame rmGame = getGameByBlock(b);
-		if(b.getType()!=Material.GLASS){
-			b = getCenterBlock(b);
-		}
-		List<List<Block>> blockList = RMGame.getBlockList(b);
-		if(blockList==null) return false;
-		if(bRemove!=null) blockList = RMGame.removeFromBlockList(blockList, bRemove);
-		blockList = getCompleteParts(blockList);
+	public static HandleState tryAddGame(Block b, RMPlayer rmp, Block bRemove){
+		RMPartList partList;
+		if(bRemove!=null) partList = new RMPartList(b, rmp, bRemove, plugin);
+		else partList = new RMPartList(b, rmp, plugin);
+		RMGame rmGame = getGameByBlock(partList.getMainBlock(b));
 		
 		Boolean wasModified = false;
-		if(rmGame==null) rmGame = RMGame.getGameByBlock(b);
+		if(rmGame==null){
+			plugin.getServer().broadcastMessage("ISNULL!");
+			rmGame = RMGame.getGameByBlock(b);
+		}
 		if(rmGame!=null){
 			if(rmp!=rmGame.getOwner()){
 				rmp.sendMessage("The owner is "+rmGame.getOwnerName()+".");
-				return false;
+				return HandleState.NOCHANGE;
 			}
-			if(!matchBlockList(blockList, rmGame.getBlockListByGroup())){
+			if(!matchPartList(partList, rmGame._partList)){
+				plugin.getServer().broadcastMessage("NO MATCH!");
 				wasModified = true;
+				//RMConfig rmConfig = _config;
 				RMGame.removeGame(rmGame);
 				rmGame = null;
 			}
 			else{
+				plugin.getServer().broadcastMessage("MATCH PERFECTLY!");
 				if(rmGame.getTeams().size()==4){
 					rmp.sendMessage("Game id "+rmGame.getId()+" has the maximum amount of teams!");
-					return false;
+					return HandleState.NOCHANGE;
 				}
 				rmp.sendMessage("Game id "+rmGame.getId()+" already exists!");
-				return false;
+				return HandleState.NOCHANGE;
 			}
 		}
 		
-		if(blockList.get(Part.STONE.ordinal()).size()<2){
-			rmp.sendMessage("You're missing "+(2-blockList.get(Part.STONE.ordinal()).size())+" stone block." );
-			return false;
+		if(partList.getStoneList().size()<2){
+			rmp.sendMessage("You're missing "+(2-partList.getStoneList().size())+" stone block." );
+			return HandleState.NONE;
 		}
 	
-		List<RMTeam> teams = getTeamsFromBlockList(blockList);
+		List<RMTeam> teams = partList.fetchTeams();
 		if(teams.size()<2){
 			rmp.sendMessage("You need at least two teams to create a game");
-			return false;
+			return HandleState.NONE;
 		}
-		
-		/*
-		String items = "";
-		for(List<Block> blocks : blockList){
-			for(Block block: blocks){
-				if(block!=null) items+=block.getType();
-			}
-		}
-		plugin.getServer().broadcastMessage(""+items.substring(0, items.length()-1));
-		*/
-		
-		rmGame = addGame(new RMGame(blockList, rmp, plugin));
-		if(wasModified) rmp.sendMessage("Game id "+rmGame.getId()+" has been modified.");
-		else rmp.sendMessage("Game id "+rmGame.getId()+" has been created.");
 
+		rmGame = addGame(new RMGame(partList, rmp, plugin));
 		for(RMTeam rmt : teams){
 			rmGame.addTeam(rmt);
 		}
+		if(wasModified) rmp.sendMessage("Game id "+rmGame.getId()+" has been modified.");
+		else rmp.sendMessage("Game id "+rmGame.getId()+" has been created.");
 		rmp.sendMessage("Found "+teams.size()+" teams. ("+rmGame.getTextTeamColors()+")");
 		rmGame.updateSigns();
-		return true;
+		
+		if(wasModified) return HandleState.MODIFY;
+		else return HandleState.ADD;
 		
 	}
 	
@@ -816,19 +809,27 @@ public class RMGame {
 		}
 		return false;
 	}
-	public static Boolean tryRemoveGame(Block b, RMPlayer rmp, Boolean justRemove){
+	public static HandleState tryRemoveGame(RMGame rmGame, RMPlayer rmp, Boolean justRemove){
+		if(rmGame!=null){
+			return tryRemoveGame(rmGame._partList.getMainBlock(), rmp, justRemove);
+		}
+		return HandleState.NONE;
+	}
+	public static HandleState tryRemoveGame(Block b, RMPlayer rmp, boolean justRemove){
 		RMGame rmGame = getGameByBlock(b);
 		if(rmGame!=null){
 			if(rmGame.getState() == RMState.SETUP){
 				if(rmp == rmGame.getOwner()){
 					if(!justRemove){
-						List<List<Block>> blockList = rmGame.getBlockListByGroup();
-						List<Block> blocks = RMGame.getSimpleBlockList((blockList.subList(2, blockList.size())));
+						List<List<Block>> blockList = rmGame._partList.getBlockList();
+						List<Block> blocks = rmGame._partList.getList();
+						plugin.getServer().broadcastMessage("JUSTREMOVE");
 						for(Block block : blocks){
-							if(b == block){
-								if(tryAddGame(b, rmp, b)) return true;
-								break;
+							if(rmGame.getMainBlock() == block){
+								plugin.getServer().broadcastMessage("MAINBLOCK");
+								return tryAddGame(rmGame.getMainBlock(), rmp, b);
 							}
+							plugin.getServer().broadcastMessage("OUTNONE");
 						}
 					}
 					for(Sign sign : rmGame.getSigns()){
@@ -840,36 +841,19 @@ public class RMGame {
 					}
 					rmp.sendMessage("Successfully removed game with id "+rmGame.getId());
 					removeGame(rmGame);
+					return HandleState.REMOVE;
 				}
 				else{
 					rmp.sendMessage("The owner is "+rmGame.getOwnerName()+".");
-					return false;
 				}
 			}
-			else return false;
 		}
-		return true;
+		plugin.getServer().broadcastMessage("NOGAME");
+		return HandleState.NONE;
 	}
-	public static Boolean tryRemoveGame(RMGame rmGame, RMPlayer rmp){
-		if(rmGame!=null){
-			if(rmGame.getState() == RMState.SETUP){
-				if(rmp == rmGame.getOwner()){
-					//REMOVE ALL
-					rmp.sendMessage("Successfully removed game with id "+rmGame.getId());
-					RMGame.removeGame(rmGame);
-					return true;
-				}
-				else{
-					rmp.sendMessage("The owner is "+rmGame.getOwnerName()+".");
-					return false;
-				}
-			}
-			else{
-				//plugin.getServer().broadcastMessage("GAY");
-				return false;
-			}
-		}
-		return true;
+	
+	public Block getMainBlock(){
+		return _partList.getMainBlock();
 	}
 	
 	//Game GET-SET
@@ -885,10 +869,11 @@ public class RMGame {
 	}
 	public static RMGame getGameByBlock(Block b){
 		for(RMGame game : RMGame.getGames()){
-			for(Block rmb : game.getSimpleBlockList()){
-				if(rmb == b){
+			for(Block block : game._partList.getList()){
+				if(block == b){
 					return game;
 				}
+				
 			}
 		}
 		return null;
@@ -1026,10 +1011,9 @@ public class RMGame {
 	}
 	private RMTeam getTeamByBlock(Block b){
 		if(RMGame.isMaterial(b.getType(), Material.CHEST, Material.WALL_SIGN, Material.WOOL)){
-			List<List<Block>> blockList = getBlockListByGroup();
-			blockList = blockList.subList(2, blockList.size());
+			List<List<Block>> partList = _partList.getPartList();
 			int i=0;
-			for(List<Block> blocks : blockList){
+			for(List<Block> blocks : partList){
 				if(blocks.contains(b)){
 					return getTeam(i);
 				}
@@ -1047,7 +1031,9 @@ public class RMGame {
 		return rmt;
 	}
 	public RMTeam getTeam(int index){
-		if(_teams.get(index)!=null) return _teams.get(index);
+		if(_teams.get(index)!=null){
+			return _teams.get(index);
+		}
 		return null;
 	}
 	public List<RMTeam> getTeams(){
@@ -1097,10 +1083,9 @@ public class RMGame {
 	}
 	private RMChest getChestByBlock(Block b){
 		if(b.getType() == Material.CHEST){
-			List<List<Block>> blockList = getBlockListByGroup();
-			blockList = blockList.subList(2, blockList.size());
+			List<List<Block>> partList = _partList.getPartList();
 			int i=0;
-			for(List<Block> blocks : blockList){
+			for(List<Block> blocks : partList){
 				if(blocks.contains(b)){
 					return getChest(i);
 				}
@@ -1113,10 +1098,9 @@ public class RMGame {
 	//Sign
 	private Sign getSignByBlock(Block b){
 		if(b.getType() == Material.WALL_SIGN){
-			List<List<Block>> blockList = getBlockListByGroup();
-			blockList = blockList.subList(2, blockList.size());
+			List<List<Block>> partList = _partList.getPartList();
 			int i=0;
-			for(List<Block> blocks : blockList){
+			for(List<Block> blocks : partList){
 				if(blocks.contains(b)){
 					return getSign(i);
 				}
@@ -1195,220 +1179,14 @@ public class RMGame {
 		}
 		return false;
 	}
-	public static Part getPartByMaterial(Material mat){
-		switch(mat){
-			case GLASS:
-				return Part.GLASS;
-			case STONE:
-				return Part.STONE;
-			case CHEST:
-				return Part.CHEST;
-			case WALL_SIGN:
-				return Part.WALL_SIGN;
-			case WOOL:
-				return Part.WOOL;
-		}
-		return null;
-	}
 
-	//Block List
-	public List<List<Block>> getBlockListByGroup(){
-		return _blockList;
-	}
-	public List<Block> getSimpleBlockList(){
-		List<Block> blockList = new ArrayList<Block>();
-			for(List<Block> blocks : getBlockListByGroup()){
-				for(Block b : blocks){
-					blockList.add(b);
-				}
-			}
-		return blockList;
-	}
-	public static List<Block> getSimpleBlockList(List<List<Block>> bList){
-		List<Block> blockList = new ArrayList<Block>();
-			for(List<Block> blocks : bList){
-				for(Block b : blocks){
-					blockList.add(b);
-				}
-			}
-		return blockList;
-	}
-	public static List<List<Block>> getBlockList(Block b){
-		if(b!=null){
-			List<List<Block>> blockList = new ArrayList<List<Block>>();
-			blockList.add(getParts(b, Material.GLASS, true, b));
-			blockList.add(getParts(b, Material.STONE, true, b.getRelative(BlockFace.UP), b.getRelative(BlockFace.DOWN)));
-			blockList.add(getParts(b.getRelative(BlockFace.DOWN), Material.CHEST, false));
-			blockList.add(getParts(b, Material.WALL_SIGN, false));
-			blockList.add(getParts(b.getRelative(BlockFace.UP), Material.WOOL, false));
-			return blockList;
-		}
-		return null;
-	}
-	public static String getStringBlockList(List<List<Block>> blockList, Boolean getNull){
-		return getStringSimpleBlockList(getSimpleBlockList(blockList), getNull );
-	}
-	public static String getStringSimpleBlockList(List<Block> blocks, Boolean getNull){
-		String list = "";
-		for(Block block : blocks){
-			if(block!=null)	list+=block.getType().name();
-			else if(getNull) list+="null";
-			list+=",";
-		}
-		return list.substring(0,list.length()-1);
-	}
-	
-	private List<List<Block>> removeFromBlockList(Block b){
-		List<List<Block>> blockList = getBlockListByGroup();
-		return removeFromBlockList(blockList, b);
-	}
-	private static List<List<Block>> removeFromBlockList(List<List<Block>> blockList, Block b){
-		for(int i=0;i<blockList.size();i++){
-			for(int j=0;j<blockList.get(i).size();j++){
-				if(blockList.get(i).get(j)==b){
-					blockList.get(i).set(j, null);
-				}
-			}
-		}
-		return blockList;
-	}
-	private static List<Block> getParts(Block b, Material mat, Boolean trim, Block... faces){
-		List<Block> blocks = new ArrayList<Block>();
-		List<Block> facings = new ArrayList<Block>();
-		if(faces.length==0){
-			facings.add(b.getRelative(BlockFace.NORTH));
-			facings.add(b.getRelative(BlockFace.EAST));
-			facings.add(b.getRelative(BlockFace.SOUTH));
-			facings.add(b.getRelative(BlockFace.WEST));
-		}
-		else{
-			for(int i=0; i<faces.length; i++){
-				facings.add(faces[i]);
-			}
-		}
-		if(mat==Material.WALL_SIGN){
-				for(int i=0; i<facings.size(); i++){
-					if((facings.get(i).getType()==Material.WALL_SIGN)&&(RMDir.getDirByData(facings.get(i).getData()).getOpposite()==RMDir.values()[i])){
-						blocks.add(facings.get(i));
-					}
-					else if(!trim){
-						blocks.add(null);
-					}
-				}
-		}
-		else{
-			for(int i=0; i<facings.size(); i++){
-				if(facings.get(i).getType() == mat){
-					blocks.add(facings.get(i));
-				}
-				else if(!trim){
-					blocks.add(null);
-				}
-			}
-		}
-		return blocks;
-	}
-	
-	private static List<List<Block>> getCompleteParts(List<List<Block>> blockList){
-		List<List<Block>> parts = new ArrayList<List<Block>>(blockList.subList(0, 2));
-		blockList = blockList.subList(2, blockList.size());
-		List<Byte> data = new ArrayList<Byte>();
-		for(int i=0; i<4; i++){
-			List<Block> partCount = new ArrayList<Block>();
-			for(int j=0; j<blockList.size(); j++){
-				Block b = blockList.get(j).get(i); 
-				if(b!=null){
-					partCount.add(b);
-				}
-			}
-			if(partCount.size()==3){
-				List<Block> blocks = new ArrayList<Block>();
-				for(int j=0; j<partCount.size(); j++){
-					blocks.add(partCount.get(j));
-				}
-				Byte d = blocks.get(Part.WOOL.ordinal()-2).getData();
-				if(!data.contains(d)){
-					data.add(d);
-					parts.add(blocks);
-				}
-			}
-		}
-		return parts;
-	}
-	public static List<RMTeam> getTeamsFromBlockList(List<List<Block>> blockList){
-		blockList = blockList.subList(2, blockList.size());
-		List<RMTeam> teams = new ArrayList<RMTeam>();
-		for(List<Block> blocks : blockList){
-			teams.add(new RMTeam(DyeColor.getByData(blocks.get(Part.WOOL.ordinal()-2).getData()), (Chest)blocks.get(Part.CHEST.ordinal()-2).getState(), plugin));
-		}
-		return teams;
-	}
-	
-	//Get Center Block
-	private static Block getCenterBlock(Block b){
-		switch(b.getType()){
-			case WALL_SIGN:
-				RMDir dir = RMDir.getDirByData(b.getData());
-				Block c = getSignBlock(b, dir);
-				if(c.getType()==Material.GLASS) return c;
-				return null;
-			case CHEST:
-				b = b.getRelative(BlockFace.UP);
-				return getCenterBlockByFace(b);
-			case WOOL:
-				b = b.getRelative(BlockFace.DOWN);
-				return getCenterBlockByFace(b);
-			case STONE:
-				return getCenterBlockByFace(b, b.getRelative(BlockFace.UP),b.getRelative(BlockFace.DOWN));
-			}
-		return null;
-	}
-	private static Block getCenterBlockByFace(Block b, Block... faces){
-		List<Block> facings;
-		facings = new ArrayList<Block>();
-		if(faces.length==0){
-		facings.add(b.getRelative(BlockFace.NORTH));
-		facings.add(b.getRelative(BlockFace.EAST));
-		facings.add(b.getRelative(BlockFace.SOUTH));
-		facings.add(b.getRelative(BlockFace.WEST));
-		}
-		else{
-			for(int i=0; i<faces.length; i++){
-			facings.add(faces[i]);
-			}
-		}
-		for(Block face : facings){
-			if(face.getType()==Material.GLASS) return face;
-		}
-		return null;
-	}
-	
-	//Get Sign Block
-	public static Block getSignBlock(Block b, RMDir dir){
-		switch(dir){
-			case NORTH:
-				return b.getRelative(BlockFace.NORTH);
-			case EAST:
-				return b.getRelative(BlockFace.EAST);
-			case SOUTH:
-				return b.getRelative(BlockFace.SOUTH);
-			case WEST:
-				return b.getRelative(BlockFace.WEST);
-		}
-		return null;
-	}
-	
-	public static Boolean matchBlockList(List<List<Block>> bl1, List<List<Block>> bl2){
-		List<Block> blocks1 = RMGame.getSimpleBlockList(bl1);
-		List<Block> blocks2 = RMGame.getSimpleBlockList(bl2);
-		
-		if(blocks1.size()!=blocks2.size()) return false;
-		for(int i=0; i<blocks1.size(); i++){
-			if(blocks1.get(i)!=blocks2.get(i))
-			{
-				return false;
-			}
-		}
+	public static Boolean matchPartList(RMPartList bl1, RMPartList bl2){
+		//plugin.getServer().broadcastMessage(plugin.getTextList(bl1.getChestList(),true)+":"+plugin.getTextList(bl2.getChestList(),true));
+		//plugin.getServer().broadcastMessage(plugin.getTextList(bl1.getSignList(),true)+":"+plugin.getTextList(bl2.getSignList(),true));
+		//plugin.getServer().broadcastMessage(plugin.getTextList(bl1.getWoolList(),true)+":"+plugin.getTextList(bl2.getWoolList(),true));
+		if(!matchSimpleBlockList(bl1.getChestList(),bl2.getChestList())) return false;
+		if(!matchSimpleBlockList(bl1.getSignList(),bl2.getSignList())) return false;
+		if(!matchSimpleBlockList(bl1.getWoolList(),bl2.getWoolList())) return false;
 		return true;
 	}
 	
@@ -1442,60 +1220,8 @@ public class RMGame {
 		}
 	}
 	//BLOCK LIST//END//
-	
-	*/
-	public void save(){
-	}
-	public void load(){
-	}
-	//Options
-	/*
-	public void setFilter(String filter){
-		if(filter!=null){
-			if(filter.length()>1){
-				_filter.clear();
-				String[] list = filter.split(",");
-				for(String item : list){
-					try{
-						int i = Integer.valueOf(item);
-						Material mat = Material.getMaterial(i);
-						if(mat!=null) _filter.add(mat);
-					}
-					catch (Exception e){
-						plugin.log.log(Level.SEVERE, "Error:"+e);
-						e.printStackTrace();
-					}
-				}
-			}
-		}
-	}
-	public void addFilterItemById(int id){
-		Material item = Material.getMaterial(id);
-		if(item!=null) addFilterItem(item);
-	}
-	public void addFilterItem(Material mat){
-		if(!_filter.contains(mat)){
-			_filter.add(mat);
-		}
-		else _filter.remove(mat);
-	}
-	*/
-	//Amount
-	public int getAmount(){
-		return _amount;
-	}
-	public void setAmount(int amount){
-		_amount = amount;
-		if(_amount<0) _amount = 0;
-		else if(_amount>20) _amount = _amountLimit;
-	}
-	//Random
-	public Boolean getRandom(){
-		return _random;
-	}
-	public void setRandom(Boolean random){
-		_random = random;
-	}
+	 */
+
 	//HackMaterials
 	public boolean getAllowHackMaterials(){
 		return _allowHackedItems;
@@ -1574,7 +1300,7 @@ public class RMGame {
 		List<String> modified = new ArrayList<String>();
 		String strItem;
 		Boolean getId = false;
-		if(items.size()>_amountLimit) getId=true;
+		if(items.size()>_wordLimit) getId=true;
 		Integer[] arrayItems = items.keySet().toArray(new Integer[items.size()]);
 		Arrays.sort(arrayItems);
 		for(Integer item : arrayItems){
@@ -1613,7 +1339,7 @@ public class RMGame {
 		List<String> removed = new ArrayList<String>();
 		String strItem;
 		Boolean getId = false;
-		if(items.size()>_amountLimit) getId=true;
+		if(items.size()>_wordLimit) getId=true;
 		Integer[] arrayItems = items.keySet().toArray(new Integer[items.size()]);
 		Arrays.sort(arrayItems);
 

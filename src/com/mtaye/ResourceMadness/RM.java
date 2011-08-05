@@ -3,14 +3,6 @@ package com.mtaye.ResourceMadness;
 import java.io.File;
 import org.bukkit.ChatColor;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import org.bukkit.entity.Player;
 import org.bukkit.DyeColor;
@@ -27,6 +19,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import java.io.*;
@@ -38,11 +31,8 @@ import com.mtaye.ResourceMadness.RMPlayer.PlayerAction;
 import com.nijikokun.bukkit.Permissions.Permissions;
 import com.nijiko.permissions.PermissionHandler;
 
-import org.bukkit.plugin.Plugin;
-import org.bukkit.util.Vector;
-
 /**
- * DropChest for Bukkit
+ * ResourceMadness for Bukkit
  *
  * @author M-Taye
  */
@@ -99,7 +89,6 @@ public class RM extends JavaPlugin {
 			RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
 			if(rmp!=null){
 				if(cmd.getName().equals("resourcemadness")){
-					boolean syntaxError=false;
 					if(args.length==0){
 						syntaxError(rmp);
 					}
@@ -128,7 +117,7 @@ public class RM extends JavaPlugin {
 						//REMOVE
 						else if(args[0].equalsIgnoreCase("remove")){
 							if(rmGame!=null){
-								RMGame.tryRemoveGame(rmGame, rmp);
+								RMGame.tryRemoveGame(rmGame, rmp, true);
 								return true;
 							}
 							else{
@@ -845,5 +834,30 @@ public class RM extends JavaPlugin {
 		}
 		line = stripLast(line, ",");
 		return line;
+	}
+	
+	public String getTextBlockList(List<List<Block>> blockList, boolean allowNull){
+		String line = "";
+		for(List<Block> bList : blockList){
+			for(Block b : bList){
+				if(b!=null){
+					line+=b.getType().name();
+				}
+				else if(allowNull) line+="null";
+				line+=",";
+			}
+		}
+		return stripLast(line, ",");
+	}
+	public String getTextList(List<Block> bList, boolean allowNull){
+		String line = "";
+		for(Block b : bList){
+			if(b!=null){
+				line+=b.getType().name();
+			}
+			else if(allowNull) line+="null";
+			line+=",";
+		}
+		return stripLast(line, ",");
 	}
 }

@@ -9,16 +9,17 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerToggleSneakEvent;
 
-import com.mtaye.ResourceMadness.RMGame.InterfaceState;
-import com.mtaye.ResourceMadness.RMGame.RMState;
 import com.mtaye.ResourceMadness.RMPlayer.PlayerAction;
 
+/**
+ * ResourceMadness for Bukkit
+ *
+ * @author M-Taye
+ */
 public class RMPlayerListener extends PlayerListener{
 	
 	private final RM plugin;
@@ -77,10 +78,13 @@ public class RMPlayerListener extends PlayerListener{
 							RMGame rmGame;
 							switch(rmp.getPlayerAction()){
 							case ADD:
+								rmGame = RMGame.getGameByBlock(b);
+								//if(rmGame!=null) //RMGame.tryAddGame(rmGame, rmp, b);
+								//else 
 								RMGame.tryAddGame(b, rmp, null);
 								break;
 							case REMOVE:
-								if(!RMGame.tryRemoveGame(b, rmp, true)) rmp.sendMessage("You can't remove this game.");
+								RMGame.tryRemoveGame(b, rmp, true);
 								break;
 							case INFO:
 								rmGame = RMGame.getGameByBlock(b);
@@ -171,32 +175,5 @@ public class RMPlayerListener extends PlayerListener{
 				}
 			}
 		}
-	}
-	
-	@Override
-	public void onPlayerJoin(PlayerJoinEvent e)
-	{
-		/*
-		Player p = e.getPlayer();
-		if(!plugin.users.containsKey(p))
-		{
-			plugin.users.put(p, true);
-			plugin.players.add(p);
-		}
-		*/
-	}
-	
-	@Override
-	public void onPlayerQuit(PlayerQuitEvent e)
-	{
-		/*
-		Player p = e.getPlayer();
-		
-		if(plugin.users.containsKey(p))
-		{
-			plugin.users.remove(p);
-			plugin.players.remove(p);
-		}
-		*/
 	}
 }

@@ -9,6 +9,11 @@ import org.bukkit.block.Chest;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+/**
+ * ResourceMadness for Bukkit
+ *
+ * @author M-Taye
+ */
 public class RMChest{
 	private Chest _chest;
 	private HashMap<Integer, RMItem> _items = new HashMap<Integer, RMItem>();
@@ -73,7 +78,7 @@ public class RMChest{
 			newAmount-=overflow;
 		}
 		else overflow = 0;
-
+		
 		_items.put(id, new RMItem(id, newAmount));
 		return overflow;
 	}

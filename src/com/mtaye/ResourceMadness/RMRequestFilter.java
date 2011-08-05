@@ -3,11 +3,14 @@ package com.mtaye.ResourceMadness;
 import java.util.HashMap;
 import java.util.List;
 
-import org.bukkit.Material;
-
 import com.mtaye.ResourceMadness.RMGame.FilterType;
 import com.mtaye.ResourceMadness.RMGame.ForceState;
 
+/**
+ * ResourceMadness for Bukkit
+ *
+ * @author M-Taye
+ */
 public class RMRequestFilter {
 	HashMap<Integer, RMItem> _items;
 	FilterType _type;

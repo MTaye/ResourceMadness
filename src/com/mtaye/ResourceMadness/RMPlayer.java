@@ -5,13 +5,16 @@ import java.util.List;
 import java.util.logging.Level;
 
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.util.Vector;
 
 import com.mtaye.ResourceMadness.RMGame.FilterType;
 import com.mtaye.ResourceMadness.RMGame.ForceState;
 
+/**
+ * ResourceMadness for Bukkit
+ *
+ * @author M-Taye
+ */
 public class RMPlayer {
 	public enum PlayerAction{
 		ADD, REMOVE, SETUP, INFO,
@@ -31,6 +34,11 @@ public class RMPlayer {
 	private RMRequestFilter _requestFilter;
 	private boolean _sneak = false;
 	private int _requestInt = 0;
+	private RMStats _stats = new RMStats();
+	
+	public RMStats getStats(){
+		return _stats;
+	}
 	
 	public void setRequestInt(int value){
 		_requestInt = value;
