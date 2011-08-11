@@ -49,36 +49,17 @@ public class RMGame {
 		Material.YELLOW_FLOWER, Material.LADDER, Material.PAINTING, Material.REDSTONE_TORCH_OFF, Material.REDSTONE_TORCH_ON, Material.TRAP_DOOR,
 		Material.WALL_SIGN, Material.WEB};
 	
-	private RMPartList _partList = new RMPartList(plugin);
+	private RMGameConfig _config = new RMGameConfig();
 	private HashMap<Location, RMBlock> _logBlockList = new HashMap<Location, RMBlock>();
 	private HashMap<Location, RMBlock> _logBlockItemList = new HashMap<Location, RMBlock>();
-	private boolean _warpToSafety = true;
-	private boolean _addWholeStack = false;
-	private boolean _addOnlyOneStack = false;
-	private boolean _autoRestoreWorld = true;
-	private boolean _warnHackedItems = true;
-	private boolean _allowHackedItems = false;
-	private int _maxPlayers = 0;
-	private int _maxTeamPlayers = 0;
-	private int _maxItems = 0;
-	private int _randomizeAmount = 0;
-	private int _autoRandomizeAmount = 0;
-	private RMConfig _config = new RMConfig();
 	
-	private RMStats _gameStats;
-	private int _id;
-	private String _ownerName;
-	private RMPlayer _owner;
-	private List<RMTeam> _teams = new ArrayList<RMTeam>();
-	private HashMap<String, RMPlayer> _players = new HashMap<String, RMPlayer>();
+	//private HashMap<String, RMPlayer> _players = new HashMap<String, RMPlayer>();
 	private RMState _state = RMState.SETUP;
 	private InterfaceState _interfaceState = InterfaceState.MAIN;
 	//private Inventory _inventory;
 	
-	private RMFilter _filter = new RMFilter();
 	private RMFilter _items = new RMFilter();
 	private static RMPlayer _requestPlayer;
-	private final int _wordLimit = 40;
 	private int _menuItems = 0;
 	
 	private enum Part { GLASS, STONE, CHEST, WALL_SIGN, WOOL; }
@@ -92,6 +73,16 @@ public class RMGame {
 	
 	private final int cdTimerLimit = 30; //3 seconds
 	private int cdTimer = cdTimerLimit;
+	
+	public RMGameConfig getConfig(){
+		return _config;
+	}
+	public void setConfig(RMGameConfig config){
+		_config = config;
+	}
+	public void saveTemplate(){
+		//plugin.saveTemaplte(_config);
+	}
 
 	private RMTeam _winTeam;
 	private RMPlayer _winPlayer;
@@ -110,10 +101,6 @@ public class RMGame {
 		_winPlayer = rmp;
 	}
 	
-	public RMStats getGameStats(){
-		return _gameStats;
-	}
-	
 	public static RMPlayer getRequestPlayer(){
 		return _requestPlayer;
 	}
@@ -124,60 +111,55 @@ public class RMGame {
 		_requestPlayer = null;
 	}
 	
-	public RMFilter getFilter(){
-		return _filter;
-	}
 	public RMFilter getItems(){
 		return _items;
 	}
 	
 	public void startGame(RMPlayer rmp){
-		if(rmp.getName()==getOwnerName()){
+		if(rmp.getName()==_config.getOwnerName()){
 			for(RMChest rmChest : getChests()){
 				rmChest.clearItems();
 			}
-			_items.populateByFilter(_filter);
-			if(_randomizeAmount>0) _items.randomize(_randomizeAmount);
-			else _items.randomize(_autoRandomizeAmount);
+			_items.populateByFilter(_config.getFilter());
+			if(_config.getRandomizeAmount()>0) _items.randomize(_config.getRandomizeAmount());
+			else _items.randomize(_config.getRandomizeAmount());
 			if(_items.size()>0){
-				/*
-				for(RMTeam rmTeam : _teams){
+				for(RMTeam rmTeam : _config.getTeams()){
 					if(rmTeam.getPlayers().length==0){
-						rmp.sendMessage("Each team must have at least one player");
+						rmp.sendMessage("Each team must have at least one player.");
 						return;
 					}
 				}
-				*/
 				rmp.sendMessage("Starting game...");
 				setState(RMState.COUNTDOWN);
 			}
 			else rmp.sendMessage("Configure the "+ChatColor.YELLOW+"filtered items"+ChatColor.WHITE+" first.");
 		}
-		else rmp.sendMessage("Only the owner "+getOwnerName()+" can start the game.");
+		else rmp.sendMessage("Only the owner "+_config.getOwner()+" can start the game.");
 	}
 	public void restartGame(RMPlayer rmp){
-		if(rmp.getName()==getOwnerName()){
+		if(rmp.getName()==_config.getOwnerName()){
 			rmp.sendMessage("Restarting game...");
-			clearRandomizeAmount();
+			_config.clearRandomizeAmount();
 			startGame(rmp);
-			if(_warpToSafety) warpPlayersToSafety();
-			if(_autoRestoreWorld) restoreLog();
+			if(_config.getWarpToSafety()) warpPlayersToSafety();
+			if(_config.getAutoRestoreWorld()) restoreLog();
 		}
-		else rmp.sendMessage("Only the owner "+getOwnerName()+" can restart the game.");
+		else rmp.sendMessage("Only the owner "+_config.getOwner()+" can restart the game.");
 	}
 	public void stopGame(RMPlayer rmp){
-		if(rmp.getName()==getOwnerName()){
+		if(rmp.getName()==_config.getOwnerName()){
 			rmp.sendMessage("Stopping game...");
-			clearRandomizeAmount();
+			_config.clearRandomizeAmount();
 			for(RMChest rmChest : getChests()){
 				rmChest.clearItems();
 			}
-			if(_warpToSafety) warpPlayersToSafety();
-			if(_autoRestoreWorld) restoreLog();
+			if(_config.getWarpToSafety()) warpPlayersToSafety();
+			if(_config.getAutoRestoreWorld()) restoreLog();
 			setState(RMState.SETUP);
 			updateSigns();
 		}
-		else rmp.sendMessage("Only the owner "+getOwnerName()+" can stop the game.");
+		else rmp.sendMessage("Only the owner "+_config.getOwnerName()+" can stop the game.");
 	}
 
 	//Sign info
@@ -193,9 +175,9 @@ public class RMGame {
 			case SETUP:
 				switch(_interfaceState){
 				case MAIN:
-					int items = _filter.size();
-					int total = _filter.getItemsTotal();
-					int totalHigh = _filter.getItemsTotalHigh();
+					int items = _config.getFilter().size();
+					int total = _config.getFilter().getItemsTotal();
+					int totalHigh = _config.getFilter().getItemsTotalHigh();
 					String lineTotal = ""+total;
 					if(totalHigh>0) lineTotal+="-"+totalHigh;
 					int length = lineTotal.length();
@@ -253,17 +235,17 @@ public class RMGame {
 		String items = "";
 		
 		//Sort
-		Integer[] array = _filter.keySet().toArray(new Integer[_filter.keySet().size()]);
+		Integer[] array = _config.getFilter().keySet().toArray(new Integer[_config.getFilter().keySet().size()]);
 		Arrays.sort(array);
 		
-		if(array.length>_wordLimit){
+		if(array.length>_config.getWordLimit()){
 			for(Integer i : array){
-				items += ChatColor.WHITE+""+i+includeItem(_filter.getItem(i))+ChatColor.WHITE+", ";
+				items += ChatColor.WHITE+""+i+includeItem(_config.getFilter().getItem(i))+ChatColor.WHITE+", ";
 			}
 		}
 		else{
 			for(Integer i : array){
-				items += ChatColor.WHITE+""+Material.getMaterial(i)+includeItem(_filter.getItem(i))+ChatColor.WHITE+", ";
+				items += ChatColor.WHITE+""+Material.getMaterial(i)+includeItem(_config.getFilter().getItem(i))+ChatColor.WHITE+", ";
 			}
 		}
 		if(items.length()>0){
@@ -313,19 +295,19 @@ public class RMGame {
 			ItemStack[] chestItems = rmChest.getChest().getInventory().getContents();
 			items.addAll(Arrays.asList(chestItems));
 		}
-		if(_addOnlyOneStack) items = removeDuplicates(items);
+		if(_config.getAddOnlyOneStack()) items = removeDuplicates(items);
 		else{
-			if(_addWholeStack) items = addDuplicates(items, true);
+			if(_config.getAddWholeStack()) items = addDuplicates(items, true);
 			else items = addDuplicates(items, false);
 		}
-		if(_warnHackedItems) warnHackMaterialsListItemStack(items);
+		if(_config.getWarnHackedItems()) warnHackMaterialsListItemStack(items);
 		items = removeHackMaterialsListItemStack(items);
 		return items;
 	}
 	
 	//Try Add Items
 	public void tryAddItemsToFilter(Block b, RMPlayer rmp, ClickState clickState){
-		if(rmp.getName() == getOwnerName()){
+		if(rmp.getName() == _config.getOwnerName()){
 			List<ItemStack> items = new ArrayList<ItemStack>();
 			boolean force;
 			if(clickState!=ClickState.NONE){
@@ -349,12 +331,12 @@ public class RMGame {
 							if(item!=Material.AIR){
 								int id = item.getId();
 								RMItem rmItem = new RMItem(id);
-								if(_addOnlyOneStack) rmItem.setAmount(rmItem.getMaxStackSize());
+								if(_config.getAddOnlyOneStack()) rmItem.setAmount(rmItem.getMaxStackSize());
 								else rmItem.setAmount(is.getAmount());
 								
 								switch(clickState){
 									case NONE: case LEFT:
-										switch(_filter.addItem(id, rmItem, force)){
+										switch(_config.getFilter().addItem(id, rmItem, force)){
 											case ADD:
 												addedItems+=ChatColor.WHITE+item.name()+includeItem(rmItem)+ChatColor.WHITE+", ";
 												break;
@@ -364,12 +346,12 @@ public class RMGame {
 										}
 										break;
 									case RIGHT:
-										switch(_filter.removeItem(id, rmItem, force)){
+										switch(_config.getFilter().removeItem(id, rmItem, force)){
 											case MODIFY:
 												modifiedItems+=ChatColor.WHITE+item.name()+includeItem(rmItem)+ChatColor.WHITE+", ";
 												break;
 											case REMOVE:
-												removedItems+=ChatColor.WHITE+item.name()+includeItem(_filter.getLastItem())+ChatColor.WHITE+", ";
+												removedItems+=ChatColor.WHITE+item.name()+includeItem(_config.getFilter().getLastItem())+ChatColor.WHITE+", ";
 												break;
 										}
 										break;
@@ -394,7 +376,7 @@ public class RMGame {
 			else if(rmp.getPlayer().isSneaking()){
 				if(clickState!=ClickState.NONE) tryAddItemToFilter(rmp, clickState);
 			}
-			else if(_filter.size()>0){
+			else if(_config.getFilter().size()>0){
 				if(clickState == ClickState.NONE){
 					rmp.sendMessage("Click sign to clear all items.");
 					setInterfaceState(InterfaceState.FILTER_CLEAR);
@@ -405,7 +387,7 @@ public class RMGame {
 	}
 	
 	public void tryAddItemToFilter(RMPlayer rmp, ClickState clickState){
-		if(rmp.getName() == getOwnerName()){
+		if(rmp.getName() == _config.getOwnerName()){
 			Player p = rmp.getPlayer();
 			ItemStack item = p.getItemInHand();
 			
@@ -422,7 +404,7 @@ public class RMGame {
 					rmItem = new RMItem(id, amount);
 					switch(clickState){
 					case NONE: case LEFT:
-						switch(_filter.addItem(id, rmItem, force)){
+						switch(_config.getFilter().addItem(id, rmItem, force)){
 							case ADD:
 								rmp.sendMessage(ChatColor.YELLOW+"Added: "+ChatColor.WHITE+mat.name()+includeItem(rmItem));
 								break;
@@ -432,7 +414,7 @@ public class RMGame {
 						}
 						break;
 					case RIGHT:
-						switch(_filter.removeItem(id, rmItem, force)){
+						switch(_config.getFilter().removeItem(id, rmItem, force)){
 							case MODIFY:
 								rmp.sendMessage(ChatColor.YELLOW+"Modified: "+ChatColor.WHITE+mat.name()+includeItem(rmItem));
 								break;
@@ -447,7 +429,7 @@ public class RMGame {
 				else{
 					_lastHackMaterials.clear();
 					_lastHackMaterials.add(mat);
-					if(_warnHackedItems) warnHackMaterials(_lastHackMaterials); 
+					if(_config.getWarnHackedItems()) warnHackMaterials(_lastHackMaterials); 
 				}
 			}
 		}
@@ -495,7 +477,7 @@ public class RMGame {
 				}
 			}
 			rmp.getStats().addItemsFoundTotal(totalFound);
-			_gameStats.addItemsFoundTotal(totalFound);
+			_config.getGameStats().addItemsFoundTotal(totalFound);
 			RMStats.addServerItemsFoundTotal(totalFound);
 			if(added.size()>0){
 				if(returned.size()>0) rmp.sendMessage(ChatColor.YELLOW+"Items left: "+getFormattedStringByHash(returned, rmp));
@@ -552,22 +534,22 @@ public class RMGame {
 				case FILTER_CLEAR: //FILTER CLEAR
 					switch(mat){
 					case CHEST: case GLASS: case STONE:
-						if(rmp.getName() == getOwnerName()){
+						if(rmp.getName() == _config.getOwnerName()){
 							rmp.sendMessage(ChatColor.GRAY+"Canceled.");
 							setInterfaceState(InterfaceState.MAIN);
 							updateSigns();
 						}
 						break;
 					case WALL_SIGN:
-						if(rmp.getName() == getOwnerName()){
-							_filter.clearItems();
+						if(rmp.getName() == _config.getOwnerName()){
+							_config.getFilter().clearItems();
 							rmp.sendMessage(ChatColor.GRAY+"Filter items cleared.");
 							setInterfaceState(InterfaceState.MAIN);
 							updateSigns();
 						}
 						break;
 					case WOOL:
-						if(rmp.getName() == getOwnerName()){
+						if(rmp.getName() == _config.getOwnerName()){
 							rmp.sendMessage(ChatColor.GRAY+"Canceled.");
 							setInterfaceState(InterfaceState.MAIN);
 							updateSigns();
@@ -583,7 +565,7 @@ public class RMGame {
 			case COUNTDOWN:
 				switch(mat){
 				case CHEST: case WALL_SIGN: case WOOL:
-					if(rmp.getName() == getOwnerName()){
+					if(rmp.getName() == _config.getOwnerName()){
 						//stopGame(rmp);
 					}
 					break;
@@ -631,8 +613,8 @@ public class RMGame {
 						for(RMPlayer rmPlayer : rmt.getPlayers()){
 							rmPlayer.getStats().addLosses();
 							rmPlayer.getStats().addTimesPlayed();
-							_gameStats.addLosses();
-							_gameStats.addTimesPlayed();
+							_config.getGameStats().addLosses();
+							_config.getGameStats().addTimesPlayed();
 							RMStats.addServerLosses();
 							RMStats.addServerTimesPlayed();
 						}
@@ -641,8 +623,8 @@ public class RMGame {
 				for(RMPlayer rmPlayer : rmTeam.getPlayers()){
 					rmPlayer.getStats().addWins();
 					rmPlayer.getStats().addTimesPlayed();
-					_gameStats.addWins();
-					_gameStats.addTimesPlayed();
+					_config.getGameStats().addWins();
+					_config.getGameStats().addTimesPlayed();
 					RMStats.addServerWins();
 					RMStats.addServerTimesPlayed();
 				}
@@ -663,7 +645,7 @@ public class RMGame {
 			//cdTimer = 0; //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			if(cdTimer%10==0){
 				if(cdTimer!=0){
-					sendMessage(""+cdTimer/10);
+					broadcastMessage(""+cdTimer/10);
 					updateSigns(""+cdTimer/10);
 				}
 			}
@@ -671,7 +653,7 @@ public class RMGame {
 				cdTimer-=10;
 			}
 			else{
-				sendMessage("LET THE RESOURCE MADNESS BEGIN!");
+				broadcastMessage("LET THE RESOURCE MADNESS BEGIN!");
 				cdTimer = cdTimerLimit;
 				setState(RMState.GAMEPLAY);
 				for(RMTeam rmt : getTeams()){
@@ -687,8 +669,8 @@ public class RMGame {
 			break;
 		case GAMEOVER:
 			setState(RMState.SETUP);
-			if(_warpToSafety) warpPlayersToSafety();
-			if(_autoRestoreWorld) restoreLog();
+			if(_config.getWarpToSafety()) warpPlayersToSafety();
+			if(_config.getAutoRestoreWorld()) restoreLog();
 			updateSigns();
 			break;
 		}
@@ -704,70 +686,64 @@ public class RMGame {
 
 	//Constructor
 	public RMGame(RMPartList partList, RMPlayer rmp, RM plugin){
-		_partList = partList;
-		_players = RMPlayer.getPlayers();
-		setId(_games.size());
-		setOwner(rmp);
+		this.plugin = plugin;
+		_config.setPartList(partList);
+		_config.setPlayers(RMPlayer.getPlayers());
+		_config.setId(_games.size());
+		_config.setOwnerName(rmp.getName());
 	}
-	
-	//Id GET-SET
-	public int getId(){
-		return _id;
-	}
-	private void setId(int id){
-		_id = id;
-	}
-	
-	//Owner GET-SET
-	public RMPlayer getOwner(){
-		return _owner;
-	}
-	public String getOwnerName(){
-		return _ownerName;
-	}
-	private void setOwner(RMPlayer owner){
-		_owner = owner;
-		_ownerName = owner.getName();
+	public RMGame(RMGameConfig config, RM plugin){
+		this.plugin = plugin;
+		_config = config;
+		_config.setId(_games.size());
 	}
 	
 	//Game
 	private static RMGame addGame(RMGame rmGame){
 		if(!_games.contains(rmGame)){
 			_games.add(rmGame);
-			rmGame._owner.setGames(_games);
 		}
 		return rmGame;
 	}
+	public static void tryAddGameFromConfig(RMGameConfig config){
+		RMGame rmGame = addGame(new RMGame(config, plugin));
+		for(RMTeam rmt : rmGame.getConfig().getTeams()){
+			rmt.setGame(rmGame);
+		}
+		rmGame.updateSigns();
+	}
+	
 	public static HandleState tryAddGame(Block b, RMPlayer rmp, Block bRemove){
 		RMPartList partList;
-		if(bRemove!=null) partList = new RMPartList(b, rmp, bRemove, plugin);
-		else partList = new RMPartList(b, rmp, plugin);
+		if(bRemove!=null) partList = new RMPartList(b, bRemove, plugin);
+		else partList = new RMPartList(b, plugin);
 		RMGame rmGame = getGameByBlock(partList.getMainBlock(b));
 		
 		Boolean wasModified = false;
+		RMGameConfig rmGameConfig = new RMGameConfig();
 		if(rmGame==null){
-			plugin.getServer().broadcastMessage("ISNULL!");
+			//plugin.getServer().broadcastMessage("ISNULL!");
 			rmGame = RMGame.getGameByBlock(b);
 		}
 		if(rmGame!=null){
-			if(rmp!=rmGame.getOwner()){
-				rmp.sendMessage("The owner is "+rmGame.getOwnerName()+".");
+			if(rmp!=rmGame._config.getOwner()){
+				rmp.sendMessage("The owner is "+rmGame._config.getOwnerName()+".");
 				return HandleState.NOCHANGE;
 			}
-			if(!matchPartList(partList, rmGame._partList)){
-				plugin.getServer().broadcastMessage("NO MATCH!");
+			if(!partList.matchPartList(rmGame._config.getPartList())){
+				//plugin.getServer().broadcastMessage("NO MATCH!");
 				wasModified = true;
-				//RMConfig rmConfig = _config;
+				rmGameConfig = rmGame._config;
 				RMGame.removeGame(rmGame);
 				rmGame = null;
 			}
 			else{
-				plugin.getServer().broadcastMessage("MATCH PERFECTLY!");
+				//plugin.getServer().broadcastMessage("MATCH PERFECTLY!");
 				if(rmGame.getTeams().size()==4){
-					rmp.sendMessage("Game id "+rmGame.getId()+" has the maximum amount of teams!");
+					rmp.sendMessage("Game id "+rmGame._config.getId()+" has the maximum amount of teams!");
 					return HandleState.NOCHANGE;
 				}
-				rmp.sendMessage("Game id "+rmGame.getId()+" already exists!");
+				rmp.sendMessage("Game id "+rmGame._config.getId()+" already exists!");
 				return HandleState.NOCHANGE;
 			}
 		}
@@ -787,8 +763,12 @@ public class RMGame {
 		for(RMTeam rmt : teams){
 			rmGame.addTeam(rmt);
 		}
-		if(wasModified) rmp.sendMessage("Game id "+rmGame.getId()+" has been modified.");
-		else rmp.sendMessage("Game id "+rmGame.getId()+" has been created.");
+		if(wasModified){
+			rmGame._config = rmGameConfig;
+			rmGameConfig = null;
+			rmp.sendMessage("Game id "+rmGame._config.getId()+" has been modified.");
+		}
+		else rmp.sendMessage("Game id "+rmGame._config.getId()+" has been created.");
 		rmp.sendMessage("Found "+teams.size()+" teams. ("+rmGame.getTextTeamColors()+")");
 		rmGame.updateSigns();
 		
@@ -799,7 +779,8 @@ public class RMGame {
 	
 	private static Boolean removeGame(RMGame rmGame){
 		if(_games.contains(rmGame)){
-			rmGame._owner.getGames().remove(rmGame);
+			//rmGame._config.getOwner().getGames().remove(rmGame);
+			rmGame.getGamesByOwnerName(rmGame.getConfig().getOwnerName()).remove(rmGame);
 			for(RMTeam rmt : rmGame.getTeams()){
 				rmt.setNull();
 			}
@@ -811,7 +792,7 @@ public class RMGame {
 	}
 	public static HandleState tryRemoveGame(RMGame rmGame, RMPlayer rmp, Boolean justRemove){
 		if(rmGame!=null){
-			return tryRemoveGame(rmGame._partList.getMainBlock(), rmp, justRemove);
+			return tryRemoveGame(rmGame._config.getPartList().getMainBlock(), rmp, justRemove);
 		}
 		return HandleState.NONE;
 	}
@@ -819,17 +800,17 @@ public class RMGame {
 		RMGame rmGame = getGameByBlock(b);
 		if(rmGame!=null){
 			if(rmGame.getState() == RMState.SETUP){
-				if(rmp == rmGame.getOwner()){
+				if(rmp == rmGame._config.getOwner()){
 					if(!justRemove){
-						List<List<Block>> blockList = rmGame._partList.getBlockList();
-						List<Block> blocks = rmGame._partList.getList();
-						plugin.getServer().broadcastMessage("JUSTREMOVE");
+						List<List<Block>> blockList = rmGame._config.getPartList().getBlockList();
+						List<Block> blocks = rmGame._config.getPartList().getList();
+						//plugin.getServer().broadcastMessage("JUSTREMOVE");
 						for(Block block : blocks){
 							if(rmGame.getMainBlock() == block){
-								plugin.getServer().broadcastMessage("MAINBLOCK");
+								//plugin.getServer().broadcastMessage("MAINBLOCK");
 								return tryAddGame(rmGame.getMainBlock(), rmp, b);
 							}
-							plugin.getServer().broadcastMessage("OUTNONE");
+							//plugin.getServer().broadcastMessage("OUTNONE");
 						}
 					}
 					for(Sign sign : rmGame.getSigns()){
@@ -839,21 +820,21 @@ public class RMGame {
 						sign.setLine(3, "");
 						sign.update();
 					}
-					rmp.sendMessage("Successfully removed game with id "+rmGame.getId());
+					rmp.sendMessage("Successfully removed game with id "+rmGame._config.getId());
 					removeGame(rmGame);
 					return HandleState.REMOVE;
 				}
 				else{
-					rmp.sendMessage("The owner is "+rmGame.getOwnerName()+".");
+					rmp.sendMessage("The owner is "+rmGame._config.getOwnerName()+".");
 				}
 			}
 		}
-		plugin.getServer().broadcastMessage("NOGAME");
+		//plugin.getServer().broadcastMessage("NOGAME");
 		return HandleState.NONE;
 	}
 	
 	public Block getMainBlock(){
-		return _partList.getMainBlock();
+		return _config.getPartList().getMainBlock();
 	}
 	
 	//Game GET-SET
@@ -869,7 +850,7 @@ public class RMGame {
 	}
 	public static RMGame getGameByBlock(Block b){
 		for(RMGame game : RMGame.getGames()){
-			for(Block block : game._partList.getList()){
+			for(Block block : game._config.getPartList().getList()){
 				if(block == b){
 					return game;
 				}
@@ -881,14 +862,14 @@ public class RMGame {
 	private static List<RMGame> getGamesByOwner(RMPlayer rmp){
 		List<RMGame> games = new ArrayList<RMGame>();
 		for(RMGame game : RMGame.getGames()){
-			if(game._owner==rmp) games.add(game); 
+			if(game._config.getOwner()==rmp) games.add(game); 
 		}
 		return games;
 	}
 	private static List<RMGame> getGamesByOwnerName(String name){
 		List<RMGame> games = new ArrayList<RMGame>();
 		for(RMGame game : RMGame.getGames()){
-			if(game._ownerName==name) games.add(game); 
+			if(game._config.getOwnerName()==name) games.add(game); 
 		}
 		return games;
 	}
@@ -917,11 +898,8 @@ public class RMGame {
 	}
 	
 	//Players
-	public HashMap<String, RMPlayer> getPlayers(){
-		return _players;
-	}
 	public String getPlayersNames(){
-		RMPlayer[] rmplayers = _players.values().toArray(new RMPlayer[_players.values().size()]);
+		RMPlayer[] rmplayers = _config.getPlayers().values().toArray(new RMPlayer[_config.getPlayers().values().size()]);
 		String names = "";
 		for(RMPlayer rmp : rmplayers){
 			names+=rmp.getName()+",";
@@ -931,17 +909,19 @@ public class RMGame {
 	public static HashMap<String, RMPlayer> getAllPlayers(){
 		HashMap<String, RMPlayer> players = new HashMap<String, RMPlayer>();
 		for(RMGame game : _games){
-			players.putAll(game.getPlayers());
+			players.putAll(game._config.getPlayers());
 		}
 		return players;
 	}
 	
+	/*
 	public void sendMessage(String message){
-		RMPlayer[] rmplayers = _players.values().toArray(new RMPlayer[_players.values().size()]);
+		RMPlayer[] rmplayers = _config.getPlayers().values().toArray(new RMPlayer[_config.getPlayers().values().size()]);
 		for(RMPlayer rmp : rmplayers){
 			rmp.sendMessage(message);
 		}
 	}
+	*/
 
 	public void broadcastMessage(String message){
 		List<RMTeam> teams = getTeams();
@@ -1011,7 +991,7 @@ public class RMGame {
 	}
 	private RMTeam getTeamByBlock(Block b){
 		if(RMGame.isMaterial(b.getType(), Material.CHEST, Material.WALL_SIGN, Material.WOOL)){
-			List<List<Block>> partList = _partList.getPartList();
+			List<List<Block>> partList = _config.getPartList().getPartList();
 			int i=0;
 			for(List<Block> blocks : partList){
 				if(blocks.contains(b)){
@@ -1024,31 +1004,42 @@ public class RMGame {
 	}
 	
 	private RMTeam addTeam(RMTeam rmt){
-		if(!_teams.contains(rmt)){
-			_teams.add(rmt);
+		if(!_config.getTeams().contains(rmt)){
+			_config.getTeams().add(rmt);
 			rmt.setGame(this);
 		}
 		return rmt;
 	}
 	public RMTeam getTeam(int index){
-		if(_teams.get(index)!=null){
-			return _teams.get(index);
+		if(index<_config.getTeams().size()){
+			if(_config.getTeams().get(index)!=null){
+				return _config.getTeams().get(index);
+			}
 		}
 		return null;
 	}
+	public RMTeam getTeam(DyeColor color){
+		for(RMTeam rmTeam : _config.getTeams()){
+			if(rmTeam.getTeamColor() == color){
+				return rmTeam;
+			}
+		}
+		return null;
+	}
+	
 	public List<RMTeam> getTeams(){
-		return _teams;
+		return _config.getTeams();
 	}
 	public static RMTeam getTeam(RMGame rmGame, int index){
-		if(rmGame._teams.size()>index) return rmGame._teams.get(index);
+		if(rmGame._config.getTeams().size()>index) return rmGame._config.getTeams().get(index);
 		return null;
 	}
 	public static List<RMTeam> getTeams(RMGame rmGame){
-		return rmGame._teams;
+		return rmGame._config.getTeams();
 	}
 	public RMPlayer[] getTeamPlayers(){
 		List<RMPlayer> list = new ArrayList<RMPlayer>();
-		for(RMTeam rmTeam : _teams){
+		for(RMTeam rmTeam : _config.getTeams()){
 			for(RMPlayer rmPlayer : rmTeam.getPlayers()){
 				list.add(rmPlayer);
 			}
@@ -1072,7 +1063,7 @@ public class RMGame {
 		}
 		return rmChests;
 	}
-	public static List<RMChest> getChestsFromBlockList(List<List<Block>> bList){
+	public static List<RMChest> getChestsFromBlockList(List<List<Block>> bList, RM plugin){
 		List<List<Block>> blockList = bList.subList(2, bList.size());
 		List<RMChest> chestList = new ArrayList<RMChest>();
 		for(List<Block> blocks : blockList){
@@ -1083,7 +1074,7 @@ public class RMGame {
 	}
 	private RMChest getChestByBlock(Block b){
 		if(b.getType() == Material.CHEST){
-			List<List<Block>> partList = _partList.getPartList();
+			List<List<Block>> partList = _config.getPartList().getPartList();
 			int i=0;
 			for(List<Block> blocks : partList){
 				if(blocks.contains(b)){
@@ -1098,7 +1089,7 @@ public class RMGame {
 	//Sign
 	private Sign getSignByBlock(Block b){
 		if(b.getType() == Material.WALL_SIGN){
-			List<List<Block>> partList = _partList.getPartList();
+			List<List<Block>> partList = _config.getPartList().getPartList();
 			int i=0;
 			for(List<Block> blocks : partList){
 				if(blocks.contains(b)){
@@ -1127,7 +1118,7 @@ public class RMGame {
 	//String
 	public String getTextTeamColors(){
 		String line = "";
-		for(RMTeam team : _teams){
+		for(RMTeam team : _config.getTeams()){
 			if(team.getTeamColor()!=null){
 				line+=team.getTeamColorString()+ChatColor.WHITE+",";
 			}
@@ -1135,7 +1126,7 @@ public class RMGame {
 		return line.substring(0,line.length()-1);
 	}
 	public RMTeam getPlayerTeam(RMPlayer rmp){
-		for(RMTeam team : _teams){
+		for(RMTeam team : _config.getTeams()){
 			if(team!=null){
 				RMPlayer rmTeamPlayer = team.getPlayer(rmp.getName());
 				if(rmTeamPlayer!=null) return team;
@@ -1149,7 +1140,7 @@ public class RMGame {
 	
 	public String getTextTeamPlayers(){
 		String line = "";
-		for(RMTeam team : _teams){
+		for(RMTeam team : _config.getTeams()){
 			if(team.getPlayers()!=null){
 				line+=team.getTeamColorString()+":";
 				line+=team.getPlayersNames()+",";
@@ -1162,7 +1153,7 @@ public class RMGame {
 	public static List<RMTeam> getAllTeams(){
 		List<RMTeam> teams = new ArrayList<RMTeam>();
 		for(RMGame game : _games){
-			teams.addAll(game._teams);
+			teams.addAll(game._config.getTeams());
 		}
 		return teams;
 	}
@@ -1180,59 +1171,9 @@ public class RMGame {
 		return false;
 	}
 
-	public static Boolean matchPartList(RMPartList bl1, RMPartList bl2){
-		//plugin.getServer().broadcastMessage(plugin.getTextList(bl1.getChestList(),true)+":"+plugin.getTextList(bl2.getChestList(),true));
-		//plugin.getServer().broadcastMessage(plugin.getTextList(bl1.getSignList(),true)+":"+plugin.getTextList(bl2.getSignList(),true));
-		//plugin.getServer().broadcastMessage(plugin.getTextList(bl1.getWoolList(),true)+":"+plugin.getTextList(bl2.getWoolList(),true));
-		if(!matchSimpleBlockList(bl1.getChestList(),bl2.getChestList())) return false;
-		if(!matchSimpleBlockList(bl1.getSignList(),bl2.getSignList())) return false;
-		if(!matchSimpleBlockList(bl1.getWoolList(),bl2.getWoolList())) return false;
-		return true;
-	}
-	
-	public static Boolean matchSimpleBlockList(List<Block> blocks1, List<Block> blocks2){
-		if(blocks1.size()!=blocks2.size()) return false;
-		for(int i=0; i<blocks1.size(); i++){
-			if(blocks1.get(i)!=blocks2.get(i))
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-	
-	/*
-	//OTHER
-	//BLOCK LIST
-	public void addBlock(Block b){
-		if(!_preBlockList.contains(b)){
-			_preBlockList.add(b);
-		}
-	}
-	public void removeBlock(Block b){
-		if(_preBlockList.contains(b)){
-			_preBlockList.remove(b);
-		}
-	}
-	public void replaceBlock(Block rb, Block b){
-		if(_preBlockList.contains(rb)){
-			_preBlockList.set(_preBlockList.indexOf(rb), b);
-		}
-	}
-	//BLOCK LIST//END//
-	 */
-
-	//HackMaterials
-	public boolean getAllowHackMaterials(){
-		return _allowHackedItems;
-	}
-	public void setAllowHackMaterials(Boolean allow){
-		_allowHackedItems = allow;
-	}
-	
-	//ParseFilter
+	//Try Parse Filter
 	public Boolean tryParseFilter(RMPlayer rmp){
-		if(rmp.getName() == getOwnerName()){
+		if(rmp.getName() == _config.getOwnerName()){
 			RMGame.setRequestPlayer(rmp);
 			parseFilter(rmp);
 			RMGame.clearRequestPlayer();
@@ -1240,11 +1181,11 @@ public class RMGame {
 			updateSigns();
 			return true;
 		}
-		else rmp.sendMessage("Only the owner "+getOwnerName()+" can modify the filter.");
+		else rmp.sendMessage("Only the owner "+_config.getOwnerName()+" can modify the filter.");
 		return false;
 	}
 	
-	
+	//Parse Filter
 	private void parseFilter(RMPlayer rmp){
 		RMRequestFilter filter = rmp.getRequestFilter();
 		if(filter!=null){
@@ -1252,8 +1193,8 @@ public class RMGame {
 			int randomize = filter.getRandomize();
 			HashMap<Integer, RMItem> items = filter.getItems();
 			if((items!=null)&&(items.size()!=0)){
-				if(!_allowHackedItems){
-					if(_warnHackedItems) warnHackMaterials(items);
+				if(!_config.getAllowHackedItems()){
+					if(_config.getWarnHackedItems()) warnHackMaterials(items);
 					items = removeHackMaterials(items);
 					if(items==null){
 						rmp.sendMessage(ChatColor.GRAY+"No items modified.");
@@ -1286,7 +1227,7 @@ public class RMGame {
 			FilterType type = filter.getType();
 			if(type!=null){
 				if(type==FilterType.CLEAR){
-					_filter.clearItems();
+					_config.getFilter().clearItems();
 					rmp.sendMessage(ChatColor.GRAY+"Filter cleared.");
 					return;
 				}
@@ -1294,13 +1235,15 @@ public class RMGame {
 		}
 		rmp.sendMessage(ChatColor.GRAY+"No items modified.");
 	}
+	
+	//Parse Filter Args
 	private void parseFilterArgs(RMPlayer rmp, HashMap<Integer, RMItem> items){
 		List<String> added = new ArrayList<String>();
 		List<String> removed = new ArrayList<String>();
 		List<String> modified = new ArrayList<String>();
 		String strItem;
 		Boolean getId = false;
-		if(items.size()>_wordLimit) getId=true;
+		if(items.size()>_config.getWordLimit()) getId=true;
 		Integer[] arrayItems = items.keySet().toArray(new Integer[items.size()]);
 		Arrays.sort(arrayItems);
 		for(Integer item : arrayItems){
@@ -1310,7 +1253,7 @@ public class RMGame {
 				else strItem = mat.name();
 				Integer amount = items.get(item).getAmount();
 				if(amount!=0){
-					switch(_filter.addItem(item, items.get(item), false)){
+					switch(_config.getFilter().addItem(item, items.get(item), false)){
 						case ADD:
 							added.add(ChatColor.WHITE+strItem+includeItem(items.get(item)));
 							break;
@@ -1320,9 +1263,9 @@ public class RMGame {
 					}
 				}
 				else{
-					switch(_filter.removeItem(item, items.get(item), false)){
+					switch(_config.getFilter().removeItem(item, items.get(item), false)){
 						case REMOVE:
-							removed.add(ChatColor.WHITE+strItem+includeItem(_filter.getLastItem()));
+							removed.add(ChatColor.WHITE+strItem+includeItem(_config.getFilter().getLastItem()));
 							break;
 					}
 				}
@@ -1334,12 +1277,14 @@ public class RMGame {
 		if(modified.size()>0) rmp.sendMessage(ChatColor.YELLOW+"Modified: "+plugin.getFormattedStringByList(modified));
 		if(removed.size()>0) rmp.sendMessage(ChatColor.GRAY+"Removed: "+plugin.getFormattedStringByList(removed));
 	}
+	
+	//Parse Filter Args Force
 	private void parseFilterArgs(RMPlayer rmp, HashMap<Integer, RMItem> items, ForceState force){
 		List<String> added = new ArrayList<String>();
 		List<String> removed = new ArrayList<String>();
 		String strItem;
 		Boolean getId = false;
-		if(items.size()>_wordLimit) getId=true;
+		if(items.size()>_config.getWordLimit()) getId=true;
 		Integer[] arrayItems = items.keySet().toArray(new Integer[items.size()]);
 		Arrays.sort(arrayItems);
 
@@ -1350,7 +1295,7 @@ public class RMGame {
 				if(mat!=Material.AIR){
 					if(getId) strItem = ""+item;
 					else strItem = mat.name();
-					switch(_filter.addItem(item, items.get(item), false)){
+					switch(_config.getFilter().addItem(item, items.get(item), false)){
 						case ADD:
 							added.add(ChatColor.WHITE+strItem+includeItem(items.get(item))+ChatColor.WHITE);
 							break;
@@ -1365,9 +1310,9 @@ public class RMGame {
 				if(mat!=Material.AIR){
 					if(getId) strItem = ""+item;
 					else strItem = mat.name();
-					switch(_filter.removeAlwaysItem(item, items.get(item))){
+					switch(_config.getFilter().removeAlwaysItem(item, items.get(item))){
 						case REMOVE:
-							removed.add(ChatColor.WHITE+strItem+includeItem(_filter.getLastItem())+ChatColor.WHITE);
+							removed.add(ChatColor.WHITE+strItem+includeItem(_config.getFilter().getLastItem())+ChatColor.WHITE);
 							break;
 					}
 				}
@@ -1377,6 +1322,7 @@ public class RMGame {
 		}
 	}
 	
+	//Get Formatted String by Hash
 	public String getFormattedStringByHash(HashMap<Integer, RMItem> items, RMPlayer rmp){
 		RMChest rmChest = rmp.getTeam().getChest();
 		String line = "";
@@ -1401,6 +1347,7 @@ public class RMGame {
 		return line;
 	}
 	
+	//Include Item
 	public String includeItem(RMItem rmItem, boolean... less){
 		int i1 = rmItem.getAmount();
 		int i2 = rmItem.getAmountHigh();
@@ -1411,6 +1358,7 @@ public class RMGame {
 		return "";
 	}
 	
+	/*
 	public List<Material> findHackMaterials(ItemStack[] items){
 		List<Material> materials = Arrays.asList(_hackMaterials);
 		List<Material> list = new ArrayList<Material>();
@@ -1420,7 +1368,9 @@ public class RMGame {
 		}
 		return list;
 	}
+	*/
 	
+	//Find Hack Materials
 	public List<Material> findHackMaterials(HashMap<Integer, RMItem> materials){
 		List<Material> list = new ArrayList<Material>();
 		for(Material mat : _hackMaterials){
@@ -1428,6 +1378,8 @@ public class RMGame {
 		}
 		return list;
 	}
+	
+	//Find Hack Materials
 	public List<Material> findHackMaterials(List<Material> items){
 		List<Material> list = new ArrayList<Material>();
 		for(Material mat : _hackMaterials){
@@ -1435,6 +1387,8 @@ public class RMGame {
 		}
 		return list;
 	}
+	
+	//Find Hack Materials List Item Stack
 	public List<Material> findHackMaterialsListItemStack(List<ItemStack> items){
 		List<Material> materials = Arrays.asList(_hackMaterials);
 		List<Material> list = new ArrayList<Material>();
@@ -1445,11 +1399,13 @@ public class RMGame {
 		return list;
 	}
 	
+	//Remove Hack Materials
 	public HashMap<Integer, RMItem> removeHackMaterials(HashMap<Integer, RMItem> materials){
 		for(Material mat : _hackMaterials) materials.remove(mat.getId());
 		return materials;
 	}
 	
+	//Remove Hack Materials
 	public List<ItemStack> removeHackMaterialsListItemStack(List<ItemStack> items){
 		List<Material> materials = Arrays.asList(_hackMaterials);
 		List<ItemStack> list = new ArrayList<ItemStack>();
@@ -1459,7 +1415,8 @@ public class RMGame {
 		}
 		return list;
 	}
-	
+
+	/*
 	public Material[] removeHackMaterials(Material[] materials){
 		List<Material> list = new ArrayList<Material>(Arrays.asList(materials));
 		list.removeAll(Arrays.asList(_hackMaterials));
@@ -1480,7 +1437,9 @@ public class RMGame {
 		}
 		return list.toArray(new ItemStack[list.size()]);
 	}
+	*/
 	
+	//Remove Duplicates
 	public List<ItemStack> removeDuplicates(List<ItemStack> items){
 		List<Material> materials = new ArrayList<Material>();
 		for(ItemStack item : items){
@@ -1497,6 +1456,7 @@ public class RMGame {
 		return newItems;
 	}
 	
+	//Add Duplicates
 	public List<ItemStack> addDuplicates(List<ItemStack> items, boolean fullStack){
 		HashMap<Integer, Integer> hash = new HashMap<Integer, Integer>();
 		
@@ -1519,9 +1479,11 @@ public class RMGame {
 		for(Integer i : array){
 			newItems.add(new ItemStack(Material.getMaterial(i), hash.get(i)));
 		}
+		RMStats temp = new RMStats();
 		return newItems;
 	}
-			
+	
+	//LOG WORLD
 	public void addLog(BlockState bState){
 		Block b = bState.getBlock();
 		Material mat = bState.getType();
@@ -1532,6 +1494,7 @@ public class RMGame {
 		checkLog(b);
 	}
 	
+	//Check Log
 	public void checkLog(Block b){
 		if(b!=null){
 			List<Block> blocks = new ArrayList<Block>();
@@ -1571,10 +1534,14 @@ public class RMGame {
 			}
 		}
 	}
+	
+	//Clear Log
 	public void clearLog(){
 		_logBlockList.clear();
 		_logBlockItemList.clear();
 	}
+	
+	//Restore Log
 	public void restoreLog(){
 		for(RMBlock rmBlock : _logBlockList.values()){
 			rmBlock.restore();
@@ -1587,9 +1554,20 @@ public class RMGame {
 		broadcastMessage("World restored.");
 	}
 	
-	public void warnHackMaterials(ItemStack[] items){
-		warnHackMaterialsMessage(plugin.getFormattedStringByListMaterial(findHackMaterials(items)));
+	//Restore World
+	public void restoreWorld(RMPlayer rmp){
+		if(rmp.getName() == _config.getOwnerName()){
+			restoreLog();
+		}
 	}
+	
+	//HACK MATERIALS
+	//Warn Hack Materials
+	
+	/*public void warnHackMaterials(ItemStack[] items){
+		warnHackMaterialsMessage(plugin.getFormattedStringByListMaterial(findHackMaterials(items)));
+	}*/
+	
 	public void warnHackMaterialsListItemStack(List<ItemStack> items){
 		warnHackMaterialsMessage(plugin.getFormattedStringByListMaterial(findHackMaterialsListItemStack(items)));
 	}
@@ -1600,127 +1578,130 @@ public class RMGame {
 		warnHackMaterialsMessage(plugin.getFormattedStringByListMaterial(findHackMaterials(items)));
 	}
 	public void warnHackMaterialsMessage(String message){
-		if(message.length()>0) getOwner().sendMessage(ChatColor.RED+"Not allowed: "+message);
+		if(message.length()>0) _config.getOwner().sendMessage(ChatColor.RED+"Not allowed: "+message);
 	}
 	
-	public int getMaxPlayers(){
-		return _maxPlayers;
-	}
+	//Config
+	
+	//Set Max Players
 	public void setMaxPlayers(RMPlayer rmp, int maxPlayers){
-		if(rmp.getName() == getOwnerName()){
-			_maxPlayers = maxPlayers;
-			if(_maxPlayers<-1) _maxPlayers = 0;
-			rmp.sendMessage("Max players: "+_maxPlayers);
+		if(rmp.getName() == _config.getOwnerName()){
+			_config.setMaxPlayers(maxPlayers);
+			rmp.sendMessage("Max players: "+_config.getMaxPlayers());
 			updateSigns();
 		}
 	}
-	public int getMaxTeamPlayers(){
-		return _maxTeamPlayers;
-	}
+	
+	//Set Max Team Players
 	public void setMaxTeamPlayers(RMPlayer rmp, int maxTeamPlayers){
-		if(rmp.getName() == getOwnerName()){
-			_maxTeamPlayers = maxTeamPlayers;
-			if(_maxTeamPlayers<-1) _maxTeamPlayers = 0;
-			rmp.sendMessage("Max team players: "+_maxTeamPlayers);
+		if(rmp.getName() == _config.getOwnerName()){
+			_config.setMaxTeamPlayers(maxTeamPlayers);
+			rmp.sendMessage("Max team players: "+_config.getMaxTeamPlayers());
 			updateSigns();
 		}
 	}
-	public int getMaxItems(){
-		return _maxItems;
-	}
+	
+	//Set Max Items
 	public void setMaxItems(RMPlayer rmp, int maxItems){
-		if(rmp.getName() == getOwnerName()){
-			_maxItems = maxItems;
-			if(_maxItems<-1) _maxItems = 0;
+		if(rmp.getName() == _config.getOwnerName()){
+			_config.setMaxItems(maxItems);
 			updateSigns();
 		}
 	}
 	
-	
-	public int getRandomizeAmount(){
-		return _randomizeAmount;
-	}
+	//Set Randomize Amount
 	public void setRandomizeAmount(RMPlayer rmp, int amount){
-		if(rmp.getName() == getOwnerName()){
-			_randomizeAmount = amount;
-			if(_randomizeAmount<0) _randomizeAmount = 0;
+		if(rmp.getName() == _config.getOwnerName()){
+			_config.setRandomizeAmount(amount);
 		}
 	}
-	public void clearRandomizeAmount(){
-		_randomizeAmount = 0;
-	}
-	public int getAutoRandomizeAmount(){
-		return _autoRandomizeAmount;
-	}
+	
+	//Set Auto Randomize Amount
 	public void setAutoRandomizeAmount(RMPlayer rmp, int amount){
-		if(rmp.getName() == getOwnerName()){
-			_autoRandomizeAmount = amount;
-			if(_autoRandomizeAmount<0) _autoRandomizeAmount = 0;
+		if(rmp.getName() == _config.getOwnerName()){
+			_config.setAutoRandomizeAmount(amount);
 			rmp.sendMessage("Auto randomize amount every match: "+getTextAutoRandomizeAmount());
 		}
 	}
+	
+	//Set Toggle Auto Restore World
 	public void toggleAutoRestoreWorld(RMPlayer rmp){
-		if(rmp.getName() == getOwnerName()){
-			if(_autoRestoreWorld) _autoRestoreWorld = false;
-			else _autoRestoreWorld = true;
-			rmp.sendMessage("Auto restore world after match: "+isTrueFalse(_autoRestoreWorld));
+		if(rmp.getName() == _config.getOwnerName()){
+			_config.toggleAutoRestoreWorld();
+			rmp.sendMessage("Auto restore world after match: "+isTrueFalse(_config.getAutoRestoreWorld()));
 		}
 	}
+	
+	//Set Toggle Warn Hacked Items
 	public void toggleWarnHackedItems(RMPlayer rmp){
-		if(rmp.getName() == getOwnerName()){
-			if(_warnHackedItems) _warnHackedItems = false;
-			else _warnHackedItems = true;
-			rmp.sendMessage("Warn when user adds hacked items: "+isTrueFalse(_warnHackedItems));
+		if(rmp.getName() == _config.getOwnerName()){
+			_config.toggleWarnHackedItems();
+			rmp.sendMessage("Warn when user adds hacked items: "+isTrueFalse(_config.getWarnHackedItems()));
 		}
 	}
+	
+	//Set Toggle Allow Hacked Items
 	public void toggleAllowHackedItems(RMPlayer rmp){
-		if(rmp.getName() == getOwnerName()){
-			if(_allowHackedItems) _allowHackedItems = false;
-			else _allowHackedItems = true;
-			rmp.sendMessage("Allow user to add hacked items: "+isTrueFalse(_allowHackedItems));
+		if(rmp.getName() == _config.getOwnerName()){
+			_config.toggleAllowHackedItems();
+			rmp.sendMessage("Allow user to add hacked items: "+isTrueFalse(_config.getAllowHackedItems()));
 		}
 	}
-	public void restoreWorld(RMPlayer rmp){
-		if(rmp.getName() == getOwnerName()){
-			restoreLog();
+	
+	//Set Toggle Allow Player Leave
+	public void toggleAllowPlayerLeave(RMPlayer rmp){
+		if(rmp.getName() == _config.getOwnerName()){
+			_config.toggleAllowPlayerLeave();
+			rmp.sendMessage("Allow a player to stay in-game while disconnected: "+isTrueFalse(_config.getAllowPlayerLeave()));
 		}
 	}
+	
+	//Is True / False
+	public String isTrueFalse(boolean bool){
+		return (bool?(ChatColor.GREEN+"True"):(ChatColor.GRAY+"False"));
+	}
+	
+	//Get Text Auto Randomize Amount
+	public String getTextAutoRandomizeAmount(){
+		return (_config.getAutoRandomizeAmount()>0?(ChatColor.GREEN+""+_config.getAutoRandomizeAmount()+" item(s)"):(ChatColor.GRAY+"Disabled"));
+	}
+	
+	//Get Text Max Players
+	public String getTextMaxPlayers(){
+		return (_config.getMaxPlayers()>0?(ChatColor.GREEN+""+_config.getMaxPlayers()):(ChatColor.GRAY+"No limit"));
+	}
+	
+	//Get Text Max Team Players
+	public String getTextMaxTeamPlayers(){
+		return (_config.getMaxTeamPlayers()>0?(ChatColor.GREEN+""+_config.getMaxTeamPlayers()):(ChatColor.GRAY+"No limit"));
+	}
+	
+	//Get Text Players of Max
+	public String getTextPlayersOfMax(){
+		String maxPlayers = "";
+		if(_config.getMaxPlayers()!=0) maxPlayers = "/"+_config.getMaxPlayers();
+		return maxPlayers;
+	}
+	
+	//Get Text Team Players of Max
+	public String getTextTeamPlayersOfMax(){
+		String maxTeamPlayers = "";
+		if(_config.getMaxTeamPlayers()!=0) maxTeamPlayers = "/"+_config.getMaxTeamPlayers();
+		return maxTeamPlayers;
+	}
+	
+	//Send Info
 	public void sendInfo(RMPlayer rmp){
-		rmp.sendMessage("Game id: "+ChatColor.YELLOW+getId());
-		rmp.sendMessage("Owner: "+ChatColor.YELLOW+getOwnerName());
+		rmp.sendMessage("Game id: "+ChatColor.YELLOW+_config.getId());
+		rmp.sendMessage("Owner: "+ChatColor.YELLOW+_config.getOwnerName());
 		rmp.sendMessage("Teams: "+getTextTeamPlayers());
 		rmp.sendMessage("Players: "+ChatColor.YELLOW+getTeamPlayers().length);
 		rmp.sendMessage("Max Players: "+getTextMaxPlayers());
 		rmp.sendMessage("Max Team Players: "+getTextMaxTeamPlayers());
 		rmp.sendMessage("Randomize items to find every match: "+getTextAutoRandomizeAmount());
-		rmp.sendMessage("Warp before and after match: "+isTrueFalse(_warpToSafety));
-		rmp.sendMessage("Auto restore world after match: "+isTrueFalse(_autoRestoreWorld));
-		rmp.sendMessage("Warn when user adds hacked items: "+isTrueFalse(_warnHackedItems));
-		rmp.sendMessage("Allow user to add hacked items: "+isTrueFalse(_allowHackedItems));
-	}
-	
-	public String isTrueFalse(boolean bool){
-		return (bool?(ChatColor.GREEN+"True"):(ChatColor.GRAY+"False"));
-	}
-	public String getTextAutoRandomizeAmount(){
-		return (getAutoRandomizeAmount()>0?(ChatColor.GREEN+""+getAutoRandomizeAmount()+" item(s)"):(ChatColor.GRAY+"Disabled"));
-	}
-	public String getTextMaxPlayers(){
-		return (getMaxPlayers()>0?(ChatColor.GREEN+""+getMaxPlayers()):(ChatColor.GRAY+"No limit"));
-	}
-	public String getTextMaxTeamPlayers(){
-		return (getMaxTeamPlayers()>0?(ChatColor.GREEN+""+getMaxTeamPlayers()):(ChatColor.GRAY+"No limit"));
-	}
-	
-	public String getTextPlayersOfMax(){
-		String maxPlayers = "";
-		if(getMaxPlayers()!=0) maxPlayers = "/"+getMaxPlayers();
-		return maxPlayers;
-	}
-	
-	public String getTextTeamPlayersOfMax(){
-		String maxTeamPlayers = "";
-		if(getMaxTeamPlayers()!=0) maxTeamPlayers = "/"+getMaxTeamPlayers();
-		return maxTeamPlayers;
+		rmp.sendMessage("Warp before and after match: "+isTrueFalse(_config.getWarpToSafety()));
+		rmp.sendMessage("Auto restore world after match: "+isTrueFalse(_config.getAutoRestoreWorld()));
+		rmp.sendMessage("Warn when user adds hacked items: "+isTrueFalse(_config.getWarnHackedItems()));
+		rmp.sendMessage("Allow user to add hacked items: "+isTrueFalse(_config.getAllowHackedItems()));
 	}
 }

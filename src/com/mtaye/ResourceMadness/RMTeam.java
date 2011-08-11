@@ -19,7 +19,7 @@ import org.bukkit.block.Sign;
  */
 public class RMTeam {
 
-	private RM plugin;
+	private final RM plugin;
 	private RMGame _game;
 	private DyeColor _teamColor;
 	private HashMap<String, RMPlayer> _players = new HashMap<String, RMPlayer>();
@@ -29,16 +29,17 @@ public class RMTeam {
 	private Location _warpLocation;
 	
 	public RMTeam(DyeColor color, Chest chest, RM plugin){
+		this.plugin = plugin;
 		init(color, chest, plugin);
 	}
 	
 	public RMTeam(DyeColor color, RMGame game, Chest chest, RM plugin){
+		this.plugin = plugin;
 		this._game = game;
 		init(color, chest, plugin);
 	}
 	
 	public void init(DyeColor color, Chest chest, RM plugin){
-		this.plugin = plugin;
 		this._teamColor = color;
 		_chest = new RMChest(chest, this, plugin);
 		_sign = (Sign)chest.getBlock().getRelative(BlockFace.UP).getState();
@@ -83,13 +84,13 @@ public class RMTeam {
 				RMTeam rmTeam = game.getPlayerTeam(rmp);
 				if(rmTeam!=null){
 					if(rmTeam!=this){
-						rmp.sendMessage("You must quit the "+rmTeam.getTeamColorString()+ChatColor.WHITE+" team from game id "+ChatColor.YELLOW+game.getId()+ChatColor.WHITE+" first.");
+						rmp.sendMessage("You must quit the "+rmTeam.getTeamColorString()+ChatColor.WHITE+" team from game id "+ChatColor.YELLOW+game.getConfig().getId()+ChatColor.WHITE+" first.");
 						return;
 					}
 				}
 			}
-			if((_game.getMaxTeamPlayers()==0)||(_players.size()<_game.getMaxTeamPlayers())){
-				if((_game.getMaxPlayers()==0)||(RMTeam.getAllPlayers().length<_game.getMaxPlayers())){
+			if((_game.getConfig().getMaxTeamPlayers()==0)||(_players.size()<_game.getConfig().getMaxTeamPlayers())){
+				if((_game.getConfig().getMaxPlayers()==0)||(RMTeam.getAllPlayers().length<_game.getConfig().getMaxPlayers())){
 					rmp.setTeam(this);
 					_players.put(rmp.getName(), rmp);
 					rmp.sendMessage(ChatColor.YELLOW+"Joined"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.");
@@ -119,9 +120,25 @@ public class RMTeam {
 		return _players.get(name);
 	}
 	public RMPlayer[] getPlayers(){
+		/*
 		RMPlayer[] rmplayers = _players.values().toArray(new RMPlayer[_players.values().size()]);
 		return rmplayers;
+		*/
+		List<RMPlayer> rmPlayers = new ArrayList<RMPlayer>();
+		for(RMPlayer rmPlayer : _players.values()){
+			if(rmPlayer!=null) rmPlayers.add(rmPlayer);
+		}
+		return rmPlayers.toArray(new RMPlayer[rmPlayers.size()]);
 	}
+	/*
+	public RMPlayer[] getOnlinePlayers(){
+		List<RMPlayer> rmPlayers = new ArrayList<RMPlayer>();
+		for(RMPlayer rmPlayer : _players.values()){
+			if(rmPlayer!=null) rmPlayers.add(rmPlayer);
+		}
+		return rmPlayers.toArray(new RMPlayer[rmPlayers.size()]);
+	}
+	*/
 	public String getPlayersNames(){
 		RMPlayer[] rmplayers = _players.values().toArray(new RMPlayer[_players.values().size()]);
 		String names = "[";

@@ -1,12 +1,19 @@
 package com.mtaye.ResourceMadness;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+
 import org.bukkit.ChatColor;
 
 import java.util.HashMap;
 import org.bukkit.entity.Player;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -67,18 +74,255 @@ public class RM extends JavaPlugin {
 		//setupPermissions();
 		PluginManager pm = getServer().getPluginManager();
 		pm.registerEvent(Type.PLAYER_INTERACT, playerListener, Priority.Normal, this);
+		pm.registerEvent(Type.PLAYER_JOIN, playerListener, Priority.Normal, this);
+		pm.registerEvent(Type.PLAYER_QUIT, playerListener, Priority.Normal, this);
 		pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Normal, this);
 		pm.registerEvent(Type.BLOCK_PLACE, blockListener, Priority.Normal, this);
 
 		pdfFile = this.getDescription();
 		log.log(Level.INFO, pdfFile.getName() + " v" + pdfFile.getVersion() + " enabled!" );
 		//RMConfig.load();
+		loadData();
 	}
 	
 	public void onDisable(){
 		getServer().getScheduler().cancelTask(watcherid);
 		log.info(pdfFile.getName() + " disabled");
+		saveData();
 		//RMConfig.save();
+	}
+	
+	//Save Data
+	public void saveData(){
+		File folder = getDataFolder();
+		if(!folder.exists()){
+			log.log(Level.INFO, "Creating config directory...");
+			folder.mkdir();
+		}
+		File file = new File(folder.getAbsolutePath()+"/gamedata.txt");
+		if(!file.exists()){
+			log.log(Level.INFO, "Data file not found! Creating one...");
+			try{
+				file.createNewFile();
+			}
+			catch(Exception e){
+				e.printStackTrace();
+				return;
+			}
+		}
+		try{
+			FileOutputStream output = new FileOutputStream(file.getAbsoluteFile());
+			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(output));
+			bw.write("[Resource Madness v"+pdfFile.getVersion()+" Data]");
+			for(RMGame rmGame : RMGame.getGames()){
+				RMGameConfig config = rmGame.getConfig();
+				String line;
+				bw.write("\n");
+				//Game
+				Block b = config.getPartList().getMainBlock();
+				line = b.getX()+","+b.getY()+","+b.getZ()+",";
+				line += config.getWorldName()+",";
+				line += config.getId()+",";
+				line += config.getOwnerName()+",";
+				line += config.getMaxPlayers()+",";
+				line += config.getMaxTeamPlayers()+",";
+				line += config.getAutoRandomizeAmount()+",";
+				line += config.getWarpToSafety()+",";
+				line += config.getAutoRestoreWorld()+",";
+				line += config.getWarnHackedItems()+",";
+				line += config.getAllowHackedItems()+",";
+				line += config.getAllowPlayerLeave()+";";
+				//Stats
+				RMStats stats = config.getGameStats();
+				line += stats.getWins()+","+stats.getLosses()+","+stats.getTimesPlayed()+","+stats.getItemsFound()+","+stats.getItemsFoundTotal()+";";
+				//Filtered Items
+				line += encodeFilterToString(config.getFilter())+";";
+				//Players
+				for(RMTeam rmt : config.getTeams()){
+					line+=rmt.getTeamColor().name()+":";
+					String players = "";
+					for(RMPlayer rmp : rmt.getPlayers()){
+						players += rmp.getName()+",";
+					}
+					players = stripLast(players,",");
+					line += players+" ";
+				}
+				line = stripLast(line, " ");
+				bw.write(line);
+			}
+			bw.flush();
+			output.close();
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	//Load Data
+	public void loadData(){
+		File folder = getDataFolder();
+		if(!folder.exists()){
+			log.log(Level.INFO, "Config folder not found! Will create one on save...");
+			return;
+		}
+		File file = new File(folder.getAbsolutePath()+"/gamedata.txt");
+		if(file.exists()){
+			FileInputStream input;
+			try {
+				input = new FileInputStream(file.getAbsoluteFile());
+				InputStreamReader isr = new InputStreamReader(input);
+				BufferedReader br = new BufferedReader(isr);
+				String line;
+				while(true){
+					line = br.readLine();
+					if(line == null) break;
+					if(line.startsWith("[")) continue;
+					parseLoadedData(line.split(";"));
+				}
+				input.close();
+				//saveConfig();
+			}
+			catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
+		else{
+			System.out.println("Could not find data file");
+		}
+	}
+	
+	public void parseLoadedData(String[] strArgs){
+		
+		String[] args = strArgs[0].split(",");
+		//x,y,z,world,id,owner
+		int xLoc = getIntByString(args[0]);
+		int yLoc = getIntByString(args[1]);
+		int zLoc = getIntByString(args[2]);
+		World world = getServer().getWorld(args[3]);
+		Block b = world.getBlockAt(xLoc, yLoc, zLoc);
+
+		//maxPlayers,maxTeamPlayers,autoRandomizeAmount
+		//warpToSafety,autoRestoreWorld,warnHackedItems,allowHackedItems,allowPlayerLeave 
+		RMGameConfig config = new RMGameConfig();
+		config.setPartList(new RMPartList(b, this));
+		
+		config.setOwnerName(args[5]);
+		
+		config.setMaxPlayers(getIntByString(args[6]));
+		config.setMaxTeamPlayers(getIntByString(args[7]));
+		config.setAutoRandomizeAmount(getIntByString(args[8]));
+		config.setWarpToSafety(Boolean.parseBoolean(args[9]));
+		config.setAutoRestoreWorld(Boolean.parseBoolean(args[10]));
+		config.setWarnHackedItems(Boolean.parseBoolean(args[11]));
+		config.setAllowHackedItems(Boolean.parseBoolean(args[12]));
+		config.setAllowPlayerLeave(Boolean.parseBoolean(args[13]));
+		
+		//wins,losses,timesPlayed,itemsFound,itemsFoundTotal
+		args = strArgs[1].split(",");
+		RMStats gameStats = config.getGameStats();
+		
+		gameStats.setWins(getIntByString(args[0]));
+		gameStats.setLosses(getIntByString(args[1]));
+		gameStats.setTimesPlayed(getIntByString(args[2]));
+		gameStats.setItemsFound(getIntByString(args[3]));
+		gameStats.setItemsFoundTotal(getIntByString(args[4]));
+		
+		//filtered items
+		if(strArgs[2].length()>0){
+			HashMap<Integer, RMItem> rmItems = getRMItemsByStringArray(Arrays.asList(strArgs[2]), true);
+			config.setFilter(new RMFilter(rmItems));
+		}
+		
+		//team players
+		args = strArgs[3].split(" ");
+		List<RMTeam> rmTeams = config.getPartList().fetchTeams();
+		for(RMTeam rmt : rmTeams){
+			config.getTeams().add(rmt);
+		}
+		/*
+		for(int j=0; j<args.length; j++){
+			String[] splitArgs = args[j].split(":");
+			if(splitArgs.length==2){
+				if(splitArgs[1].length()>0){
+					String[] players = splitArgs[1].split(",");
+					for(String player : players){
+						RMTeam rmTeam = config.getTeams().get(j);
+						if(rmTeam!=null){
+							//rmTeam.addPlayer(RMPlayer.getPlayerByName(player));
+						}
+					}
+				}
+			}
+		}
+		*/
+		RMGame.tryAddGameFromConfig(config);
+	}
+	
+	public String encodeFilterToString(RMFilter filter){
+		if(filter.size()==0) return "";
+		HashMap<Integer, String> rmItems = new HashMap<Integer, String>();
+		for(RMItem rmItem : filter.values()){
+			String amount = ""+rmItem.getAmount();
+			if(rmItem.getAmountHigh()>0) amount+="-"+rmItem.getAmountHigh();
+			rmItems.put(rmItem.getId(), amount);
+		}
+		
+		HashMap<String, List<Integer>> foundItems = new HashMap<String, List<Integer>>();
+		for(Integer i : rmItems.keySet()){
+			String amount = rmItems.get(i);
+			if(foundItems.containsKey(rmItems.get(i))){
+				List<Integer> list = foundItems.get(amount);
+				if(!list.contains(i)) list.add(i);
+				foundItems.put(amount, list);
+			}
+			else{
+				List<Integer> list = new ArrayList<Integer>();
+				list.add(i);
+				foundItems.put(amount, list);
+			}
+		}
+	
+		String line = "";
+		for(String amount : foundItems.keySet()){
+			if(line!=""){
+				line = stripLast(line, ",");
+				line+=" ";
+			}
+			line += amount+":";
+			List<Integer> listAmount = foundItems.get(amount);
+			Integer[] array = listAmount.toArray(new Integer[listAmount.size()]);
+			Arrays.sort(array);
+			
+			int firstItem = -1;
+			int lastItem = -1;
+			for(Integer item : array){
+				if(firstItem==-1){
+					firstItem = item;
+					lastItem = item;
+				}
+				else{
+					if(item-lastItem!=1){
+						if(lastItem-firstItem>1){
+							line += firstItem+"-"+lastItem+",";
+						}
+						else{
+							if(firstItem!=lastItem) line += firstItem+","+lastItem+",";
+							else line += firstItem+",";
+						}
+						firstItem = item;
+						lastItem = item;
+					}
+					else lastItem = item;
+				}
+			}
+			if(lastItem-firstItem>1) line += firstItem+"-"+lastItem+",";
+			else{
+				if(firstItem!=lastItem) line += firstItem+","+lastItem+",";
+				else line += firstItem+",";
+			}
+		}
+		line = stripLast(line,",");
+		return line;
 	}
 	
 	@Override
@@ -94,6 +338,7 @@ public class RM extends JavaPlugin {
 					}
 					else{
 						RMGame rmGame = null;
+						String[] argsItems = args.clone();
 						if(args.length>1){
 							int gameid = getIntByString(args[0]);
 							if(gameid!=-1){
@@ -113,6 +358,7 @@ public class RM extends JavaPlugin {
 						else if(args[0].equalsIgnoreCase("add")){
 							rmp.setPlayerAction(PlayerAction.ADD);
 							rmp.sendMessage("Left click a game block to create your new game.");
+							return true;
 						}
 						//REMOVE
 						else if(args[0].equalsIgnoreCase("remove")){
@@ -149,18 +395,48 @@ public class RM extends JavaPlugin {
 								return true;
 							}
 						}
+						//SAVE
+						else if(args[0].equalsIgnoreCase("save")){
+							saveData();
+							return true;
+							/*
+							if(rmGame!=null){
+								rmGame.saveConfig();
+								return true;
+							}
+							else{
+								rmp.setPlayerAction(PlayerAction.SAVE_CONFIG);
+								rmp.sendMessage("Left click a game block to save your game game.");
+								return true;
+							}
+							*/
+						}
+						//LOAD
+						else if(args[0].equalsIgnoreCase("load")){
+							loadData();
+							return true;
+						}
 						//JOIN
 						else if(args[0].equalsIgnoreCase("join")){
-							if(rmGame!=null){
-								RMTeam rmTeam = getTeamById(args[1], rmGame);
-								if(rmTeam!=null){
-									rmGame.joinTeam(rmTeam, rmp);
+							if(args.length==2){
+								if(rmGame!=null){								
+									RMTeam rmTeam = getTeamById(args[1], rmGame);
+									if(rmTeam!=null){
+										rmGame.joinTeam(rmTeam, rmp);
+										return true;
+									}
+									rmTeam = getTeamByDye(args[1], rmGame);
+									if(rmTeam!=null){
+										rmGame.joinTeam(rmTeam, rmp);
+										return true;
+									}
+									rmp.sendMessage("This team does not exist!");
 									return true;
 								}
 							}
 							else{
 								rmp.setPlayerAction(PlayerAction.JOIN);
-								rmp.sendMessage("Left click a game block to join the team.");
+								rmp.sendMessage("Left click a team block to join the team.");
 								return true;
 							}
 						}
@@ -338,7 +614,7 @@ public class RM extends JavaPlugin {
 							}
 							else{
 								rmp.setPlayerAction(PlayerAction.WARN_HACKED_ITEMS);
-								rmp.sendMessage("Left click a game block to toggle auto restore world.");
+								rmp.sendMessage("Left click a game block to toggle warn hacked items.");
 								return true;
 							}
 						}
@@ -350,7 +626,7 @@ public class RM extends JavaPlugin {
 							}
 							else{
 								rmp.setPlayerAction(PlayerAction.ALLOW_HACKED_ITEMS);
-								rmp.sendMessage("Left click a game block to toggle auto restore world.");
+								rmp.sendMessage("Left click a game block to toggle allow hacked items.");
 								return true;
 							}
 						}
@@ -358,9 +634,10 @@ public class RM extends JavaPlugin {
 						else if(args[0].equalsIgnoreCase("items")){
 							RMTeam rmTeam = rmp.getTeam();
 							if(rmTeam!=null){
-								if(rmGame!=null){
-									if(rmGame.getState()==RMState.GAMEPLAY){
-										rmGame.updateGameplayInfo(rmp);
+								RMGame rmg = rmTeam.getGame(); 
+								if(rmg!=null){
+									if(rmg.getState()==RMState.GAMEPLAY){
+										rmg.updateGameplayInfo(rmp);
 										return true;
 									}
 								}
@@ -393,61 +670,59 @@ public class RM extends JavaPlugin {
 							}
 						}
 						else{
-							//if(args.length>1){
-								/*
-								List<String> listArgs = new ArrayList<String>();
-								for(int i=1; i<args.length; i++){
-									listArgs.add(args[i]);
-								}
-								if(listArgs.size()>0){
-								*/
-									List<String> items = new ArrayList<String>();
-									for(String str : args){
-										String[] strItems = str.split(",");
-										for(String strItem : strItems){
-											for(Material mat : Material.values()){
-												if(strItem.equalsIgnoreCase(mat.name())){
-													if(!items.contains(mat))items.add(ChatColor.WHITE+mat.name()+":"+ChatColor.YELLOW+mat.getId());
-												}
+							List<String> items = new ArrayList<String>();
+							List<String> itemsWarn = new ArrayList<String>();
+							for(String str : argsItems){
+								String[] strItems = str.split(",");
+								for(String strItem : strItems){
+									for(Material mat : Material.values()){
+										if(strItem.equalsIgnoreCase(mat.name())){
+											if(!items.contains(mat)) items.add(ChatColor.WHITE+mat.name()+":"+ChatColor.YELLOW+mat.getId());
+										}
+									}
+									if(strItem.contains("-")){
+										String[] strItems2 = strItem.split("-");
+										int id1=getIntByString(strItems2[0]);
+										int id2=getIntByString(strItems2[1]);
+										if((id1!=-1)&&(id2!=-1)){
+											if(id1>id2){
+												int id3=id1;
+												id1=id2;
+												id2=id3;
 											}
-											if(strItem.contains("-")){
-												String[] strItems2 = strItem.split("-");
-												int id1=getIntByString(strItems2[0]);
-												int id2=getIntByString(strItems2[1]);
-												if((id1!=-1)&&(id2!=-1)){
-													if(id1>id2){
-														int id3=id1;
-														id1=id2;
-														id2=id3;
-													}
-													while(id1<=id2){
-														Material mat = Material.getMaterial(id1);
-														if(mat!=null){
-															if(!items.contains(mat))items.add(""+ChatColor.WHITE+id1+":"+ChatColor.YELLOW+Material.getMaterial(id1).name());
-														}
-														id1++;
-													}
+											while(id1<=id2){
+												Material mat = Material.getMaterial(id1);
+												if(mat!=null){
+													if(!items.contains(mat)) items.add(""+ChatColor.WHITE+id1+":"+ChatColor.YELLOW+Material.getMaterial(id1).name());
 												}
-											}
-											else{
-												int id = getIntByString(strItem);
-												if(id!=-1){
-													Material mat = Material.getMaterial(id);
-													if(mat!=null) if(!items.contains(mat)){
-														items.add(""+ChatColor.WHITE+id+":"+ChatColor.YELLOW+Material.getMaterial(id).name());
-													}
-												}
+												else if(!itemsWarn.contains(strItem)) itemsWarn.add(""+id1);
+												id1++;
 											}
 										}
 									}
-									if(items.size()>0){
-										rmp.sendMessage(getFormattedStringByList(items));
-										return true;
+									else{
+										int id = getIntByString(strItem);
+										if(id!=-1){
+											Material mat = Material.getMaterial(id);
+											if(mat!=null){
+												if(!items.contains(mat)) items.add(""+ChatColor.WHITE+id+":"+ChatColor.YELLOW+Material.getMaterial(id).name());
+											}
+											else if(!itemsWarn.contains(strItem)) itemsWarn.add(""+id);
+										}
 									}
-								//}
-							//}
-							syntaxError(rmp);
+								}
+							}
+							if(items.size()>0){
+								rmp.sendMessage(getFormattedStringByList(items));
+								return true;
+							}
+							else if(itemsWarn.size()>0){
+								rmp.sendMessage("These items don't exist!");
+								//rmp.sendMessage("These items don't exist: "+getFormattedStringByList(itemsWarn));
+								return true;
+							}
 						}
+						syntaxError(rmp);
 					}
 				}
 			}
@@ -525,65 +800,9 @@ public class RM extends JavaPlugin {
 				if(useDefaultAmount) amount = getDefaultAmount(items);
 			}
 			else{
-				for(String arg : args){
-					List<String> strArgs = splitArgs(arg);
-					for(String strArg : strArgs){
-						String strAmount = "";
-						String[] strSplit = strArg.split(":");
-						String[] strItems = strSplit[0].split(",");
-						Integer[] intAmount = null;
-						if(strSplit.length>1){
-							strAmount = strSplit[1];
-							intAmount = checkInt(strAmount);
-						}
-						for(String str : strItems){
-							if(str.contains("-")){
-								String[] strItems2 = str.split("-");
-								int id1=getIntByString(strItems2[0]);
-								int id2=getIntByString(strItems2[1]);
-								if((id1!=-1)&&(id2!=-1)){
-									if(id1>id2){
-										int id3=id1;
-										id1=id2;
-										id2=id3;
-									}
-									while(id1<=id2){
-										Material mat = Material.getMaterial(id1);
-										if(mat!=null){
-											if(intAmount==null){
-												intAmount = new Integer[1];
-												if(strArg.contains("stack")){
-													intAmount[0] = mat.getMaxStackSize();
-												}
-												else intAmount[0] = 1;
-											}
-											items.add(mat.getId());
-											amount.add(intAmount);
-										}
-										id1++;
-									}
-								}
-							}
-							else{
-								int id=getIntByString(str);
-								if(id!=-1){
-									Material mat = Material.getMaterial(id);
-									if(mat!=null){
-										if(intAmount==null){
-											intAmount = new Integer[1];
-											if(strArg.contains("stack")){
-												intAmount[0] = mat.getMaxStackSize();
-											}
-											else intAmount[0] = 1;
-										}
-										items.add(mat.getId());
-										amount.add(intAmount);
-									}
-								}
-							}
-						}
-					}
-				}
+				HashMap<Integer, Integer[]> hashItems = getItemsByStringArray(args, false);
+				items = Arrays.asList(hashItems.keySet().toArray(new Integer[hashItems.size()]));
+				amount = Arrays.asList(hashItems.values().toArray(new Integer[hashItems.size()][]));
 			}
 			if((type==null)&&(items.size()==0)){
 				syntaxError(rmp);
@@ -610,6 +829,90 @@ public class RM extends JavaPlugin {
 			//rmp.setRequestFilter(hashItems, type, force);
 			rmp.setRequestFilter(rmItems, type, force, randomize);
 		}
+	}
+	
+	public HashMap<Integer, RMItem> getRMItemsByStringArray(List<String> args, boolean invert){
+		HashMap<Integer, RMItem> rmItems = new HashMap<Integer, RMItem>();
+		HashMap<Integer, Integer[]> items = getItemsByStringArray(args, invert);
+
+		for(Integer item : items.keySet()){
+			Integer[] amount = items.get(item);
+			int amount1 = -1;
+			int amount2 = -1;
+			if(amount.length>0) amount1 = amount[0];
+			if(amount.length>1) amount2 = amount[1];
+			
+			RMItem rmItem = new RMItem(item);
+			if(amount1 > -1) rmItem.setAmount(amount1);
+			if(amount2 > -1) rmItem.setAmountHigh(amount2);
+			
+			rmItems.put(item, rmItem);
+		}
+		return rmItems;
+	}
+	
+	public HashMap<Integer, Integer[]> getItemsByStringArray(List<String> args, boolean invert){
+		HashMap<Integer, Integer[]> items = new HashMap<Integer, Integer[]>();
+		for(String arg : args){
+			List<String> strArgs = new ArrayList<String>();
+			if(invert) strArgs = Arrays.asList(arg.split(" "));
+			else strArgs = splitArgs(arg);
+			for(String strArg : strArgs){
+				String strAmount = "";
+				String[] strSplit = strArg.split(":");
+				String[] strItems = strSplit[invert?1:0].split(",");
+				Integer[] intAmount = null;
+				if(strSplit.length>1){
+					strAmount = strSplit[invert?0:1];
+					intAmount = checkInt(strAmount);
+				}
+				for(String str : strItems){
+					if(str.contains("-")){
+						String[] strItems2 = str.split("-");
+						int id1=getIntByString(strItems2[0]);
+						int id2=getIntByString(strItems2[1]);
+						if((id1!=-1)&&(id2!=-1)){
+							if(id1>id2){
+								int id3=id1;
+								id1=id2;
+								id2=id3;
+							}
+							while(id1<=id2){
+								Material mat = Material.getMaterial(id1);
+								if(mat!=null){
+									if(intAmount==null){
+										intAmount = new Integer[1];
+										if(strArg.contains("stack")){
+											intAmount[0] = mat.getMaxStackSize();
+										}
+										else intAmount[0] = 1;
+									}
+									items.put(mat.getId(),intAmount);
+								}
+								id1++;
+							}
+						}
+					}
+					else{
+						int id=getIntByString(str);
+						if(id!=-1){
+							Material mat = Material.getMaterial(id);
+							if(mat!=null){
+								if(intAmount==null){
+									intAmount = new Integer[1];
+									if(strArg.contains("stack")){
+										intAmount[0] = mat.getMaxStackSize();
+									}
+									else intAmount[0] = 1;
+								}
+								items.put(mat.getId(),intAmount);
+							}
+						}
+					}
+				}
+			}
+		}
+		return items;
 	}
 	
 	public Integer[] checkInt(String arg){
@@ -710,20 +1013,39 @@ public class RM extends JavaPlugin {
 		if(rmGames.size()>0) rmp.sendMessage("Page "+id+" of " +(int)(rmGames.size()/5));
 		while(i<rmGames.size()){
 			RMGame rmGame = rmGames.get(i);
-			rmp.sendMessage("Game: "+ChatColor.YELLOW+rmGame.getId()+ChatColor.WHITE+" - "+"Owner: "+ChatColor.YELLOW+rmGame.getOwnerName()+ChatColor.WHITE+" Teams: "+rmGame.getTextTeamPlayers());
+			rmp.sendMessage("Game: "+ChatColor.YELLOW+rmGame.getConfig().getId()+ChatColor.WHITE+" - "+"Owner: "+ChatColor.YELLOW+rmGame.getConfig().getOwnerName()+ChatColor.WHITE+" Teams: "+rmGame.getTextTeamPlayers());
 			if(i==id*10+10) break;
 			i++;
 		}
 	}
 	
 	public RMGame getGameById(String arg){
-		return RMGame.getGame(getIntByString(arg));
+		int id = getIntByString(arg);
+		if(id!=-1) return RMGame.getGame(id);
+		return null;
 	}
 	public RMGame getGameById(int arg){
 		return RMGame.getGame(arg);
 	}
 	public RMTeam getTeamById(String arg, RMGame rmGame){
-		return rmGame.getTeam(getIntByString(arg));
+		int id = getIntByString(arg);
+		if(id!=-1) return rmGame.getTeam(id);
+		return null;
+	}
+	
+	public DyeColor getDyeByString(String color){
+		for(DyeColor dyeColor : DyeColor.values()){
+			if(dyeColor.name().equalsIgnoreCase(color.toLowerCase())){
+				return dyeColor;
+			}
+		}
+		return null;
+	}
+	
+	public RMTeam getTeamByDye(String arg, RMGame rmGame){
+		DyeColor color = getDyeByString(arg);
+		if(color!=null) return rmGame.getTeam(color);
+		return null;
 	}
 	
 	public int getIntByString(String arg){

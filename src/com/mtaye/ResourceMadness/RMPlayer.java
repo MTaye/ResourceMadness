@@ -1,5 +1,6 @@
 package com.mtaye.ResourceMadness;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
@@ -9,6 +10,7 @@ import org.bukkit.entity.Player;
 
 import com.mtaye.ResourceMadness.RMGame.FilterType;
 import com.mtaye.ResourceMadness.RMGame.ForceState;
+import com.mtaye.ResourceMadness.RMGame.RMState;
 
 /**
  * ResourceMadness for Bukkit
@@ -18,6 +20,7 @@ import com.mtaye.ResourceMadness.RMGame.ForceState;
 public class RMPlayer {
 	public enum PlayerAction{
 		ADD, REMOVE, SETUP, INFO,
+		SAVE_TEMPLATE,
 		JOIN, QUIT,
 		START, START_RANDOMIZE, RESTART, STOP,
 		FILTER,
@@ -27,10 +30,9 @@ public class RMPlayer {
 		WARN_HACKED_ITEMS, ALLOW_HACKED_ITEMS,
 		NONE;
 	}
-	
-	private String _player;
+	private String _name;
 	private RMTeam _team;
-	private List<RMGame> _games;
+	//private List<RMGame> _games;
 	private RMRequestFilter _requestFilter;
 	private boolean _sneak = false;
 	private int _requestInt = 0;
@@ -62,7 +64,7 @@ public class RMPlayer {
 		setPlayer(player);
 		setPlayerAction(PlayerAction.NONE);
 	}
-	private RMPlayer(String player, PlayerAction playerAction, RM plugin){
+	private RMPlayer(String player, PlayerAction playerAction){
 		setPlayerAction(playerAction);
 		setPlayer(player);
 	}
@@ -80,17 +82,17 @@ public class RMPlayer {
 	
 	//Player GET/SET
 	public String getName(){
-		return _player;
+		return _name;
 	}
 	public void setName(Player player){
-		_player = player.getName();
+		_name = player.getName();
 	}
 	
 	public Player getPlayer(){
-		return plugin.getServer().getPlayer(_player);
+		return plugin.getServer().getPlayer(_name);
 	}
 	private void setPlayer(String player){
-		_player = player;
+		_name = player;
 	}
 	public static HashMap<String, RMPlayer> getPlayers(){
 		return _players;
@@ -142,11 +144,14 @@ public class RMPlayer {
 	}
 	
 	//Game
-	public void setGames(List<RMGame> games){
-		_games = games;
-	}
 	public List<RMGame> getGames(){
-		return _games;
+		List<RMGame> rmGames = new ArrayList<RMGame>();
+		for(RMGame rmGame : RMGame.getGames()){
+			if(rmGame.getConfig().getOwnerName() == getPlayer().getName()){
+				rmGames.add(rmGame);
+			}
+		}
+		return rmGames;
 	}
 	
 	//SendMessage
@@ -175,5 +180,35 @@ public class RMPlayer {
 	}
 	public boolean isSneaking(){
 		return _sneak;
+	}
+	
+	public boolean isInGame(){
+		RMTeam rmTeam = getTeam();
+		if(rmTeam!=null){
+			RMGame rmGame = rmTeam.getGame();
+			if(rmGame!=null){
+				if(rmGame.getState()==RMState.GAMEPLAY){
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	public void onPlayerJoin(){
+	}
+	
+	public void onPlayerQuit(){
+		RMTeam rmTeam = getTeam();
+		if(rmTeam!=null){
+			RMGame rmGame = rmTeam.getGame();
+			if(rmGame!=null){
+				if(rmGame.getState()==RMState.GAMEPLAY){
+					if(!rmGame.getConfig().getAllowPlayerLeave()){
+						rmGame.quitTeam(rmTeam, this);
+					}
+				}
+			}
+		}
 	}
 }

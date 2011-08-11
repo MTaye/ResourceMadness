@@ -15,19 +15,19 @@ import org.bukkit.inventory.ItemStack;
  * @author M-Taye
  */
 public class RMChest{
+	public RM plugin;
 	private Chest _chest;
 	private HashMap<Integer, RMItem> _items = new HashMap<Integer, RMItem>();
 	private RMTeam _team;
-	private RM plugin;
 	
 	public RMChest(Chest chest, RM plugin){
-		_chest = chest;
 		this.plugin = plugin;
+		_chest = chest;
 	}
 	public RMChest(Chest chest, RMTeam team, RM plugin){
+		this.plugin = plugin;
 		_chest = chest;
 		_team = team;
-		this.plugin = plugin;
 	}
 	
 	public RMTeam getTeam(){

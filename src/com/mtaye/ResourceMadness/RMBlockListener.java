@@ -26,10 +26,8 @@ import com.nijiko.data.UserStorage;
 public class RMBlockListener extends BlockListener{
 	
 	private final RM plugin;
-	
-	public RMBlockListener(RM piston){
-		
-		this.plugin = piston;
+	public RMBlockListener(RM plugin){
+		this.plugin = plugin;
 	}
 	
 	@Override

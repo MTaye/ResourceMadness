@@ -23,9 +23,7 @@ import com.mtaye.ResourceMadness.RMPlayer.PlayerAction;
 public class RMPlayerListener extends PlayerListener{
 	
 	private final RM plugin;
-	
-	public RMPlayerListener(RM plugin)
-	{
+	public RMPlayerListener(RM plugin){
 		this.plugin = plugin;
 	}
 	
@@ -42,7 +40,7 @@ public class RMPlayerListener extends PlayerListener{
 						if(rmGame!=null){
 							switch(rmGame.getState()){
 								case SETUP:
-									if(rmp.getName()!=rmGame.getOwnerName()){
+									if(rmp.getName()!=rmGame.getConfig().getOwnerName()){
 										e.setCancelled(true);
 									}
 									else{
@@ -89,6 +87,10 @@ public class RMPlayerListener extends PlayerListener{
 							case INFO:
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.sendInfo(rmp);
+								break;
+							case SAVE_TEMPLATE:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.saveTemplate();
 								break;
 							case JOIN:
 								rmGame = RMGame.getGameByBlock(b);
@@ -174,6 +176,26 @@ public class RMPlayerListener extends PlayerListener{
 					p.sendMessage("Not an User");
 				}
 			}
+		}
+	}
+	
+	@Override
+	public void onPlayerJoin(PlayerJoinEvent e){
+		/*
+		Player p = e.getPlayer();
+		RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
+		if(rmp!=null){
+			rmp.onPlayerJoin();
+		}
+		*/
+	}
+	
+	@Override
+	public void onPlayerQuit(PlayerQuitEvent e){
+		Player p = e.getPlayer();
+		RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
+		if(rmp!=null){
+			rmp.onPlayerQuit();
 		}
 	}
 }
