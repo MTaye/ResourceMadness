@@ -12,6 +12,8 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
 
+import com.mtaye.ResourceMadness.RMGame.RMState;
+
 /**
  * ResourceMadness for Bukkit
  *
@@ -78,28 +80,9 @@ public class RMTeam {
 	}
 	
 	//Player
-	public void addPlayer(RMPlayer rmp){
+	public void addRemovePlayer(RMPlayer rmp){
 		if(!_players.containsKey(rmp.getName())){
-			for(RMGame game : RMGame.getGames()){
-				RMTeam rmTeam = game.getPlayerTeam(rmp);
-				if(rmTeam!=null){
-					if(rmTeam!=this){
-						rmp.sendMessage("You must quit the "+rmTeam.getTeamColorString()+ChatColor.WHITE+" team from game id "+ChatColor.YELLOW+game.getConfig().getId()+ChatColor.WHITE+" first.");
-						return;
-					}
-				}
-			}
-			if((_game.getConfig().getMaxTeamPlayers()==0)||(_players.size()<_game.getConfig().getMaxTeamPlayers())){
-				if((_game.getConfig().getMaxPlayers()==0)||(RMTeam.getAllPlayers().length<_game.getConfig().getMaxPlayers())){
-					rmp.setTeam(this);
-					_players.put(rmp.getName(), rmp);
-					rmp.sendMessage(ChatColor.YELLOW+"Joined"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.");
-					_game.broadcastMessage(rmp.getName()+ChatColor.YELLOW+" joined"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.", rmp);
-					_game.updateSigns();
-				}
-				else rmp.sendMessage("All players slots in this game are already full.");
-			}
-			else rmp.sendMessage("This team is already full.");
+			addPlayer(rmp);
 			return;
 		}
 		else{
@@ -107,6 +90,34 @@ public class RMTeam {
 			return;
 		}
 	}
+	public void addPlayer(RMPlayer rmp){
+		for(RMGame game : RMGame.getGames()){
+			RMTeam rmTeam = game.getPlayerTeam(rmp);
+			if(rmTeam!=null){
+				if(rmTeam!=this){
+					rmp.sendMessage("You must quit the "+rmTeam.getTeamColorString()+ChatColor.WHITE+" team from game id "+ChatColor.YELLOW+game.getConfig().getId()+ChatColor.WHITE+" first.");
+					return;
+				}
+			}
+		}
+		if((_game.getState() == RMState.GAMEPLAY)&&(!_game.getConfig().getAllowMidgameJoin())){
+			rmp.sendMessage("You can't join a game while it's running.");
+			return;
+		}
+		if((_game.getConfig().getMaxTeamPlayers()==0)||(_players.size()<_game.getConfig().getMaxTeamPlayers())){
+			if((_game.getConfig().getMaxPlayers()==0)||(RMTeam.getAllPlayers().length<_game.getConfig().getMaxPlayers())){
+				rmp.setTeam(this);
+				_players.put(rmp.getName(), rmp);
+				rmp.sendMessage(ChatColor.YELLOW+"Joined"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.");
+				_game.broadcastMessage(rmp.getName()+ChatColor.YELLOW+" joined"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.", rmp);
+				_game.updateSigns();
+			}
+			else rmp.sendMessage("All players slots in this game are already full.");
+		}
+		else rmp.sendMessage(getTeamColorString()+ChatColor.WHITE+" team is already full.");
+		return;
+	}
+	
 	public void removePlayer(RMPlayer rmp){
 		if(_players.containsKey(rmp.getName())){
 			rmp.clearTeam();
@@ -151,6 +162,10 @@ public class RMTeam {
 			return names;
 		}
 		return "[]";
+	}
+	
+	public void clearPlayers(){
+		_players.clear();
 	}
 
 	//Player

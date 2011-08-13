@@ -124,7 +124,6 @@ public class RMChest{
 	
 	public RMItem getItemLeft(Integer item){
 		HashMap<Integer, RMItem> items = getTeam().getGame().getItems().getItems();
-		plugin.getServer().broadcastMessage("items:"+items.get(item).getAmount()+",_items:"+_items.get(item).getAmount()+"="+(items.get(item).getAmount() - _items.get(item).getAmount()));
 		return new RMItem(item, items.get(item).getAmount() - _items.get(item).getAmount());
 	}
 	

@@ -40,7 +40,7 @@ public class RMPlayerListener extends PlayerListener{
 						if(rmGame!=null){
 							switch(rmGame.getState()){
 								case SETUP:
-									if(rmp.getName()!=rmGame.getConfig().getOwnerName()){
+									if(!rmp.getName().equalsIgnoreCase(rmGame.getConfig().getOwnerName())){
 										e.setCancelled(true);
 									}
 									else{
@@ -94,7 +94,7 @@ public class RMPlayerListener extends PlayerListener{
 								break;
 							case JOIN:
 								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null) rmGame.joinTeamByBlock(b, rmp);
+								if(rmGame!=null) rmGame.joinTeamByBlock(b, rmp, true);
 								break;
 							case QUIT:
 								rmGame = RMGame.getGameByBlock(b);
@@ -154,6 +154,18 @@ public class RMPlayerListener extends PlayerListener{
 							case ALLOW_HACKED_ITEMS:
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.toggleAllowHackedItems(rmp);
+								break;
+							case ALLOW_PLAYER_LEAVE:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.toggleAllowPlayerLeave(rmp);
+								break;
+							case CLEAR_PLAYER_INVENTORY:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.toggleClearPlayerInventory(rmp);
+								break;
+							case ALLOW_MIDGAME_JOIN:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.toggleAllowMidgameJoin(rmp);
 								break;
 							}
 							rmp.setPlayerAction(PlayerAction.NONE);

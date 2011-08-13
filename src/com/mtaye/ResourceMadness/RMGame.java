@@ -84,21 +84,27 @@ public class RMGame {
 		//plugin.saveTemaplte(_config);
 	}
 
-	private RMTeam _winTeam;
-	private RMPlayer _winPlayer;
+	private RMTeam _winningTeam;
+	private RMPlayer _winningPlayer;
 	
-	public RMTeam getWinTeam(){
-		return _winTeam;
+	public RMTeam getWinningTeam(){
+		return _winningTeam;
 	}
-	public void setWinTeam(RMTeam rmTeam){
-		_winTeam = rmTeam;
+	public void setWinningTeam(RMTeam rmTeam){
+		_winningTeam = rmTeam;
+	}
+	public void clearWinningTeam(){
+		_winningTeam = null;
 	}
 	
-	public RMPlayer getWinPlayer(){
-		return _winPlayer;
+	public RMPlayer getWinningPlayer(){
+		return _winningPlayer;
 	}
-	public void setWinPlayer(RMPlayer rmp){
-		_winPlayer = rmp;
+	public void setWinningPlayer(RMPlayer rmp){
+		_winningPlayer = rmp;
+	}
+	public void clearWinningPlayer(){
+		_winningTeam = null;
 	}
 	
 	public static RMPlayer getRequestPlayer(){
@@ -116,7 +122,7 @@ public class RMGame {
 	}
 	
 	public void startGame(RMPlayer rmp){
-		if(rmp.getName()==_config.getOwnerName()){
+		if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
 			for(RMChest rmChest : getChests()){
 				rmChest.clearItems();
 			}
@@ -124,42 +130,60 @@ public class RMGame {
 			if(_config.getRandomizeAmount()>0) _items.randomize(_config.getRandomizeAmount());
 			else _items.randomize(_config.getRandomizeAmount());
 			if(_items.size()>0){
+				/*
 				for(RMTeam rmTeam : _config.getTeams()){
 					if(rmTeam.getPlayers().length==0){
-						rmp.sendMessage("Each team must have at least one player.");
+						//rmp.sendMessage("Each team must have at least one player.");
+						broadcastMessage("Each team must have at least one player.");
 						return;
 					}
 				}
-				rmp.sendMessage("Starting game...");
+				*/
+				//rmp.sendMessage("Starting game...");
+				broadcastMessage("Starting game...");
 				setState(RMState.COUNTDOWN);
 			}
 			else rmp.sendMessage("Configure the "+ChatColor.YELLOW+"filtered items"+ChatColor.WHITE+" first.");
 		}
-		else rmp.sendMessage("Only the owner "+_config.getOwner()+" can start the game.");
+		else rmp.sendMessage("Only the owner "+_config.getOwnerName()+" can start the game.");
 	}
 	public void restartGame(RMPlayer rmp){
-		if(rmp.getName()==_config.getOwnerName()){
-			rmp.sendMessage("Restarting game...");
+		if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
+			if(_state == RMState.GAMEPLAY){
+				//rmp.sendMessage("Restarting game...");
+				broadcastMessage("Restarting game...");
+				stopGame(rmp);
+				startGame(rmp);
+			}
+			/*
 			_config.clearRandomizeAmount();
 			startGame(rmp);
 			if(_config.getWarpToSafety()) warpPlayersToSafety();
 			if(_config.getAutoRestoreWorld()) restoreLog();
+			*/
 		}
-		else rmp.sendMessage("Only the owner "+_config.getOwner()+" can restart the game.");
+		else rmp.sendMessage("Only the owner "+_config.getOwnerName()+" can restart the game.");
 	}
 	public void stopGame(RMPlayer rmp){
-		if(rmp.getName()==_config.getOwnerName()){
-			rmp.sendMessage("Stopping game...");
-			_config.clearRandomizeAmount();
-			for(RMChest rmChest : getChests()){
-				rmChest.clearItems();
-			}
-			if(_config.getWarpToSafety()) warpPlayersToSafety();
-			if(_config.getAutoRestoreWorld()) restoreLog();
-			setState(RMState.SETUP);
-			updateSigns();
+		if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
+			//rmp.sendMessage("Stopping game...");
+			broadcastMessage("Stopping game...");
+			initGameOver();
 		}
 		else rmp.sendMessage("Only the owner "+_config.getOwnerName()+" can stop the game.");
+	}
+	
+	public void initGameOver(){
+		_config.clearRandomizeAmount();
+		for(RMChest rmChest : getChests()){
+			rmChest.clearItems();
+		}
+		returnInventories();
+		if(_config.getWarpToSafety()) warpPlayersToSafety();
+		if(_config.getAutoRestoreWorld()) restoreLog();
+		setState(RMState.SETUP);
+		clearTeamPlayers();
+		updateSigns();
 	}
 
 	//Sign info
@@ -189,8 +213,8 @@ public class RMGame {
 						Sign sign = rmTeam.getSign();
 						sign.setLine(0, "Filtered: "+items);
 						sign.setLine(1, lineTotal);
-						sign.setLine(2, "Joined: "+rmTeam.getPlayers().length+getTextPlayersOfMax());
-						sign.setLine(3, "Total: "+getTeamPlayers().length+getTextTeamPlayersOfMax());
+						sign.setLine(2, "Joined: "+rmTeam.getPlayers().length+getTextTeamPlayersOfMax());
+						sign.setLine(3, "Total: "+getTeamPlayers().length+getTextPlayersOfMax());
 						sign.update();
 					}
 					break;
@@ -221,8 +245,8 @@ public class RMGame {
 					RMChest rmChest = rmTeam.getChest();
 					sign.setLine(0, "Items Left: "+rmChest.getItemsLeftInt());
 					sign.setLine(1, "Total: "+rmChest.getTotalLeft());
-					sign.setLine(2, "");
-					sign.setLine(3, "");
+					sign.setLine(2, "Joined: "+rmTeam.getPlayers().length+getTextTeamPlayersOfMax());
+					sign.setLine(3, "Total: "+getTeamPlayers().length+getTextPlayersOfMax());
 					sign.update();
 				}
 				break;
@@ -307,7 +331,7 @@ public class RMGame {
 	
 	//Try Add Items
 	public void tryAddItemsToFilter(Block b, RMPlayer rmp, ClickState clickState){
-		if(rmp.getName() == _config.getOwnerName()){
+		if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
 			List<ItemStack> items = new ArrayList<ItemStack>();
 			boolean force;
 			if(clickState!=ClickState.NONE){
@@ -387,9 +411,8 @@ public class RMGame {
 	}
 	
 	public void tryAddItemToFilter(RMPlayer rmp, ClickState clickState){
-		if(rmp.getName() == _config.getOwnerName()){
-			Player p = rmp.getPlayer();
-			ItemStack item = p.getItemInHand();
+		if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
+			ItemStack item = rmp.getPlayer().getItemInHand();
 			
 			boolean force;
 			if(clickState!=ClickState.NONE) force = true;
@@ -466,7 +489,7 @@ public class RMGame {
 								}
 								totalFound+=item.getAmount()-overflow;
 								returned.put(id, rmChest.getItemLeft(id));
-								rmp.sendMessage("getItemLeft:"+rmChest.getItemLeft(id));
+								//rmp.sendMessage("getItemLeft:"+rmChest.getItemLeft(id));
 							}
 							if(overflow>0){
 								item.setAmount(overflow);
@@ -480,7 +503,10 @@ public class RMGame {
 			_config.getGameStats().addItemsFoundTotal(totalFound);
 			RMStats.addServerItemsFoundTotal(totalFound);
 			if(added.size()>0){
-				if(returned.size()>0) rmp.sendMessage(ChatColor.YELLOW+"Items left: "+getFormattedStringByHash(returned, rmp));
+				if(returned.size()>0){
+					rmp.sendMessage(ChatColor.YELLOW+"Items left: "+getFormattedStringByHash(returned, rmp));
+					broadcastMessage(rmp.getTeam().getTeamColorString()+ChatColor.WHITE+" team has "+ChatColor.YELLOW+rmChest.getItemsLeftInt()+ChatColor.WHITE+" item(s) ("+ChatColor.YELLOW+rmChest.getTotalLeft()+ChatColor.WHITE+" total) left.",rmp);
+				}
 			}
 			else updateGameplayInfo(rmp);
 		}
@@ -501,7 +527,7 @@ public class RMGame {
 						trySignSetupInfo(rmp);
 						break;
 					case WOOL:
-						joinTeamByBlock(b, rmp);
+						joinTeamByBlock(b, rmp, false);
 						break;
 					}
 					break;
@@ -527,21 +553,21 @@ public class RMGame {
 						trySignSetupInfo(rmp);
 						break;
 					case WOOL:
-						joinTeamByBlock(b, rmp);
+						joinTeamByBlock(b, rmp, false);
 						break;
 					}
 					break;
 				case FILTER_CLEAR: //FILTER CLEAR
 					switch(mat){
 					case CHEST: case GLASS: case STONE:
-						if(rmp.getName() == _config.getOwnerName()){
+						if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
 							rmp.sendMessage(ChatColor.GRAY+"Canceled.");
 							setInterfaceState(InterfaceState.MAIN);
 							updateSigns();
 						}
 						break;
 					case WALL_SIGN:
-						if(rmp.getName() == _config.getOwnerName()){
+						if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
 							_config.getFilter().clearItems();
 							rmp.sendMessage(ChatColor.GRAY+"Filter items cleared.");
 							setInterfaceState(InterfaceState.MAIN);
@@ -549,12 +575,12 @@ public class RMGame {
 						}
 						break;
 					case WOOL:
-						if(rmp.getName() == _config.getOwnerName()){
+						if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
 							rmp.sendMessage(ChatColor.GRAY+"Canceled.");
 							setInterfaceState(InterfaceState.MAIN);
 							updateSigns();
 						}
-						else joinTeamByBlock(b, rmp);
+						else joinTeamByBlock(b, rmp, false);
 						break;
 					}
 					break;
@@ -565,7 +591,7 @@ public class RMGame {
 			case COUNTDOWN:
 				switch(mat){
 				case CHEST: case WALL_SIGN: case WOOL:
-					if(rmp.getName() == _config.getOwnerName()){
+					if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
 						//stopGame(rmp);
 					}
 					break;
@@ -577,13 +603,14 @@ public class RMGame {
 				switch(mat){
 				case CHEST:
 					tryAddFoundItems(b, rmp);
-					checkWinner(rmp);
+					setWinningTeam(findWinningTeam());
+					gameOver();
 					break;
 				case WALL_SIGN:
 					trySignGameplayInfo(b, rmp);
 					break;
 				case WOOL:
-					//joinTeamByBlock(b, rmp);
+					joinTeamByBlock(b, rmp, false);
 					break;
 				}
 				break;
@@ -601,38 +628,68 @@ public class RMGame {
 		}
 	}
 	
-	public void checkWinner(RMPlayer rmp){
+	public boolean hasMinimumPlayers(){
+		int teams = 0;
+		for(RMTeam rmTeam : getTeams()){
+			if(rmTeam.getPlayers().length>0){
+				teams++;
+			}
+		}
+		if(teams>1) return true;
+		else return false;
+	}
+	
+	public RMTeam findWinningTeam(){
 		for(RMChest rmChest : getChests()){
 			if(rmChest.getItemsLeftInt()==0){
-				RMTeam rmTeam = rmChest.getTeam();
-				setState(RMState.GAMEOVER);
-				broadcastMessage(rmTeam.getTeamColorString()+ChatColor.WHITE+" team has won the match!");
-				
-				for(RMTeam rmt : getTeams()){
-					if(rmt!=rmTeam){
-						for(RMPlayer rmPlayer : rmt.getPlayers()){
-							rmPlayer.getStats().addLosses();
-							rmPlayer.getStats().addTimesPlayed();
-							_config.getGameStats().addLosses();
-							_config.getGameStats().addTimesPlayed();
-							RMStats.addServerLosses();
-							RMStats.addServerTimesPlayed();
-						}
+				return rmChest.getTeam();
+			}
+		}
+		return null;
+	}
+	
+	public RMTeam findLeadingTeam(){
+		List<RMTeam> rmTeams = getTeams();
+		int total = -1;
+		RMTeam leadingTeam = null;
+		for(RMTeam rmt : rmTeams){
+			int totalLeft = rmt.getChest().getTotalLeft();
+			if((total==-1)||(total<totalLeft)){
+				total = totalLeft;
+				leadingTeam = rmt;
+			}
+			
+		}
+		return leadingTeam;
+	}
+	
+	public void gameOver(){
+		RMTeam rmTeam = getWinningTeam();
+		if(rmTeam!=null){
+			setState(RMState.GAMEOVER);
+			broadcastMessage(rmTeam.getTeamColorString()+ChatColor.WHITE+" team has won the match!");
+			for(RMTeam rmt : getTeams()){
+				if(rmt!=rmTeam){
+					for(RMPlayer rmPlayer : rmt.getPlayers()){
+						rmPlayer.getStats().addLosses();
+						rmPlayer.getStats().addTimesPlayed();
+						_config.getGameStats().addLosses();
+						_config.getGameStats().addTimesPlayed();
+						RMStats.addServerLosses();
+						RMStats.addServerTimesPlayed();
 					}
 				}
-				for(RMPlayer rmPlayer : rmTeam.getPlayers()){
-					rmPlayer.getStats().addWins();
-					rmPlayer.getStats().addTimesPlayed();
-					_config.getGameStats().addWins();
-					_config.getGameStats().addTimesPlayed();
-					RMStats.addServerWins();
-					RMStats.addServerTimesPlayed();
-				}
-				setWinTeam(rmTeam);
-				setWinPlayer(rmp);
-				update();
-				return;
 			}
+			for(RMPlayer rmPlayer : rmTeam.getPlayers()){
+				rmPlayer.getStats().addWins();
+				rmPlayer.getStats().addTimesPlayed();
+				_config.getGameStats().addWins();
+				_config.getGameStats().addTimesPlayed();
+				RMStats.addServerWins();
+				RMStats.addServerTimesPlayed();
+			}
+			//setWinPlayer(rmp);
+			update();
 		}
 	}
 	
@@ -661,6 +718,7 @@ public class RMGame {
 						updateGameplayInfo(rmp);
 					}
 				}
+				snatchInventories();
 				warpPlayersToSafety();
 				updateSigns();
 			}
@@ -668,11 +726,40 @@ public class RMGame {
 		case GAMEPLAY:
 			break;
 		case GAMEOVER:
-			setState(RMState.SETUP);
-			if(_config.getWarpToSafety()) warpPlayersToSafety();
-			if(_config.getAutoRestoreWorld()) restoreLog();
-			updateSigns();
+			initGameOver();
 			break;
+		}
+	}
+	
+	public void snatchInventories(){
+		for(RMTeam rmt : getTeams()){
+			for(RMPlayer rmp : rmt.getPlayers()){
+				if(rmp.getPlayer()!=null){
+					Inventory inv = rmp.getPlayer().getInventory();
+					rmp.clearInventoryContents();
+					rmp.addContentsToInventory(inv.getContents());
+					inv.clear();
+				}
+			}
+		}
+	}
+	
+	public void returnInventories(){
+		for(RMTeam rmt : getTeams()){
+			for(RMPlayer rmp : rmt.getPlayers()){
+				if(rmp.getPlayer()!=null){
+					Inventory inv = rmp.getPlayer().getInventory();
+					inv.clear();
+					inv.setContents(rmp.getContentsFromInventory());
+					rmp.clearInventoryContents();
+				}
+			}
+		}
+	}
+	
+	public void clearTeamPlayers(){
+		for(RMTeam rmTeam : getTeams()){
+			rmTeam.clearPlayers();
 		}
 	}
 	
@@ -689,13 +776,29 @@ public class RMGame {
 		this.plugin = plugin;
 		_config.setPartList(partList);
 		_config.setPlayers(RMPlayer.getPlayers());
-		_config.setId(_games.size());
+		_config.setId(getFreeId());
 		_config.setOwnerName(rmp.getName());
 	}
 	public RMGame(RMGameConfig config, RM plugin){
 		this.plugin = plugin;
 		_config = config;
-		_config.setId(_games.size());
+		_config.setId(getFreeId());
+	}
+	
+	public int getFreeId(){
+		int i=0;
+		for(RMGame rmGame : _games){
+			i = checkIdMatch(i, rmGame);
+		}
+		return i;
+	}
+	
+	public int checkIdMatch(int i, RMGame rmGame){
+		if(i==rmGame.getConfig().getId()){
+			i++;
+			i = checkIdMatch(i, rmGame);
+		}
+		return i;
 	}
 	
 	//Game
@@ -726,7 +829,7 @@ public class RMGame {
 			rmGame = RMGame.getGameByBlock(b);
 		}
 		if(rmGame!=null){
-			if(rmp!=rmGame._config.getOwner()){
+			if(!rmp.getName().equalsIgnoreCase(rmGame._config.getOwnerName())){
 				rmp.sendMessage("The owner is "+rmGame._config.getOwnerName()+".");
 				return HandleState.NOCHANGE;
 			}
@@ -764,7 +867,8 @@ public class RMGame {
 			rmGame.addTeam(rmt);
 		}
 		if(wasModified){
-			rmGame._config = rmGameConfig;
+			RMGameConfig config = rmGame.getConfig();
+			config.getDataFrom(rmGameConfig);
 			rmGameConfig = null;
 			rmp.sendMessage("Game id "+rmGame._config.getId()+" has been modified.");
 		}
@@ -780,7 +884,7 @@ public class RMGame {
 	private static Boolean removeGame(RMGame rmGame){
 		if(_games.contains(rmGame)){
 			//rmGame._config.getOwner().getGames().remove(rmGame);
-			rmGame.getGamesByOwnerName(rmGame.getConfig().getOwnerName()).remove(rmGame);
+			RMGame.getGamesByOwnerName(rmGame.getConfig().getOwnerName()).remove(rmGame);
 			for(RMTeam rmt : rmGame.getTeams()){
 				rmt.setNull();
 			}
@@ -800,8 +904,8 @@ public class RMGame {
 		RMGame rmGame = getGameByBlock(b);
 		if(rmGame!=null){
 			if(rmGame.getState() == RMState.SETUP){
-				if(rmp == rmGame._config.getOwner()){
-					if(!justRemove){
+				if(rmp.getName().equalsIgnoreCase(rmGame._config.getOwnerName())){
+					if((isMaterial(b.getType(), Material.CHEST, Material.WALL_SIGN, Material.WOOL))&&(!justRemove)){
 						List<List<Block>> blockList = rmGame._config.getPartList().getBlockList();
 						List<Block> blocks = rmGame._config.getPartList().getList();
 						//plugin.getServer().broadcastMessage("JUSTREMOVE");
@@ -826,6 +930,7 @@ public class RMGame {
 				}
 				else{
 					rmp.sendMessage("The owner is "+rmGame._config.getOwnerName()+".");
+					return HandleState.NOCHANGE;
 				}
 			}
 		}
@@ -862,14 +967,14 @@ public class RMGame {
 	private static List<RMGame> getGamesByOwner(RMPlayer rmp){
 		List<RMGame> games = new ArrayList<RMGame>();
 		for(RMGame game : RMGame.getGames()){
-			if(game._config.getOwner()==rmp) games.add(game); 
+			if(rmp.getName().equalsIgnoreCase(game._config.getOwnerName())) games.add(game); 
 		}
 		return games;
 	}
 	private static List<RMGame> getGamesByOwnerName(String name){
 		List<RMGame> games = new ArrayList<RMGame>();
 		for(RMGame game : RMGame.getGames()){
-			if(game._config.getOwnerName()==name) games.add(game); 
+			if(game._config.getOwnerName().equalsIgnoreCase(name)) games.add(game); 
 		}
 		return games;
 	}
@@ -956,11 +1061,11 @@ public class RMGame {
 		RMTeam rmTeam = rmGame.getPlayerTeam(rmp);
 		if(rmTeam!=null){
 			rmTeam.removePlayer(rmp);
-			rmp.sendMessage("You quit the "+rmTeam.getTeamColorString()+ChatColor.WHITE+" team.");
+			//rmp.sendMessage("You quit the "+rmTeam.getTeamColorString()+ChatColor.WHITE+" team.");
 		}
 	}
-	public RMTeam joinTeamByBlock(Block b, RMPlayer rmp){
-		if(getState() == RMState.SETUP){
+	public RMTeam joinTeamByBlock(Block b, RMPlayer rmp, boolean fromConsole){
+		if(_state == RMState.SETUP){
 			RMTeam rmt = getTeamByBlock(b);
 			if(rmt!=null){
 				RMTeam rmTeam = getPlayerTeam(rmp);
@@ -970,10 +1075,13 @@ public class RMGame {
 						return null;
 					}
 				}
-				rmt.addPlayer(rmp);
+				rmt.addRemovePlayer(rmp);
 				return rmt;
 			}
 			else rmp.sendMessage("This team does not exist!");
+		}
+		else{
+			rmp.sendMessage("To join/quit a game in progress, use /rm "+ChatColor.YELLOW+"join"+ChatColor.WHITE+"/"+ChatColor.YELLOW+"quit"+ChatColor.WHITE+".");
 		}
 		return null;
 	}
@@ -1173,7 +1281,7 @@ public class RMGame {
 
 	//Try Parse Filter
 	public Boolean tryParseFilter(RMPlayer rmp){
-		if(rmp.getName() == _config.getOwnerName()){
+		if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
 			RMGame.setRequestPlayer(rmp);
 			parseFilter(rmp);
 			RMGame.clearRequestPlayer();
@@ -1556,7 +1664,7 @@ public class RMGame {
 	
 	//Restore World
 	public void restoreWorld(RMPlayer rmp){
-		if(rmp.getName() == _config.getOwnerName()){
+		if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
 			restoreLog();
 		}
 	}
@@ -1585,7 +1693,7 @@ public class RMGame {
 	
 	//Set Max Players
 	public void setMaxPlayers(RMPlayer rmp, int maxPlayers){
-		if(rmp.getName() == _config.getOwnerName()){
+		if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
 			_config.setMaxPlayers(maxPlayers);
 			rmp.sendMessage("Max players: "+_config.getMaxPlayers());
 			updateSigns();
@@ -1594,7 +1702,7 @@ public class RMGame {
 	
 	//Set Max Team Players
 	public void setMaxTeamPlayers(RMPlayer rmp, int maxTeamPlayers){
-		if(rmp.getName() == _config.getOwnerName()){
+		if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
 			_config.setMaxTeamPlayers(maxTeamPlayers);
 			rmp.sendMessage("Max team players: "+_config.getMaxTeamPlayers());
 			updateSigns();
@@ -1603,7 +1711,7 @@ public class RMGame {
 	
 	//Set Max Items
 	public void setMaxItems(RMPlayer rmp, int maxItems){
-		if(rmp.getName() == _config.getOwnerName()){
+		if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
 			_config.setMaxItems(maxItems);
 			updateSigns();
 		}
@@ -1611,14 +1719,14 @@ public class RMGame {
 	
 	//Set Randomize Amount
 	public void setRandomizeAmount(RMPlayer rmp, int amount){
-		if(rmp.getName() == _config.getOwnerName()){
+		if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
 			_config.setRandomizeAmount(amount);
 		}
 	}
 	
 	//Set Auto Randomize Amount
 	public void setAutoRandomizeAmount(RMPlayer rmp, int amount){
-		if(rmp.getName() == _config.getOwnerName()){
+		if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
 			_config.setAutoRandomizeAmount(amount);
 			rmp.sendMessage("Auto randomize amount every match: "+getTextAutoRandomizeAmount());
 		}
@@ -1626,7 +1734,7 @@ public class RMGame {
 	
 	//Set Toggle Auto Restore World
 	public void toggleAutoRestoreWorld(RMPlayer rmp){
-		if(rmp.getName() == _config.getOwnerName()){
+		if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
 			_config.toggleAutoRestoreWorld();
 			rmp.sendMessage("Auto restore world after match: "+isTrueFalse(_config.getAutoRestoreWorld()));
 		}
@@ -1634,7 +1742,7 @@ public class RMGame {
 	
 	//Set Toggle Warn Hacked Items
 	public void toggleWarnHackedItems(RMPlayer rmp){
-		if(rmp.getName() == _config.getOwnerName()){
+		if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
 			_config.toggleWarnHackedItems();
 			rmp.sendMessage("Warn when user adds hacked items: "+isTrueFalse(_config.getWarnHackedItems()));
 		}
@@ -1642,7 +1750,7 @@ public class RMGame {
 	
 	//Set Toggle Allow Hacked Items
 	public void toggleAllowHackedItems(RMPlayer rmp){
-		if(rmp.getName() == _config.getOwnerName()){
+		if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
 			_config.toggleAllowHackedItems();
 			rmp.sendMessage("Allow user to add hacked items: "+isTrueFalse(_config.getAllowHackedItems()));
 		}
@@ -1650,9 +1758,24 @@ public class RMGame {
 	
 	//Set Toggle Allow Player Leave
 	public void toggleAllowPlayerLeave(RMPlayer rmp){
-		if(rmp.getName() == _config.getOwnerName()){
+		if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
 			_config.toggleAllowPlayerLeave();
 			rmp.sendMessage("Allow a player to stay in-game while disconnected: "+isTrueFalse(_config.getAllowPlayerLeave()));
+		}
+	}
+	
+	//Set Clear Player Inventory
+	public void toggleClearPlayerInventory(RMPlayer rmp){
+		if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
+			_config.toggleClearPlayerInventory();
+			rmp.sendMessage("Clear/return player's items at game start/finish: "+isTrueFalse(_config.getClearPlayerInventory()));
+		}
+	}
+	
+	public void toggleAllowMidgameJoin(RMPlayer rmp){
+		if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
+			_config.toggleAllowMidgameJoin();
+			rmp.sendMessage("Allow players to join midgame: "+isTrueFalse(_config.getAllowMidgameJoin()));
 		}
 	}
 	
@@ -1703,5 +1826,8 @@ public class RMGame {
 		rmp.sendMessage("Auto restore world after match: "+isTrueFalse(_config.getAutoRestoreWorld()));
 		rmp.sendMessage("Warn when user adds hacked items: "+isTrueFalse(_config.getWarnHackedItems()));
 		rmp.sendMessage("Allow user to add hacked items: "+isTrueFalse(_config.getAllowHackedItems()));
+		rmp.sendMessage("Allow a player to stay in-game while disconnected: "+isTrueFalse(_config.getAllowPlayerLeave()));
+		rmp.sendMessage("Clear/return player's items at game start/finish: "+isTrueFalse(_config.getClearPlayerInventory()));
+		rmp.sendMessage("Allow players to join midgame: "+isTrueFalse(_config.getAllowMidgameJoin()));
 	}
 }

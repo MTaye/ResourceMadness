@@ -94,6 +94,7 @@ public class RM extends JavaPlugin {
 	
 	//Save Data
 	public void saveData(){
+		if(RMGame.getGames().size()==0) return;
 		File folder = getDataFolder();
 		if(!folder.exists()){
 			log.log(Level.INFO, "Creating config directory...");
@@ -131,7 +132,9 @@ public class RM extends JavaPlugin {
 				line += config.getAutoRestoreWorld()+",";
 				line += config.getWarnHackedItems()+",";
 				line += config.getAllowHackedItems()+",";
-				line += config.getAllowPlayerLeave()+";";
+				line += config.getAllowPlayerLeave()+",";
+				line += config.getClearPlayerInventory();
+				line += ";";
 				//Stats
 				RMStats stats = config.getGameStats();
 				line += stats.getWins()+","+stats.getLosses()+","+stats.getTimesPlayed()+","+stats.getItemsFound()+","+stats.getItemsFoundTotal()+";";
@@ -228,7 +231,7 @@ public class RM extends JavaPlugin {
 		gameStats.setItemsFoundTotal(getIntByString(args[4]));
 		
 		//filtered items
-		if(strArgs[2].length()>0){
+		if(!strArgs[2].equalsIgnoreCase("FILTER")){
 			HashMap<Integer, RMItem> rmItems = getRMItemsByStringArray(Arrays.asList(strArgs[2]), true);
 			config.setFilter(new RMFilter(rmItems));
 		}
@@ -259,7 +262,7 @@ public class RM extends JavaPlugin {
 	}
 	
 	public String encodeFilterToString(RMFilter filter){
-		if(filter.size()==0) return "";
+		if(filter.size()==0) return "FILTER";
 		HashMap<Integer, String> rmItems = new HashMap<Integer, String>();
 		for(RMItem rmItem : filter.values()){
 			String amount = ""+rmItem.getAmount();
@@ -627,6 +630,42 @@ public class RM extends JavaPlugin {
 							else{
 								rmp.setPlayerAction(PlayerAction.ALLOW_HACKED_ITEMS);
 								rmp.sendMessage("Left click a game block to toggle allow hacked items.");
+								return true;
+							}
+						}
+						//ALLOW PLAYER LEAVE
+						else if(args[0].equalsIgnoreCase("allowleave")){
+							if(rmGame!=null){
+								rmGame.toggleAllowHackedItems(rmp);
+								return true;
+							}
+							else{
+								rmp.setPlayerAction(PlayerAction.ALLOW_PLAYER_LEAVE);
+								rmp.sendMessage("Left click a game block to toggle allow player leave.");
+								return true;
+							}
+						}
+						//CLEAR PLAYER INVENTORY
+						else if(args[0].equalsIgnoreCase("clearinventory")){
+							if(rmGame!=null){
+								rmGame.toggleAllowHackedItems(rmp);
+								return true;
+							}
+							else{
+								rmp.setPlayerAction(PlayerAction.CLEAR_PLAYER_INVENTORY);
+								rmp.sendMessage("Left click a game block to toggle clear player inventory.");
+								return true;
+							}
+						}
+						//ALLOW MIDGAME JOIN
+						else if(args[0].equalsIgnoreCase("allowmidgamejoin")){
+							if(rmGame!=null){
+								rmGame.toggleAllowHackedItems(rmp);
+								return true;
+							}
+							else{
+								rmp.setPlayerAction(PlayerAction.ALLOW_MIDGAME_JOIN);
+								rmp.sendMessage("Left click a game block to toggle allow midgame join.");
 								return true;
 							}
 						}
@@ -1011,11 +1050,17 @@ public class RM extends JavaPlugin {
 		if(id<0) id=0;
 		int i=id*10;
 		if(rmGames.size()>0) rmp.sendMessage("Page "+id+" of " +(int)(rmGames.size()/5));
+		HashMap<Integer, String> hashGames = new HashMap<Integer, String>();
 		while(i<rmGames.size()){
 			RMGame rmGame = rmGames.get(i);
-			rmp.sendMessage("Game: "+ChatColor.YELLOW+rmGame.getConfig().getId()+ChatColor.WHITE+" - "+"Owner: "+ChatColor.YELLOW+rmGame.getConfig().getOwnerName()+ChatColor.WHITE+" Teams: "+rmGame.getTextTeamPlayers());
+			hashGames.put(rmGame.getConfig().getId(), "Game: "+ChatColor.YELLOW+rmGame.getConfig().getId()+ChatColor.WHITE+" - "+"Owner: "+ChatColor.YELLOW+rmGame.getConfig().getOwnerName()+ChatColor.WHITE+" Teams: "+rmGame.getTextTeamPlayers());
 			if(i==id*10+10) break;
 			i++;
+		}
+		Integer[] gameIds = hashGames.keySet().toArray(new Integer[hashGames.size()]);
+		Arrays.sort(gameIds);
+		for(Integer gameId : gameIds){
+			rmp.sendMessage(hashGames.get(gameId));
 		}
 	}
 	
