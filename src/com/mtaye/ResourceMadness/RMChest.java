@@ -19,6 +19,27 @@ public class RMChest{
 	private Chest _chest;
 	private HashMap<Integer, RMItem> _items = new HashMap<Integer, RMItem>();
 	private RMTeam _team;
+	private List<ItemStack> _inventory = new ArrayList<ItemStack>();
+	
+	public void clearInventoryContents(){
+		_inventory.clear();
+	}
+	
+	public void addContentsToInventory(){
+		Inventory inv =_chest.getInventory();
+		_inventory.clear();
+		for(ItemStack item : inv.getContents()){
+			_inventory.add(item);
+		}
+		inv.clear();
+	}
+	
+	public void returnContentsFromInventory(){
+		Inventory inv =_chest.getInventory();
+		inv.clear();
+		inv.setContents(_inventory.toArray(new ItemStack[_inventory.size()]));
+		_inventory.clear();
+	}
 	
 	public RMChest(Chest chest, RM plugin){
 		this.plugin = plugin;

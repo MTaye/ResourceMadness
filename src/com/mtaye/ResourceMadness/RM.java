@@ -16,6 +16,8 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.MaterialData;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.PluginManager;
@@ -82,24 +84,30 @@ public class RM extends JavaPlugin {
 		pdfFile = this.getDescription();
 		log.log(Level.INFO, pdfFile.getName() + " v" + pdfFile.getVersion() + " enabled!" );
 		//RMConfig.load();
-		loadData();
+		loadAll();
 	}
 	
 	public void onDisable(){
 		getServer().getScheduler().cancelTask(watcherid);
 		log.info(pdfFile.getName() + " disabled");
-		saveData();
+		saveAll();
 		//RMConfig.save();
 	}
 	
-	//Save Data
-	public void saveData(){
+	public void saveAll(){
 		if(RMGame.getGames().size()==0) return;
 		File folder = getDataFolder();
 		if(!folder.exists()){
 			log.log(Level.INFO, "Creating config directory...");
 			folder.mkdir();
 		}
+		saveData();
+		savePlayerData();
+	}
+	
+	//Save Data
+	public void saveData(){
+		File folder = getDataFolder();
 		File file = new File(folder.getAbsolutePath()+"/gamedata.txt");
 		if(!file.exists()){
 			log.log(Level.INFO, "Data file not found! Creating one...");
@@ -161,6 +169,55 @@ public class RM extends JavaPlugin {
 		}
 	}
 	
+	//SavePlayerData
+	public void savePlayerData(){
+		File folder = getDataFolder();
+		File file = new File(folder.getAbsolutePath()+"/playerdata.txt");
+		if(!file.exists()){
+			log.log(Level.INFO, "Player Data file not found! Creating one...");
+			try{
+				file.createNewFile();
+			}
+			catch(Exception e){
+				e.printStackTrace();
+				return;
+			}
+		}
+		try{
+			FileOutputStream output = new FileOutputStream(file.getAbsoluteFile());
+			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(output));
+			bw.write("[Resource Madness v"+pdfFile.getVersion()+" Player Data]");
+			for(RMPlayer rmp : RMPlayer.getPlayers().values()){
+				String line;
+				bw.write("\n");
+				line = rmp.getName()+";";
+				//Stats
+				RMStats stats = rmp.getStats();
+				line += stats.getWins()+","+stats.getLosses()+","+stats.getTimesPlayed()+","+stats.getItemsFound()+","+stats.getItemsFoundTotal()+";";
+				//Inventory items
+				
+				line += encodeInventoryToString(rmp.getInventoryContents());
+				bw.write(line);
+			}
+			bw.flush();
+			output.close();
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	//Load All
+	public void loadAll(){
+		File folder = getDataFolder();
+		if(!folder.exists()){
+			log.log(Level.INFO, "Config folder not found! Will create one on save...");
+			return;
+		}
+		loadData();
+		loadPlayerData();
+	}
+	
 	//Load Data
 	public void loadData(){
 		File folder = getDataFolder();
@@ -192,6 +249,87 @@ public class RM extends JavaPlugin {
 		else{
 			System.out.println("Could not find data file");
 		}
+	}
+	
+	//Load Player Data
+	public void loadPlayerData(){
+		File folder = getDataFolder();
+		File file = new File(folder.getAbsolutePath()+"/playerdata.txt");
+		if(file.exists()){
+			FileInputStream input;
+			try {
+				input = new FileInputStream(file.getAbsoluteFile());
+				InputStreamReader isr = new InputStreamReader(input);
+				BufferedReader br = new BufferedReader(isr);
+				String line;
+				while(true){
+					line = br.readLine();
+					if(line == null) break;
+					if(line.startsWith("[")) continue;
+					parseLoadedPlayerData(line.split(";"));
+				}
+				input.close();
+				//saveConfig();
+			}
+			catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
+		else{
+			System.out.println("Could not find data file");
+		}
+	}
+	
+	public void parseLoadedPlayerData(String[] strArgs){
+		//name
+		RMPlayer rmp = new RMPlayer(strArgs[0]);
+		
+		//wins,losses,timesPlayed,itemsFound,itemsFoundTotal
+		String[] args = strArgs[1].split(",");
+		RMStats stats = rmp.getStats();
+		
+		stats.setWins(getIntByString(args[0]));
+		stats.setLosses(getIntByString(args[1]));
+		stats.setTimesPlayed(getIntByString(args[2]));
+		stats.setItemsFound(getIntByString(args[3]));
+		stats.setItemsFoundTotal(getIntByString(args[4]));
+		
+		//inventory items
+		if(!strArgs[2].equalsIgnoreCase("NONE")){
+			rmp.addContentsToInventory(getItemStackByStringArray(strArgs[2]));
+		}
+	}
+	
+	public ItemStack[] getItemStackByStringArray(String strArgs){
+		List<ItemStack> items = new ArrayList<ItemStack>();
+		String[] splitArgs = strArgs.split(",");
+		for(String splitArg : splitArgs){
+			String[] args = splitArg.split(":");
+			int id = getIntByString(args[0]);
+			int amount = getIntByString(args[1]);
+			short durability = getShortByString(args[2]);
+			if((id!=-1)&&(amount!=-1)&&(durability!=-1)){
+				if(args.length==4){
+					byte data = getByteByString(args[3]);
+					if(data!=-1){
+						Material mat = Material.getMaterial(id);
+						ItemStack item = new ItemStack(mat, amount, durability, data);
+						items.add(item);
+					}
+				}
+				else if(args.length==3){
+					Material mat = Material.getMaterial(id);
+					while(amount>mat.getMaxStackSize()){
+						ItemStack item = new ItemStack(mat, amount, durability);
+						items.add(item);
+						amount-=mat.getMaxStackSize();
+					}
+					ItemStack item = new ItemStack(mat,amount, durability);
+					items.add(item);
+				}
+			}
+		}
+		return items.toArray(new ItemStack[items.size()]);
 	}
 	
 	public void parseLoadedData(String[] strArgs){
@@ -259,6 +397,37 @@ public class RM extends JavaPlugin {
 		}
 		*/
 		RMGame.tryAddGameFromConfig(config);
+	}
+	
+	public String encodeInventoryToString(ItemStack[] items){
+		if(items.length==0){
+			return "NONE";
+		}
+		String line = "";
+		HashMap<String, ItemStack> hashItems = new HashMap<String, ItemStack>();
+		List<ItemStack> listItems = new ArrayList<ItemStack>();
+		for(ItemStack item : items){
+			String idData = ""+item.getTypeId()+":"+item.getDurability();
+			if(item.getData()!=null) idData += ":"+Byte.toString(item.getData().getData());
+			if(hashItems.containsKey(idData)){
+				int amount = hashItems.get(idData).getAmount()+item.getAmount();
+				item.setAmount(amount);
+				hashItems.put(idData, item);
+			}
+			else hashItems.put(idData, item);
+		}
+		String[] array = hashItems.keySet().toArray(new String[hashItems.size()]);
+		Arrays.sort(array);
+		for(String idData : array){
+			//String[] splitItems = idData.split(":");
+			//int id = getIntByString(splitItems[0]);
+			ItemStack item = hashItems.get(idData);
+			line+=item.getTypeId()+":"+item.getAmount()+":"+item.getDurability();
+			if(item.getData()!=null) line+=":"+Byte.toString(item.getData().getData());
+			line+=",";
+		}
+		line = stripLast(line,",");
+		return line;
 	}
 	
 	public String encodeFilterToString(RMFilter filter){
@@ -676,7 +845,7 @@ public class RM extends JavaPlugin {
 								RMGame rmg = rmTeam.getGame(); 
 								if(rmg!=null){
 									if(rmg.getState()==RMState.GAMEPLAY){
-										rmg.updateGameplayInfo(rmp);
+										rmg.updateGameplayInfo(rmp, rmTeam);
 										return true;
 									}
 								}
@@ -707,6 +876,24 @@ public class RM extends JavaPlugin {
 									}
 								}
 							}
+						}
+						//GET ITEMS
+						else if(args[0].equalsIgnoreCase("getitems")){
+							RMTeam rmTeam = rmp.getTeam();
+							if((rmTeam==null)||((rmTeam!=null)&&(rmTeam.getGame().getState()==RMState.SETUP))){
+								rmp.returnContentsFromInventory();
+							}
+							else rmp.sendMessage("Can't return your items while you're ingame.");
+							return true;
+						}
+						//GET AWARD
+						else if(args[0].equalsIgnoreCase("getaward")){
+							RMTeam rmTeam = rmp.getTeam();
+							if((rmTeam==null)||((rmTeam!=null)&&(rmTeam.getGame().getState()==RMState.SETUP))){
+								rmp.returnContentsFromInventory();
+							}
+							else rmp.sendMessage("Can't get award while you're ingame.");
+							return true;
 						}
 						else{
 							List<String> items = new ArrayList<String>();
@@ -1091,6 +1278,25 @@ public class RM extends JavaPlugin {
 		DyeColor color = getDyeByString(arg);
 		if(color!=null) return rmGame.getTeam(color);
 		return null;
+	}
+	
+	public short getShortByString(String arg){
+		short data = 0;
+		try{
+			data = Byte.valueOf(arg);
+			return data;
+		} catch(Exception e){
+			return -1;
+		}
+	}
+	public byte getByteByString(String arg){
+		byte data = 0;
+		try{
+			data = Byte.valueOf(arg);
+			return data;
+		} catch(Exception e){
+			return -1;
+		}
 	}
 	
 	public int getIntByString(String arg){

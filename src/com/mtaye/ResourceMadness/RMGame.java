@@ -121,6 +121,17 @@ public class RMGame {
 		return _items;
 	}
 	
+	public void stashChestsContents(){
+		for(RMChest rmChest : getChests()){
+			rmChest.addContentsToInventory();
+		}
+	}
+	public void returnChestsContents(){
+		for(RMChest rmChest : getChests()){
+			rmChest.returnContentsFromInventory();
+		}
+	}
+	
 	public void startGame(RMPlayer rmp){
 		if(rmp.getName().equalsIgnoreCase(_config.getOwnerName())){
 			for(RMChest rmChest : getChests()){
@@ -179,11 +190,150 @@ public class RMGame {
 			rmChest.clearItems();
 		}
 		returnInventories();
+		returnChestsContents();
 		if(_config.getWarpToSafety()) warpPlayersToSafety();
 		if(_config.getAutoRestoreWorld()) restoreLog();
 		setState(RMState.SETUP);
 		clearTeamPlayers();
 		updateSigns();
+	}
+	
+	public boolean hasMinimumPlayers(){
+		int teams = 0;
+		for(RMTeam rmTeam : getTeams()){
+			if(rmTeam.getPlayers().length>0){
+				teams++;
+			}
+		}
+		if(teams>1) return true;
+		else return false;
+	}
+	
+	public RMTeam findWinningTeam(){
+		for(RMChest rmChest : getChests()){
+			if(rmChest.getItemsLeftInt()==0){
+				return rmChest.getTeam();
+			}
+		}
+		return null;
+	}
+	
+	public RMTeam findLeadingTeam(){
+		List<RMTeam> rmTeams = getTeams();
+		int total = -1;
+		RMTeam leadingTeam = null;
+		for(RMTeam rmt : rmTeams){
+			int totalLeft = rmt.getChest().getTotalLeft();
+			if((total==-1)||(total<totalLeft)){
+				total = totalLeft;
+				leadingTeam = rmt;
+			}
+			
+		}
+		return leadingTeam;
+	}
+	
+	public void gameOver(){
+		RMTeam rmTeam = getWinningTeam();
+		if(rmTeam!=null){
+			setState(RMState.GAMEOVER);
+			broadcastMessage(rmTeam.getTeamColorString()+ChatColor.WHITE+" team has won the match!");
+			for(RMTeam rmt : getTeams()){
+				if(rmt!=rmTeam){
+					for(RMPlayer rmPlayer : rmt.getPlayers()){
+						rmPlayer.getStats().addLosses();
+						rmPlayer.getStats().addTimesPlayed();
+						_config.getGameStats().addLosses();
+						_config.getGameStats().addTimesPlayed();
+						RMStats.addServerLosses();
+						RMStats.addServerTimesPlayed();
+					}
+				}
+			}
+			for(RMPlayer rmPlayer : rmTeam.getPlayers()){
+				rmPlayer.getStats().addWins();
+				rmPlayer.getStats().addTimesPlayed();
+				_config.getGameStats().addWins();
+				_config.getGameStats().addTimesPlayed();
+				RMStats.addServerWins();
+				RMStats.addServerTimesPlayed();
+			}
+			//setWinPlayer(rmp);
+			update();
+		}
+	}
+	
+	//UPDATE
+	public void update(){
+		switch(getState()){
+		case SETUP:
+			break;
+		case COUNTDOWN:
+			//cdTimer = 0; //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			if(cdTimer%10==0){
+				if(cdTimer!=0){
+					broadcastMessage(""+cdTimer/10);
+					updateSigns(""+cdTimer/10);
+				}
+			}
+			if(cdTimer>0){
+				cdTimer-=10;
+			}
+			else{
+				broadcastMessage("LET THE RESOURCE MADNESS BEGIN!");
+				cdTimer = cdTimerLimit;
+				setState(RMState.GAMEPLAY);
+				for(RMTeam rmt : getTeams()){
+					for(RMPlayer rmp : rmt.getPlayers()){
+						updateGameplayInfo(rmp, rmt);
+					}
+				}
+				stashChestsContents();
+				snatchInventories();
+				warpPlayersToSafety();
+				updateSigns();
+			}
+			break;
+		case GAMEPLAY:
+			break;
+		case GAMEOVER:
+			initGameOver();
+			break;
+		}
+	}
+	
+	public void snatchInventories(){
+		for(RMTeam rmt : getTeams()){
+			for(RMPlayer rmp : rmt.getPlayers()){
+				if(rmp.getPlayer()!=null){
+					rmp.addContentsToInventory();
+				}
+			}
+		}
+	}
+	
+	public void returnInventories(){
+		for(RMTeam rmt : getTeams()){
+			for(RMPlayer rmp : rmt.getPlayers()){
+				if(rmp.getPlayer()!=null){
+					rmp.returnContentsFromInventory();
+				}
+			}
+		}
+	}
+	
+	public void clearTeamPlayers(){
+		for(RMTeam rmTeam : getTeams()){
+			rmTeam.clearPlayers();
+		}
+	}
+	
+	public void warpPlayersToSafety(){
+		for(RMTeam rmt : getTeams()){
+			for(RMPlayer rmp : rmt.getPlayers()){
+				rmp.warpToSafety();
+			}
+		}
 	}
 
 	//Sign info
@@ -283,13 +433,16 @@ public class RMGame {
 		RMTeam rmTeam = getTeamByBlock(b);
 		RMPlayer rmPlayer = rmTeam.getPlayer(rmp.getName());
 		if((rmTeam!=null)&&(rmPlayer!=null)){
-			updateGameplayInfo(rmp);
+			updateGameplayInfo(rmp, rmTeam);
 			updateSigns();
+		}
+		else if(rmTeam!=rmp.getTeam()){
+			updateGameplayInfo(rmp, rmTeam);
 		}
 	}
 	
-	public void updateGameplayInfo(RMPlayer rmp){
-		RMTeam rmTeam = rmp.getTeam();
+	public void updateGameplayInfo(RMPlayer rmp, RMTeam rmTeam){
+		//RMTeam rmTeam = rmp.getTeam();
 		String strItems = "";
 		RMChest rmChest = rmTeam.getChest();
 		
@@ -508,7 +661,7 @@ public class RMGame {
 					broadcastMessage(rmp.getTeam().getTeamColorString()+ChatColor.WHITE+" team has "+ChatColor.YELLOW+rmChest.getItemsLeftInt()+ChatColor.WHITE+" item(s) ("+ChatColor.YELLOW+rmChest.getTotalLeft()+ChatColor.WHITE+" total) left.",rmp);
 				}
 			}
-			else updateGameplayInfo(rmp);
+			else updateGameplayInfo(rmp, rmTeam);
 		}
 		updateSigns();
 	}
@@ -602,6 +755,11 @@ public class RMGame {
 			case GAMEPLAY:
 				switch(mat){
 				case CHEST:
+					RMTeam rmTeam = getTeamByBlock(b);
+					if((rmTeam!=null)&&(rmp.getTeam()!=rmTeam)){
+						trySignGameplayInfo(rmTeam.getChest().getChest().getBlock(), rmp);
+						break;
+					}
 					tryAddFoundItems(b, rmp);
 					setWinningTeam(findWinningTeam());
 					gameOver();
@@ -625,149 +783,6 @@ public class RMGame {
 				case WOOL:
 					break;
 				}
-		}
-	}
-	
-	public boolean hasMinimumPlayers(){
-		int teams = 0;
-		for(RMTeam rmTeam : getTeams()){
-			if(rmTeam.getPlayers().length>0){
-				teams++;
-			}
-		}
-		if(teams>1) return true;
-		else return false;
-	}
-	
-	public RMTeam findWinningTeam(){
-		for(RMChest rmChest : getChests()){
-			if(rmChest.getItemsLeftInt()==0){
-				return rmChest.getTeam();
-			}
-		}
-		return null;
-	}
-	
-	public RMTeam findLeadingTeam(){
-		List<RMTeam> rmTeams = getTeams();
-		int total = -1;
-		RMTeam leadingTeam = null;
-		for(RMTeam rmt : rmTeams){
-			int totalLeft = rmt.getChest().getTotalLeft();
-			if((total==-1)||(total<totalLeft)){
-				total = totalLeft;
-				leadingTeam = rmt;
-			}
-			
-		}
-		return leadingTeam;
-	}
-	
-	public void gameOver(){
-		RMTeam rmTeam = getWinningTeam();
-		if(rmTeam!=null){
-			setState(RMState.GAMEOVER);
-			broadcastMessage(rmTeam.getTeamColorString()+ChatColor.WHITE+" team has won the match!");
-			for(RMTeam rmt : getTeams()){
-				if(rmt!=rmTeam){
-					for(RMPlayer rmPlayer : rmt.getPlayers()){
-						rmPlayer.getStats().addLosses();
-						rmPlayer.getStats().addTimesPlayed();
-						_config.getGameStats().addLosses();
-						_config.getGameStats().addTimesPlayed();
-						RMStats.addServerLosses();
-						RMStats.addServerTimesPlayed();
-					}
-				}
-			}
-			for(RMPlayer rmPlayer : rmTeam.getPlayers()){
-				rmPlayer.getStats().addWins();
-				rmPlayer.getStats().addTimesPlayed();
-				_config.getGameStats().addWins();
-				_config.getGameStats().addTimesPlayed();
-				RMStats.addServerWins();
-				RMStats.addServerTimesPlayed();
-			}
-			//setWinPlayer(rmp);
-			update();
-		}
-	}
-	
-	//UPDATE
-	public void update(){
-		switch(getState()){
-		case SETUP:
-			break;
-		case COUNTDOWN:
-			//cdTimer = 0; //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			if(cdTimer%10==0){
-				if(cdTimer!=0){
-					broadcastMessage(""+cdTimer/10);
-					updateSigns(""+cdTimer/10);
-				}
-			}
-			if(cdTimer>0){
-				cdTimer-=10;
-			}
-			else{
-				broadcastMessage("LET THE RESOURCE MADNESS BEGIN!");
-				cdTimer = cdTimerLimit;
-				setState(RMState.GAMEPLAY);
-				for(RMTeam rmt : getTeams()){
-					for(RMPlayer rmp : rmt.getPlayers()){
-						updateGameplayInfo(rmp);
-					}
-				}
-				snatchInventories();
-				warpPlayersToSafety();
-				updateSigns();
-			}
-			break;
-		case GAMEPLAY:
-			break;
-		case GAMEOVER:
-			initGameOver();
-			break;
-		}
-	}
-	
-	public void snatchInventories(){
-		for(RMTeam rmt : getTeams()){
-			for(RMPlayer rmp : rmt.getPlayers()){
-				if(rmp.getPlayer()!=null){
-					Inventory inv = rmp.getPlayer().getInventory();
-					rmp.clearInventoryContents();
-					rmp.addContentsToInventory(inv.getContents());
-					inv.clear();
-				}
-			}
-		}
-	}
-	
-	public void returnInventories(){
-		for(RMTeam rmt : getTeams()){
-			for(RMPlayer rmp : rmt.getPlayers()){
-				if(rmp.getPlayer()!=null){
-					Inventory inv = rmp.getPlayer().getInventory();
-					inv.clear();
-					inv.setContents(rmp.getContentsFromInventory());
-					rmp.clearInventoryContents();
-				}
-			}
-		}
-	}
-	
-	public void clearTeamPlayers(){
-		for(RMTeam rmTeam : getTeams()){
-			rmTeam.clearPlayers();
-		}
-	}
-	
-	public void warpPlayersToSafety(){
-		for(RMTeam rmt : getTeams()){
-			for(RMPlayer rmp : rmt.getPlayers()){
-				rmp.warpToSafety();
-			}
 		}
 	}
 

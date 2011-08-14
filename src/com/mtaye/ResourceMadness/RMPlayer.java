@@ -5,7 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -43,18 +45,66 @@ public class RMPlayer {
 	private List<ItemStack> _inventory = new ArrayList<ItemStack>();
 	private boolean _isOnline = false;
 	
+	public ItemStack[] getInventoryContents(){
+		return _inventory.toArray(new ItemStack[_inventory.size()]);
+	}
 	public void clearInventoryContents(){
 		_inventory.clear();
 	}
 	
-	public void addContentsToInventory(ItemStack[] items){
-		for(ItemStack item : items){
-			_inventory.add(item);
+	public void addContentsToInventory(){
+		if(getPlayer()!=null){
+			Inventory inv = getPlayer().getInventory();
+			//clearInventoryContents();
+			for(ItemStack item : inv.getContents()){
+				if((item!=null)&&(item.getType()!=Material.AIR)){
+					_inventory.add(item);
+				}
+			}
+			inv.clear();
 		}
 	}
 	
-	public ItemStack[] getContentsFromInventory(){
-		return _inventory.toArray(new ItemStack[_inventory.size()]);
+	public void addContentsToInventory(ItemStack[] items){
+		//clearInventoryContents();
+		for(ItemStack item : items){
+			if((item!=null)&&(item.getType()!=Material.AIR)){
+				_inventory.add(item);
+			}
+		}
+	}
+	
+	public void returnContentsFromInventory(){
+		if(_inventory.size()==0){
+			sendMessage("No items to return.");
+			return;
+		}
+		if(getPlayer()!=null){
+			Inventory inv = getPlayer().getInventory();
+			if(inv.firstEmpty()==-1){
+				sendMessage("Your inventory is full. Cannot return items.");
+				return;
+			}
+			List<ItemStack> removeItems = new ArrayList<ItemStack>();
+			for(int i=0; i<_inventory.size(); i++){
+				if(inv.firstEmpty()!=-1){
+					ItemStack item = _inventory.get(i);
+					if((item!=null)&&(item.getType()!=Material.AIR)){
+						inv.addItem(item);
+						//removeItems.add(item);
+						removeItems.add(item);
+					}
+				}
+				else break;
+			}
+			for(ItemStack item : removeItems){
+				_inventory.remove(item);
+			}
+			//inv.clear();
+			//clearInventoryContents();
+			if(_inventory.size()>0)	sendMessage("Inventory is full. "+ChatColor.YELLOW+_inventory.size()+ChatColor.WHITE+" item(s) remaining.");
+			else sendMessage("All items were returned. Check your inventory.");
+		}
 	}
 	
 	public RMStats getStats(){
@@ -79,11 +129,12 @@ public class RMPlayer {
 	private PlayerAction _playerAction = PlayerAction.NONE;
 	
 	//Constructor
-	private RMPlayer(String player){
+	public RMPlayer(String player){
 		setPlayer(player);
 		setPlayerAction(PlayerAction.NONE);
+		_players.put(_name, this);
 	}
-	private RMPlayer(String player, PlayerAction playerAction){
+	public RMPlayer(String player, PlayerAction playerAction){
 		setPlayerAction(playerAction);
 		setPlayer(player);
 	}
