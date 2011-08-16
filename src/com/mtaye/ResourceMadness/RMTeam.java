@@ -12,7 +12,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
 
-import com.mtaye.ResourceMadness.RMGame.RMState;
+import com.mtaye.ResourceMadness.RMGame.GameState;
 
 /**
  * ResourceMadness for Bukkit
@@ -100,7 +100,7 @@ public class RMTeam {
 				}
 			}
 		}
-		if((_game.getState() == RMState.GAMEPLAY)&&(!_game.getConfig().getAllowMidgameJoin())){
+		if((_game.getConfig().getState() == GameState.GAMEPLAY)&&(!_game.getConfig().getAllowMidgameJoin())){
 			rmp.sendMessage("You can't join a game while it's running.");
 			return;
 		}

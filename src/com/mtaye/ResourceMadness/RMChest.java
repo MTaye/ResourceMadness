@@ -113,6 +113,9 @@ public class RMChest{
 	public HashMap<Integer, RMItem> getItems(){
 		return _items;//_itemsToFind;
 	}
+	public void setItems(HashMap<Integer, RMItem> items){
+		_items = items;
+	}
 	public int getItemsTotal(){
 		int total = 0;
 		for(RMItem rmItem : _items.values()){

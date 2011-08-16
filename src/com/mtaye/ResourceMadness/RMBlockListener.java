@@ -45,7 +45,7 @@ public class RMBlockListener extends BlockListener{
 			}
 			for(RMGame rmGame : RMGame.getGames()){
 				if(rmGame!=null){
-					switch(rmGame.getState()){
+					switch(rmGame.getConfig().getState()){
 					case SETUP:
 						break;
 					case COUNTDOWN: case GAMEPLAY: case GAMEOVER:
@@ -63,7 +63,7 @@ public class RMBlockListener extends BlockListener{
 		if(RMGame.getGames().size()!=0){
 			for(RMGame rmGame : RMGame.getGames()){
 				if(rmGame!=null){
-					switch(rmGame.getState()){
+					switch(rmGame.getConfig().getState()){
 					case SETUP:
 						break;
 					case COUNTDOWN: case GAMEPLAY: case GAMEOVER:

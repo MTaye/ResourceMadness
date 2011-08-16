@@ -38,7 +38,7 @@ public class RMPlayerListener extends PlayerListener{
 					if(b.getType() == Material.CHEST){
 						RMGame rmGame = RMGame.getGameByBlock(b);
 						if(rmGame!=null){
-							switch(rmGame.getState()){
+							switch(rmGame.getConfig().getState()){
 								case SETUP:
 									if(!rmp.getName().equalsIgnoreCase(rmGame.getConfig().getOwnerName())){
 										e.setCancelled(true);
@@ -88,10 +88,12 @@ public class RMPlayerListener extends PlayerListener{
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.sendInfo(rmp);
 								break;
+								/*
 							case SAVE_TEMPLATE:
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.saveTemplate();
 								break;
+								*/
 							case JOIN:
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.joinTeamByBlock(b, rmp, true);
@@ -104,7 +106,7 @@ public class RMPlayerListener extends PlayerListener{
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.startGame(rmp);
 								break;
-							case START_RANDOMIZE:
+							case START_RANDOM:
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null){
 									rmGame.setRandomizeAmount(rmp, rmp.getRequestInt());
@@ -123,49 +125,49 @@ public class RMPlayerListener extends PlayerListener{
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.tryParseFilter(rmp);
 								break;
-							case MAX_PLAYERS:
-								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null) rmGame.setMaxPlayers(rmp, rmp.getRequestInt());
-								break;
-							case MAX_TEAM_PLAYERS:
-								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null) rmGame.setMaxTeamPlayers(rmp, rmp.getRequestInt());
-								break;
-							case MAX_ITEMS:
-								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null) rmGame.setMaxItems(rmp, rmp.getRequestInt());
-								break;
-							case AUTO_RANDOMIZE_ITEMS:
-								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null) rmGame.setAutoRandomizeAmount(rmp, rmp.getRequestInt());
-								break;
-							case RESTORE_WORLD:
+							case RESTORE:
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.restoreWorld(rmp);
 								break;
-							case AUTO_RESTORE_WORLD:
+							case SET_MAX_PLAYERS:
 								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null) rmGame.toggleAutoRestoreWorld(rmp);
+								if(rmGame!=null) rmGame.setMaxPlayers(rmp, rmp.getRequestInt());
 								break;
-							case WARN_HACKED_ITEMS:
+							case SET_MAX_TEAM_PLAYERS:
 								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null) rmGame.toggleWarnHackedItems(rmp);
+								if(rmGame!=null) rmGame.setMaxTeamPlayers(rmp, rmp.getRequestInt());
 								break;
-							case ALLOW_HACKED_ITEMS:
+							case SET_MAX_ITEMS:
 								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null) rmGame.toggleAllowHackedItems(rmp);
+								if(rmGame!=null) rmGame.setMaxItems(rmp, rmp.getRequestInt());
 								break;
-							case ALLOW_PLAYER_LEAVE:
+							case SET_RANDOM:
 								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null) rmGame.toggleAllowPlayerLeave(rmp);
+								if(rmGame!=null) rmGame.setAutoRandomizeAmount(rmp, rmp.getRequestInt());
 								break;
-							case CLEAR_PLAYER_INVENTORY:
+							case SET_RESTORE:
 								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null) rmGame.toggleClearPlayerInventory(rmp);
+								if(rmGame!=null) rmGame.setAutoRestoreWorld(rmp, rmp.getRequestInt());
 								break;
-							case ALLOW_MIDGAME_JOIN:
+							case SET_WARN_HACKED:
 								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null) rmGame.toggleAllowMidgameJoin(rmp);
+								if(rmGame!=null) rmGame.setWarnHackedItems(rmp, rmp.getRequestInt());
+								break;
+							case SET_ALLOW_HACKED:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.setAllowHackedItems(rmp, rmp.getRequestInt());
+								break;
+							case SET_KEEP_INGAME:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.setKeepIngame(rmp, rmp.getRequestInt());
+								break;
+							case SET_CLEAR_INVENTORY:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.setClearPlayerInventory(rmp, rmp.getRequestInt());
+								break;
+							case SET_MIDGAME_JOIN:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.setAllowMidgameJoin(rmp, rmp.getRequestInt());
 								break;
 							}
 							rmp.setPlayerAction(PlayerAction.NONE);
