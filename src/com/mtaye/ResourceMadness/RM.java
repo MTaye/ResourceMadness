@@ -283,6 +283,7 @@ public class RM extends JavaPlugin {
 						RMGameConfig config = rmGame.getConfig();
 						line += encodeLogToString(config.getLog());
 						bw.write(line);
+						bw.write("\n");
 					}
 					break;
 			}
