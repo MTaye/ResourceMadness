@@ -279,7 +279,6 @@ public class RM extends JavaPlugin {
 				case LOG:
 					for(RMGame rmGame : RMGame.getGames()){
 						line = "";
-						bw.write("\n");
 						//Log
 						RMGameConfig config = rmGame.getConfig();
 						line += encodeLogToString(config.getLog());
