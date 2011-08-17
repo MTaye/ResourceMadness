@@ -3,6 +3,7 @@ package com.mtaye.ResourceMadness;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.bukkit.Material;
 import org.bukkit.block.Chest;
@@ -20,7 +21,7 @@ public class RMChest{
 	private HashMap<Integer, RMItem> _items = new HashMap<Integer, RMItem>();
 	private RMTeam _team;
 	private List<ItemStack> _inventory = new ArrayList<ItemStack>();
-	
+		
 	public void clearInventoryContents(){
 		_inventory.clear();
 	}
@@ -34,11 +35,23 @@ public class RMChest{
 		inv.clear();
 	}
 	
+	public void setInventory(List<ItemStack> inventory){
+		_inventory = inventory;
+	}
+	
+	public ItemStack[] getInventory(){
+		return _inventory.toArray(new ItemStack[_inventory.size()]);
+	}
+	
 	public void returnContentsFromInventory(){
-		Inventory inv =_chest.getInventory();
-		inv.clear();
-		inv.setContents(_inventory.toArray(new ItemStack[_inventory.size()]));
-		_inventory.clear();
+		if(_inventory!=null){
+			if(_inventory.size()>0){
+				Inventory inv =_chest.getInventory();
+				inv.clear();
+				inv.setContents(_inventory.toArray(new ItemStack[inv.getContents().length]));
+				_inventory.clear();
+			}
+		}
 	}
 	
 	public RMChest(Chest chest, RM plugin){
@@ -111,7 +124,7 @@ public class RMChest{
 		return -1;
 	}
 	public HashMap<Integer, RMItem> getItems(){
-		return _items;//_itemsToFind;
+		return _items;
 	}
 	public void setItems(HashMap<Integer, RMItem> items){
 		_items = items;

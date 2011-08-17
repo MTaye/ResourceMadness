@@ -1,7 +1,6 @@
 package com.mtaye.ResourceMadness;
 
 import java.util.HashMap;
-import java.util.List;
 
 import com.mtaye.ResourceMadness.RMGame.FilterType;
 import com.mtaye.ResourceMadness.RMGame.ForceState;

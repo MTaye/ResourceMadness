@@ -2,22 +2,16 @@ package com.mtaye.ResourceMadness;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 
-import java.util.Hashtable;
-
 import org.bukkit.DyeColor;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.ChatColor;
@@ -41,19 +35,14 @@ public class RMGame {
 		Material.DIODE_BLOCK_OFF, Material.DIODE_BLOCK_ON, Material.LOCKED_CHEST, Material.CHAINMAIL_HELMET, Material.CHAINMAIL_CHESTPLATE,
 		Material.CHAINMAIL_LEGGINGS, Material.CHAINMAIL_BOOTS};
 	
-	private RMLog _log = new RMLog();
 	private List<Material> _lastHackMaterials = new ArrayList<Material>();
 	
 	private RMGameConfig _config = new RMGameConfig();
-	private HashMap<Location, RMBlock> _logBlockList = new HashMap<Location, RMBlock>();
-	private HashMap<Location, RMBlock> _logBlockItemList = new HashMap<Location, RMBlock>();
 	
 	//private HashMap<String, RMPlayer> _players = new HashMap<String, RMPlayer>();
 	//private Inventory _inventory;
 	
-	private RMFilter _items = new RMFilter();
 	private static RMPlayer _requestPlayer;
-	private int _menuItems = 0;
 	
 	private enum Part { GLASS, STONE, CHEST, WALL_SIGN, WOOL; }
 	public enum GameState { SETUP, COUNTDOWN, GAMEPLAY, GAMEOVER; }
@@ -112,7 +101,7 @@ public class RMGame {
 	}
 	
 	public RMFilter getItems(){
-		return _items;
+		return _config.getItems();
 	}
 	
 	public void stashChestsContents(){
@@ -131,10 +120,10 @@ public class RMGame {
 			for(RMChest rmChest : getChests()){
 				rmChest.clearItems();
 			}
-			_items.populateByFilter(_config.getFilter());
-			if(_config.getRandomizeAmount()>0) _items.randomize(_config.getRandomizeAmount());
-			else _items.randomize(_config.getRandomizeAmount());
-			if(_items.size()>0){
+			_config.getItems().populateByFilter(_config.getFilter());
+			if(_config.getRandomizeAmount()>0) _config.getItems().randomize(_config.getRandomizeAmount());
+			else _config.getItems().randomize(_config.getRandomizeAmount());
+			if(_config.getItems().size()>0){
 				/*
 				for(RMTeam rmTeam : _config.getTeams()){
 					if(rmTeam.getPlayers().length==0){
@@ -441,13 +430,13 @@ public class RMGame {
 		RMChest rmChest = rmTeam.getChest();
 		
 		//Sort
-		Integer[] array = _items.keySet().toArray(new Integer[_items.keySet().size()]);
+		Integer[] array = _config.getItems().keySet().toArray(new Integer[_config.getItems().keySet().size()]);
 		Arrays.sort(array);
 		
 		HashMap<Integer, RMItem> items = rmChest.getItems();
 		
 		for(Integer i : array){
-			RMItem rmItem = _items.getItem(i);
+			RMItem rmItem = _config.getItems().getItem(i);
 			int amount = rmItem.getAmount();
 			if(items.containsKey(i)) amount -= items.get(i).getAmount();
 			if(amount>0) strItems += ChatColor.WHITE+""+Material.getMaterial(i)+includeItem(new RMItem(i, amount))+ChatColor.WHITE+", ";
@@ -614,13 +603,13 @@ public class RMGame {
 			HashMap<Integer, RMItem> returned = new HashMap<Integer, RMItem>();
 			int totalFound = 0;
 			Inventory inv = rmChest.getChest().getInventory();
-			returned = _items.cloneItems(-1);
+			returned = _config.getItems().cloneItems(-1);
 			for(int i=0; i<inv.getSize(); i++){
 				ItemStack item = inv.getItem(i);
 				int id = item.getTypeId();
 				if(item!=null){
 					if(item.getType()!=Material.AIR){
-						if(_items.containsKey(id)){
+						if(_config.getItems().containsKey(id)){
 							int overflow = 0;
 							overflow = rmChest.addItem(item);
 							if(overflow!=item.getAmount()){
@@ -915,7 +904,6 @@ public class RMGame {
 			if(rmGame.getConfig().getState() == GameState.SETUP){
 				if(rmp.getName().equalsIgnoreCase(rmGame._config.getOwnerName())){
 					if((isMaterial(b.getType(), Material.CHEST, Material.WALL_SIGN, Material.WOOL))&&(!justRemove)){
-						List<List<Block>> blockList = rmGame._config.getPartList().getBlockList();
 						List<Block> blocks = rmGame._config.getPartList().getList();
 						//plugin.getServer().broadcastMessage("JUSTREMOVE");
 						for(Block block : blocks){
@@ -1433,7 +1421,7 @@ public class RMGame {
 			}
 			else{
 				if(rmChest.getItems().containsKey(item)) amount = rmChest.getItemLeft(item).getAmount();
-				else amount = _items.getItem(item).getAmount();
+				else amount = _config.getItems().getItem(item).getAmount();
 				if(amount!=0) line+=ChatColor.WHITE+Material.getMaterial(item).name()+includeItem(new RMItem(item, amount))+ChatColor.WHITE+", ";
 			}
 		}
@@ -1573,22 +1561,21 @@ public class RMGame {
 		for(Integer i : array){
 			newItems.add(new ItemStack(Material.getMaterial(i), hash.get(i)));
 		}
-		RMStats temp = new RMStats();
 		return newItems;
 	}
 	
 	//LOG WORLD
 	public void addLog(BlockState bState){
-		_log.add(bState);
+		_config.getLog().add(bState);
 	}
 	
 	//Clear Log
 	public void clearLog(){
-		_log.clear();
+		_config.getLog().clear();
 	}
 	
 	public void restoreLog(){
-		if(_log.restore()) broadcastMessage("World restored.");
+		if(_config.getLog().restore()) broadcastMessage("World restored.");
 	}
 	
 	//Restore World

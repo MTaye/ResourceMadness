@@ -163,13 +163,13 @@ public class RMPlayer {
 	
 	//Constructor
 	public RMPlayer(String player){
-		setPlayer(player);
-		setPlayerAction(PlayerAction.NONE);
-		_players.put(_name, this);
+		_name = player;
+		_playerAction = PlayerAction.NONE;
+		_players.put(player, this);
 	}
 	public RMPlayer(String player, PlayerAction playerAction){
-		setPlayerAction(playerAction);
-		setPlayer(player);
+		_name = player;
+		_playerAction = PlayerAction.NONE;
 	}
 	
 	public void setRequestFilter(HashMap<Integer, RMItem> items, FilterType type, ForceState force, int randomize){
@@ -212,7 +212,6 @@ public class RMPlayer {
 				return rmp;
 			}
 		}
-		plugin.log.log(Level.WARNING,"Player "+name+" doesn't exist.");
 		return null;
 	}
 	

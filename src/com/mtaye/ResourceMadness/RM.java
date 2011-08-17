@@ -2,9 +2,7 @@ package com.mtaye.ResourceMadness;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStreamWriter;
 
 import org.bukkit.ChatColor;
@@ -12,6 +10,7 @@ import org.bukkit.ChatColor;
 import java.util.HashMap;
 import org.bukkit.entity.Player;
 import org.bukkit.DyeColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.event.Event.Priority;
@@ -41,6 +40,7 @@ import com.mtaye.ResourceMadness.RMPlayer.ClaimType;
 import com.mtaye.ResourceMadness.RMPlayer.PlayerAction;
 import com.nijikokun.bukkit.Permissions.Permissions;
 import com.nijiko.permissions.PermissionHandler;
+import com.ning.compress.lzf.LZFOutputStream;
 
 /**
  * ResourceMadness for Bukkit
@@ -59,12 +59,13 @@ public class RM extends JavaPlugin {
 
 	private RMBlockListener blockListener = new RMBlockListener(this);
 	private RMPlayerListener playerListener = new RMPlayerListener(this);
+	private RMLogListener logListener = new RMLogListener(this);
 	
 	private RMWatcher watcher;
 	private int watcherid;
 	//private RMInventoryListener inventoryListener = new RMPlayerListener(this);
 	
-	public enum DataType { CONFIG, STATS, PLAYER, GAME };
+	public enum DataType { CONFIG, STATS, PLAYER, GAME, LOG };
 	
 	public RM(){
 		RMPlayer.plugin = this;
@@ -84,6 +85,7 @@ public class RM extends JavaPlugin {
 		pm.registerEvent(Type.PLAYER_QUIT, playerListener, Priority.Normal, this);
 		pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Normal, this);
 		pm.registerEvent(Type.BLOCK_PLACE, blockListener, Priority.Normal, this);
+		pm.registerEvent(Type.CUSTOM_EVENT, logListener, Priority.Normal, this);
 
 		pdfFile = this.getDescription();
 		log.log(Level.INFO, pdfFile.getName() + " v" + pdfFile.getVersion() + " enabled!" );
@@ -109,6 +111,46 @@ public class RM extends JavaPlugin {
 		save(DataType.STATS);
 		save(DataType.PLAYER);
 		save(DataType.GAME);
+		save(DataType.LOG);
+		//saveLZF(DataType.LOG);
+	}
+	
+	public void saveLZF(DataType dataType){
+		File folder = getDataFolder();
+		File file = new File(folder.getAbsolutePath()+"/gamelog.txt");
+		if(!file.exists()){
+			try{
+				file.createNewFile();
+			}
+			catch(Exception e){
+				e.printStackTrace();
+				return;
+			}
+		}
+		try{
+			OutputStream output = new LZFOutputStream(new FileOutputStream(file.getAbsoluteFile()));
+			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(output));
+			String line = "";
+			
+			bw.write("[Resource Madness v"+pdfFile.getVersion()+" Game Data]");
+			for(RMGame rmGame : RMGame.getGames()){
+				RMGameConfig config = rmGame.getConfig();
+				line = "";
+				bw.write("\n");
+				//Game
+				//Log
+				//line += encodeLogToString(config.getLog());
+				for(int i=0; i<100; i++){
+					bw.write(line);
+				}
+			}
+			bw.flush();
+			output.close();
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		
 	}
 	
 	//Save Data
@@ -120,6 +162,7 @@ public class RM extends JavaPlugin {
 			case STATS: file = new File(folder.getAbsolutePath()+"/stats.txt"); break;
 			case PLAYER: file = new File(folder.getAbsolutePath()+"/playerdata.txt"); break;
 			case GAME: file = new File(folder.getAbsolutePath()+"/gamedata.txt"); break;
+			case LOG: file = new File(folder.getAbsolutePath()+"/gamelogdata.txt"); break;
 		}
 		if(file==null){
 			log.log(Level.WARNING, "Cannot load data. Data type unknown!");
@@ -131,6 +174,7 @@ public class RM extends JavaPlugin {
 				case STATS: log.log(Level.INFO, "Stats file not found! Creating one..."); break;
 				case PLAYER: log.log(Level.INFO, "Player Data file not found! Creating one..."); break;
 				case GAME: log.log(Level.INFO, "Game Data file not found! Creating one..."); break;
+				case LOG: log.log(Level.INFO, "Game Data file not found! Creating one..."); break;
 			}
 			try{
 				file.createNewFile();
@@ -155,7 +199,7 @@ public class RM extends JavaPlugin {
 					//Stats
 					line = "";
 					bw.write("\n");
-					line += RMStats.getServerWins()+","+RMStats.getServerLosses()+","+RMStats.getServerTimesPlayed()+","+RMStats.getServerItemsFound()+","+RMStats.getServerItemsFoundTotal()+";";
+					line += RMStats.getServerWins()+","+RMStats.getServerLosses()+","+RMStats.getServerTimesPlayed()+","+/*RMStats.getServerItemsFound()+","+*/RMStats.getServerItemsFoundTotal()+";";
 					bw.write(line);
 					break;
 				case PLAYER:
@@ -166,7 +210,7 @@ public class RM extends JavaPlugin {
 						line = rmp.getName()+";";
 						//Stats
 						RMStats stats = rmp.getStats();
-						line += stats.getWins()+","+stats.getLosses()+","+stats.getTimesPlayed()+","+stats.getItemsFound()+","+stats.getItemsFoundTotal()+";";
+						line += stats.getWins()+","+stats.getLosses()+","+stats.getTimesPlayed()+","+/*stats.getItemsFound()+","+*/stats.getItemsFoundTotal()+";";
 						//Inventory items
 						
 						line += encodeInventoryToString(rmp.getItems(), ClaimType.ITEMS) + ";";
@@ -196,11 +240,12 @@ public class RM extends JavaPlugin {
 						line += config.getWarnHackedItems()+",";
 						line += config.getAllowHackedItems()+",";
 						line += config.getKeepIngame()+",";
+						line += config.getAllowMidgameJoin()+",";
 						line += config.getClearPlayerInventory();
 						line += ";";
 						//Stats
 						RMStats stats = config.getGameStats();
-						line += stats.getWins()+","+stats.getLosses()+","+stats.getTimesPlayed()+","+stats.getItemsFound()+","+stats.getItemsFoundTotal()+";";
+						line += stats.getWins()+","+stats.getLosses()+","+stats.getTimesPlayed()+","+/*stats.getItemsFound()+","+*/stats.getItemsFoundTotal()+";";
 						//Players
 						for(RMTeam rmt : config.getTeams()){
 							line+=rmt.getTeamColor().name()+":";
@@ -217,13 +262,26 @@ public class RM extends JavaPlugin {
 						line += encodeFilterToString(config.getFilter().getItems(), FilterState.FILTER)+";";
 						//Game items
 						line += encodeFilterToString(config.getItems().getItems(), FilterState.ITEMS)+";";
+						//Chest items
+						for(RMTeam rmt : config.getTeams()){
+							line += encodeInventoryToString(rmt.getChest().getInventory(), ClaimType.ITEMS)+".";
+						}
+						line = stripLast(line, ".");
+						line += ";";
 						//Team items
 						for(RMTeam rmt : config.getTeams()){
 							line += encodeFilterToString(rmt.getChest().getItems(), FilterState.ITEMS)+".";
 						}
 						line = stripLast(line, ".");
+						bw.write(line);
+					}
+					break;
+				case LOG:
+					for(RMGame rmGame : RMGame.getGames()){
+						line = "";
 						//Log
-						//line += encodeLogToString(config.getLog());
+						RMGameConfig config = rmGame.getConfig();
+						line += encodeLogToString(config.getLog());
 						bw.write(line);
 					}
 					break;
@@ -234,6 +292,59 @@ public class RM extends JavaPlugin {
 		catch(Exception e){
 			e.printStackTrace();
 		}
+	}
+	public String encodeLogListToString(HashMap<Location, RMBlock> logList){
+		String line = "";
+		if(logList.size()==0) return "LOG";
+		
+		HashMap<String, HashMap<Integer, HashMap<Integer, List<String>>>> worldList = new HashMap<String, HashMap<Integer, HashMap<Integer, List<String>>>>();
+		
+		for(Location loc : logList.keySet()){
+			RMBlock rmBlock = logList.get(loc);
+			String world = loc.getWorld().getName();
+			int id = rmBlock.getType().getId();
+			int data = rmBlock.getData();
+			String pos = loc.getBlockX()+","+loc.getBlockY()+","+loc.getBlockZ();
+			if(!worldList.containsKey(world)) worldList.put(world, new HashMap<Integer, HashMap<Integer, List<String>>>());
+			
+			HashMap<Integer, HashMap<Integer, List<String>>> idList = worldList.get(world);
+			if(!idList.containsKey(id)) idList.put(id, new HashMap<Integer, List<String>>());
+				
+			HashMap<Integer, List<String>> dataList = idList.get(id);
+			if(!dataList.containsKey(data)) dataList.put(data, new ArrayList<String>());
+				
+			List<String> posList = dataList.get(data);
+			if(!posList.contains(pos)) posList.add(pos);
+		}
+		
+		for(String world : worldList.keySet()){
+			line+=world;
+			//ID
+			HashMap<Integer, HashMap<Integer, List<String>>> idList = worldList.get(world);
+			for(Integer id : idList.keySet()){
+				line+=":"+id;
+				//DATA
+				HashMap<Integer, List<String>> dataList = idList.get(id);
+				for(Integer data : dataList.keySet()){
+					line+="."+data;
+					//POS
+					List<String> posList = dataList.get(data);
+					for(String pos : posList){
+						line+=","+pos;
+					}
+				}
+			}
+			line+=" ";
+		}
+		line = stripLast(line, " ");
+		return line;
+	}
+	
+	public String encodeLogToString(RMLog log){
+		String line = "";
+		line += encodeLogListToString(log.getList())+";";
+		line += encodeLogListToString(log.getItemList());
+		return line;
 	}
 	
 	//Load All
@@ -247,6 +358,7 @@ public class RM extends JavaPlugin {
 		load(DataType.STATS);
 		load(DataType.PLAYER);
 		load(DataType.GAME);
+		load(DataType.LOG);
 	}
 	
 	public void load(DataType dataType){
@@ -257,6 +369,7 @@ public class RM extends JavaPlugin {
 			case STATS: file = new File(folder.getAbsolutePath()+"/stats.txt"); break;
 			case PLAYER: file = new File(folder.getAbsolutePath()+"/playerdata.txt"); break;
 			case GAME: file = new File(folder.getAbsolutePath()+"/gamedata.txt"); break;
+			case LOG: file = new File(folder.getAbsolutePath()+"/gamelogdata.txt"); break;
 		}
 		if(file==null){
 			log.log(Level.WARNING, "Cannot load data. Data type unknown!");
@@ -268,6 +381,7 @@ public class RM extends JavaPlugin {
 				input = new FileInputStream(file.getAbsoluteFile());
 				InputStreamReader isr = new InputStreamReader(input);
 				BufferedReader br = new BufferedReader(isr);
+				
 				String line;
 				while(true){
 					line = br.readLine();
@@ -282,14 +396,17 @@ public class RM extends JavaPlugin {
 							RMStats.setServerWins(getIntByString(args[0]));
 							RMStats.setServerLosses(getIntByString(args[1]));
 							RMStats.setServerTimesPlayed(getIntByString(args[2]));
-							RMStats.setServerItemsFound(getIntByString(args[3]));
-							RMStats.setServerItemsFoundTotal(getIntByString(args[4]));
+							//RMStats.setServerItemsFound(getIntByString(args[3]));
+							RMStats.setServerItemsFoundTotal(getIntByString(args[3]));
 							break;
 						case PLAYER:
 							parseLoadedPlayerData(line.split(";"));
 							break;
 						case GAME:
 							parseLoadedData(line.split(";"));
+							break;
+						case LOG:
+							parseLoadedLogData(line.split(";"));
 							break;
 					}
 				}
@@ -310,6 +427,53 @@ public class RM extends JavaPlugin {
 		}
 	}
 	
+	public HashMap<Location, RMBlock> getLogDataByString(String strArg){
+		HashMap<Location, RMBlock> hashLog = new HashMap<Location, RMBlock>();
+		String[] worldArgs = strArg.split(" ");
+		for(String worldArg : worldArgs){
+			String[] idArgs = worldArg.split(":"); 
+			World world = getServer().getWorld(idArgs[0]);
+			if(world!=null){
+				idArgs = Arrays.copyOfRange(idArgs, 1, idArgs.length);
+				for(String idArg : idArgs){
+					String[] dataArgs = idArg.split("\\.");
+					int id = getIntByString(dataArgs[0]);
+					if(id!=-1){
+						Material mat = Material.getMaterial(id);
+						if(mat!=null){
+							dataArgs = Arrays.copyOfRange(dataArgs, 1, dataArgs.length);
+							for(String dataArg : dataArgs){
+								String[] posArgs = dataArg.split(",");
+								byte data = getByteByString(posArgs[0]);
+								if(data!=-1){
+									posArgs = Arrays.copyOfRange(posArgs, 1, posArgs.length);
+									for(int i=0; i<posArgs.length-2; i+=3){
+										int xPos = getIntByString(posArgs[i]);
+										int yPos = getIntByString(posArgs[i+1]);
+										int zPos = getIntByString(posArgs[i+2]);
+										Block b = world.getBlockAt(xPos, yPos, zPos);
+										hashLog.put(b.getLocation(), new RMBlock(b, mat, data));
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return hashLog;
+	}
+	
+	public void parseLoadedLogData(String[] strArgs){
+		for(RMGame rmGame : RMGame.getGames()){
+			if(rmGame!=null){
+				RMGameConfig config = rmGame.getConfig();
+				if((strArgs[0].length()>0)&&(strArgs[0]!="LOG")) config.getLog().setList(getLogDataByString(strArgs[0]));
+				if((strArgs[1].length()>0)&&(strArgs[1]!="LOG")) config.getLog().setItemList(getLogDataByString(strArgs[1]));
+			}
+		}
+	}
+	
 	public void parseLoadedPlayerData(String[] strArgs){
 		//name
 		RMPlayer rmp = new RMPlayer(strArgs[0]);
@@ -321,8 +485,8 @@ public class RM extends JavaPlugin {
 		stats.setWins(getIntByString(args[0]));
 		stats.setLosses(getIntByString(args[1]));
 		stats.setTimesPlayed(getIntByString(args[2]));
-		stats.setItemsFound(getIntByString(args[3]));
-		stats.setItemsFoundTotal(getIntByString(args[4]));
+		//stats.setItemsFound(getIntByString(args[3]));
+		stats.setItemsFoundTotal(getIntByString(args[3]));
 		
 		//inventory items
 		if(!strArgs[2].equalsIgnoreCase("ITEMS")){
@@ -355,7 +519,7 @@ public class RM extends JavaPlugin {
 				else if(args.length==3){
 					Material mat = Material.getMaterial(id);
 					while(amount>mat.getMaxStackSize()){
-						ItemStack item = new ItemStack(mat, amount, durability);
+						ItemStack item = new ItemStack(mat, mat.getMaxStackSize(), durability);
 						items.add(item);
 						amount-=mat.getMaxStackSize();
 					}
@@ -394,6 +558,7 @@ public class RM extends JavaPlugin {
 		config.setWarnHackedItems(Boolean.parseBoolean(args[13]));
 		config.setAllowHackedItems(Boolean.parseBoolean(args[14]));
 		config.setKeepIngame(Boolean.parseBoolean(args[15]));
+		config.setAllowMidgameJoin(Boolean.parseBoolean(args[16]));
 
 		//wins,losses,timesPlayed,itemsFound,itemsFoundTotal
 		args = strArgs[1].split(",");
@@ -402,8 +567,8 @@ public class RM extends JavaPlugin {
 		gameStats.setWins(getIntByString(args[0]));
 		gameStats.setLosses(getIntByString(args[1]));
 		gameStats.setTimesPlayed(getIntByString(args[2]));
-		gameStats.setItemsFound(getIntByString(args[3]));
-		gameStats.setItemsFoundTotal(getIntByString(args[4]));
+		//gameStats.setItemsFound(getIntByString(args[3]));
+		gameStats.setItemsFoundTotal(getIntByString(args[3]));
 		
 		//team players
 		args = strArgs[2].split(" ");
@@ -419,13 +584,13 @@ public class RM extends JavaPlugin {
 					for(String player : players){
 						RMTeam rmTeam = config.getTeams().get(j);
 						if(rmTeam!=null){
-							rmTeam.addPlayer(RMPlayer.getPlayerByName(player));
+							rmTeam.addPlayerSilent(RMPlayer.getPlayerByName(player));
 						}
 					}
 				}
 			}
 		}
-	
+			
 		//filter items
 		if(!strArgs[3].equalsIgnoreCase("FILTER")){
 			HashMap<Integer, RMItem> rmItems = getRMItemsByStringArray(Arrays.asList(strArgs[3]), true);
@@ -434,53 +599,74 @@ public class RM extends JavaPlugin {
 		
 		//game items
 		if(!strArgs[4].equalsIgnoreCase("ITEMS")){
-			HashMap<Integer, RMItem> rmItems = getRMItemsByStringArray(Arrays.asList(strArgs[3]), true);
+			HashMap<Integer, RMItem> rmItems = getRMItemsByStringArray(Arrays.asList(strArgs[4]), true);
 			config.setItems(new RMFilter(rmItems));
 		}
 		
-		//team items
-		args = strArgs[5].split(".");
-		
+		//chest items
+		args = strArgs[5].split("\\.");
 		for(int j=0; j<args.length; j++){
 			if(!args[j].equalsIgnoreCase("ITEMS")){
-				HashMap<Integer, RMItem> rmItems = getRMItemsByStringArray(Arrays.asList(strArgs[3]), true);
-				config.getTeams().get(j).getChest().setItems(rmItems);
+				ItemStack[] items = getItemStackByStringArray(args[j]);
+				List<ItemStack> inventory = new ArrayList<ItemStack>();
+				for(ItemStack item : items){
+					inventory.add(item);
+				}
+				RMTeam rmTeam = config.getTeams().get(j);
+				if(rmTeam!=null){
+					rmTeam.getChest().setInventory(inventory);
+				}
+			}
+		}
+		
+		//team items
+		args = strArgs[6].split("\\.");
+		for(int j=0; j<args.length; j++){
+			if(!args[j].equalsIgnoreCase("ITEMS")){
+				HashMap<Integer, RMItem> rmItems = getRMItemsByStringArray(Arrays.asList(args[j]), true);
+				RMTeam rmTeam = config.getTeams().get(j);
+				if(rmTeam!=null){
+					rmTeam.getChest().setItems(rmItems);
+				}
 			}
 		}
 		RMGame.tryAddGameFromConfig(config);
 	}
 	
 	public String encodeInventoryToString(ItemStack[] items, ClaimType claimType){
-		if(items.length==0){
+		String line = "";
+		if((items!=null)&&(items.length>0)){
+			HashMap<String, ItemStack> hashItems = new HashMap<String, ItemStack>();
+			for(ItemStack item : items){
+				if(item!=null){
+					String idData = ""+item.getTypeId()+":"+item.getDurability();
+					if(item.getData()!=null) idData += ":"+Byte.toString(item.getData().getData());
+					if(hashItems.containsKey(idData)){
+						int amount = hashItems.get(idData).getAmount()+item.getAmount();
+						item.setAmount(amount);
+						hashItems.put(idData, item);
+					}
+					else hashItems.put(idData, item);
+				}
+			}
+			String[] array = hashItems.keySet().toArray(new String[hashItems.size()]);
+			Arrays.sort(array);
+			for(String idData : array){
+				//String[] splitItems = idData.split(":");
+				//int id = getIntByString(splitItems[0]);
+				ItemStack item = hashItems.get(idData);
+				line+=item.getTypeId()+":"+item.getAmount()+":"+item.getDurability();
+				if(item.getData()!=null) line+=":"+Byte.toString(item.getData().getData());
+				line+=",";
+			}
+		}
+		if(line.length()==0){
 			switch(claimType){
 				case ITEMS:
 					return "ITEMS";
 				case AWARD:
 					return "AWARD";
 			}
-		}
-		String line = "";
-		HashMap<String, ItemStack> hashItems = new HashMap<String, ItemStack>();
-		List<ItemStack> listItems = new ArrayList<ItemStack>();
-		for(ItemStack item : items){
-			String idData = ""+item.getTypeId()+":"+item.getDurability();
-			if(item.getData()!=null) idData += ":"+Byte.toString(item.getData().getData());
-			if(hashItems.containsKey(idData)){
-				int amount = hashItems.get(idData).getAmount()+item.getAmount();
-				item.setAmount(amount);
-				hashItems.put(idData, item);
-			}
-			else hashItems.put(idData, item);
-		}
-		String[] array = hashItems.keySet().toArray(new String[hashItems.size()]);
-		Arrays.sort(array);
-		for(String idData : array){
-			//String[] splitItems = idData.split(":");
-			//int id = getIntByString(splitItems[0]);
-			ItemStack item = hashItems.get(idData);
-			line+=item.getTypeId()+":"+item.getAmount()+":"+item.getDurability();
-			if(item.getData()!=null) line+=":"+Byte.toString(item.getData().getData());
-			line+=",";
 		}
 		line = stripLast(line,",");
 		return line;

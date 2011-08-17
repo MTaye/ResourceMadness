@@ -1,9 +1,5 @@
 package com.mtaye.ResourceMadness;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.logging.Level;
-
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
