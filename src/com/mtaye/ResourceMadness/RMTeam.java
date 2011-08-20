@@ -54,6 +54,7 @@ public class RMTeam {
 		BlockFace face = RMDir.getBlockFaceByData(b.getData());
 		face = RMDir.getBlockFaceOpposite(face);
 		Location loc = b.getRelative(face).getLocation();
+		loc = loc.add(0.5, -1, 0.5);
 		return loc;
 	}
 	public Location getWarpLocation(){
@@ -88,10 +89,18 @@ public class RMTeam {
 	//Player
 	public void addRemovePlayer(RMPlayer rmp){
 		if(!_players.containsKey(rmp.getName())){
+			if(!rmp.hasPermission("resourcemadness.join")){
+				rmp.sendMessage(RMText.noPermissionAction);
+				return;
+			}
 			addPlayer(rmp);
 			return;
 		}
 		else{
+			if(!rmp.hasPermission("resourcemadness.quit")){
+				rmp.sendMessage(RMText.noPermissionAction);
+				return;
+			}
 			removePlayer(rmp);
 			return;
 		}

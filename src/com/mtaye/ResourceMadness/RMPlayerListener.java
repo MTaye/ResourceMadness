@@ -8,6 +8,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 
 import com.mtaye.ResourceMadness.RMPlayer.PlayerAction;
 
@@ -56,6 +57,7 @@ public class RMPlayerListener extends PlayerListener{
 											e.setCancelled(true);
 										}
 									}
+									else e.setCancelled(true);
 									break;
 							}
 						}
@@ -92,7 +94,7 @@ public class RMPlayerListener extends PlayerListener{
 								*/
 							case JOIN:
 								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null) rmGame.joinTeamByBlock(b, rmp, true);
+								if(rmGame!=null) rmGame.joinTeamByBlock(b, rmp);
 								break;
 							case QUIT:
 								rmGame = RMGame.getGameByBlock(b);
@@ -141,6 +143,10 @@ public class RMPlayerListener extends PlayerListener{
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.setAutoRandomizeAmount(rmp, rmp.getRequestInt());
 								break;
+							case SET_WARP:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.setWarpToSafety(rmp, rmp.getRequestInt());
+								break;
 							case SET_RESTORE:
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.setAutoRestoreWorld(rmp, rmp.getRequestInt());
@@ -177,6 +183,10 @@ public class RMPlayerListener extends PlayerListener{
 						RMGame rmGame = RMGame.getGameByBlock(b);
 						if(rmGame!=null){
 							if(RMGame.isMaterial(b.getType(), RMGame.getMaterials())){
+								if(!rmp.hasPermission("resourcemadness")){
+									rmp.sendMessage(RMText.noPermissionAction);
+									return;
+								}
 								rmGame.handleLeftClick(b, rmp);
 							}
 						}
@@ -206,6 +216,17 @@ public class RMPlayerListener extends PlayerListener{
 		RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
 		if(rmp!=null){
 			rmp.onPlayerQuit();
+		}
+	}
+	
+	@Override
+	public void onPlayerRespawn(PlayerRespawnEvent e){
+		Player p = e.getPlayer();
+		RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
+		if(rmp!=null){
+			if(rmp.isIngame()){
+				e.setRespawnLocation(rmp.getTeam().getWarpLocation());
+			}
 		}
 	}
 }

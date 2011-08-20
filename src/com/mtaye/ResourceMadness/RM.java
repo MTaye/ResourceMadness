@@ -16,6 +16,7 @@ import org.bukkit.World;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.PluginManager;
@@ -29,17 +30,24 @@ import java.util.logging.Logger;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+
+import ru.tehkode.permissions.PermissionManager;
+import ru.tehkode.permissions.bukkit.PermissionsEx;
+
 import java.io.*;
 
+import org.bukkit.permissions.Permission;
+
+import com.mtaye.ResourceMadness.RMConfig.PermissionType;
 import com.mtaye.ResourceMadness.RMGame.FilterState;
 import com.mtaye.ResourceMadness.RMGame.FilterType;
 import com.mtaye.ResourceMadness.RMGame.GameState;
 import com.mtaye.ResourceMadness.RMGame.ForceState;
 import com.mtaye.ResourceMadness.RMGame.InterfaceState;
-import com.mtaye.ResourceMadness.RMPlayer.ClaimType;
 import com.mtaye.ResourceMadness.RMPlayer.PlayerAction;
 import com.nijikokun.bukkit.Permissions.Permissions;
 import com.nijiko.permissions.PermissionHandler;
+import com.ning.compress.lzf.LZFInputStream;
 import com.ning.compress.lzf.LZFOutputStream;
 
 /**
@@ -56,16 +64,21 @@ public class RM extends JavaPlugin {
 	private String ver = "0.1";
 	
 	public HashMap<Player, Boolean> players = new HashMap<Player, Boolean>();
+	public RMConfig config = new RMConfig();
 
 	private RMBlockListener blockListener = new RMBlockListener(this);
 	private RMPlayerListener playerListener = new RMPlayerListener(this);
-	private RMLogListener logListener = new RMLogListener(this);
+	//private RMLogListener logListener = new RMLogListener(this);
+	
+	public static enum ClaimType { ITEMS, AWARD, CHEST };
+	public static enum DataType { CONFIG, STATS, PLAYER, GAME, LOG };
 	
 	private RMWatcher watcher;
 	private int watcherid;
 	//private RMInventoryListener inventoryListener = new RMPlayerListener(this);
 	
-	public enum DataType { CONFIG, STATS, PLAYER, GAME, LOG };
+	public PermissionHandler permissions = null;
+	public PermissionManager permissionsEx = null;
 	
 	public RM(){
 		RMPlayer.plugin = this;
@@ -74,156 +87,254 @@ public class RM extends JavaPlugin {
 
 	public void onEnable(){
 		log = getServer().getLogger();
-		
-		watcher = new RMWatcher(this);
-		watcherid = getServer().getScheduler().scheduleSyncRepeatingTask(this, watcher, 25,25);
 	
 		//setupPermissions();
 		PluginManager pm = getServer().getPluginManager();
 		pm.registerEvent(Type.PLAYER_INTERACT, playerListener, Priority.Normal, this);
 		pm.registerEvent(Type.PLAYER_JOIN, playerListener, Priority.Normal, this);
 		pm.registerEvent(Type.PLAYER_QUIT, playerListener, Priority.Normal, this);
+		pm.registerEvent(Type.PLAYER_RESPAWN, playerListener, Priority.Normal, this);
 		pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Normal, this);
 		pm.registerEvent(Type.BLOCK_PLACE, blockListener, Priority.Normal, this);
-		pm.registerEvent(Type.CUSTOM_EVENT, logListener, Priority.Normal, this);
+		//pm.registerEvent(Type.CUSTOM_EVENT, logListener, Priority.Normal, this);
 
 		pdfFile = this.getDescription();
 		log.log(Level.INFO, pdfFile.getName() + " v" + pdfFile.getVersion() + " enabled!" );
 		//RMConfig.load();
 		loadAll();
+		/*
+		log.log(Level.INFO, "Autosave:"+config.getAutoSave());
+		log.log(Level.INFO, "PermissionType:"+config.getPermissionType().name());
+		log.log(Level.INFO, "UseRestore:"+config.getUseRestore());
+		log.log(Level.INFO, "MaxGames:"+config.getMaxGames());
+		log.log(Level.INFO, "MaxGamesPerPlayer:"+config.getMaxGamesPerPlayer());
+		log.log(Level.INFO, "MaxPlayersPerGame:"+config.getMaxPlayersPerGame());
+		log.log(Level.INFO, "MaxPlayersPerTeam:"+config.getMaxPlayersPerTeam());
+		log.log(Level.INFO, "Restore:"+config.getRestore());
+		log.log(Level.INFO, "WarpToSafety:"+config.getWarpToSafety());
+		log.log(Level.INFO, "WarnHackedItems:"+config.getWarnHackedItems());
+		log.log(Level.INFO, "AllowHackedItems:"+config.getAllowHackedItems());
+		log.log(Level.INFO, "KeepIngame:"+config.getKeepIngame());
+		log.log(Level.INFO, "AllowMidgameJoin:"+config.getAllowMidgameJoin());
+		log.log(Level.INFO, "ClearPlayerInventory:"+config.getClearPlayerInventory());
+		*/
+		setupPermissions();
+		
+		watcher = new RMWatcher(this);
+		watcherid = getServer().getScheduler().scheduleSyncRepeatingTask(this, watcher, 20,20);
 	}
 	
 	public void onDisable(){
+		saveAll();
 		getServer().getScheduler().cancelTask(watcherid);
 		log.info(pdfFile.getName() + " disabled");
-		saveAll();
 		//RMConfig.save();
+	}
+	
+	public void setupPermissions(){
+		switch(config.getPermissionType()){
+			case P3:
+				try{
+					Plugin permissionPlugin = getServer().getPluginManager().getPlugin("Permissions");
+					if(this.permissions == null){
+						try{
+							this.permissions = ((Permissions)permissionPlugin).getHandler();
+							log.log(Level.INFO, RMText.preLog+"Found Permissions 3");
+						}
+						catch (Exception e){
+							this.permissions = null;
+							log.log(Level.WARNING, RMText.preLog+"Permissions plugin is not enabled!");
+						}
+					}
+				}
+				catch (java.lang.NoClassDefFoundError e){
+					this.permissions = null;
+					log.log(Level.WARNING, RMText.preLog+"Permissions plugin not found!");
+				}
+				break;
+			case PEX:
+				try{
+					if(getServer().getPluginManager().isPluginEnabled("PermissionsEx")){
+					    PermissionManager permissionsEx = PermissionsEx.getPermissionManager();
+					    if(permissionsEx==null) log.log(Level.WARNING, "PermissionsEx plugin is not enabled!");
+					    log.log(Level.INFO, RMText.preLog+"Found PermissionsEx");
+					}
+					else log.log(Level.WARNING, RMText.preLog+"PermissionsEx plugin not found.");
+				}
+				catch (Exception e){
+					this.permissions = null;
+					log.log(Level.WARNING, RMText.preLog+"PermissionsEx plugin not found!");
+				}
+				break;
+			case NONE: default:
+				log.log(Level.INFO, RMText.preLog+"Running without permissions...");
+				break;
+		}
+		if((permissions == null)&&(permissionsEx == null)) config.setPermissionType(PermissionType.NONE);
+	}
+	
+	public boolean hasPermission(Player player, String node){
+		if((permissions==null)&&(permissionsEx==null)) return true;
+		if(player==null) return false;
+		else{
+			switch(config.getPermissionType()){
+				case P3:
+					if((permissions.has(player, "resourcemadness.admin"))||(permissions.has(player, "*"))) return true;
+					else return permissions.has(player, node);
+				case PEX:
+					if((permissionsEx.has(player, "resourcemadness.admin"))||(permissionsEx.has(player, "*"))) return true;
+					else return permissionsEx.has(player, node);
+				case NONE: default: return true;
+			}
+		}
+	}
+	
+	public void saveAllBackup(){
+		log.log(Level.INFO, RMText.preLog+"Autosaving...");
+		if(RMGame.getGames().size()==0) return;
+		File folder = new File(getDataFolder()+"/backup");
+		if(!folder.exists()){
+			log.log(Level.INFO, RMText.preLog+"Creating backup directory...");
+			folder.mkdir();
+		}
+		File file = new File(folder.getAbsolutePath()+"/config.txt");
+		if(!file.exists()) save(DataType.CONFIG, false, file);
+		save(DataType.STATS, false, new File(folder.getAbsolutePath()+"/stats.txt"));
+		save(DataType.PLAYER, false, new File(folder.getAbsolutePath()+"/playerdata.txt"));
+		save(DataType.GAME, false, new File(folder.getAbsolutePath()+"/gamedata.txt"));
+		save(DataType.LOG, true, new File(folder.getAbsolutePath()+"/gamelogdata.txt"));
 	}
 	
 	public void saveAll(){
 		if(RMGame.getGames().size()==0) return;
 		File folder = getDataFolder();
 		if(!folder.exists()){
-			log.log(Level.INFO, "Creating config directory...");
+			log.log(Level.INFO, RMText.preLog+"Creating config directory...");
 			folder.mkdir();
 		}
-		//save(DataType.CONFIG);
-		save(DataType.STATS);
-		save(DataType.PLAYER);
-		save(DataType.GAME);
-		save(DataType.LOG);
-		//saveLZF(DataType.LOG);
-	}
-	
-	public void saveLZF(DataType dataType){
-		File folder = getDataFolder();
-		File file = new File(folder.getAbsolutePath()+"/gamelog.txt");
-		if(!file.exists()){
-			try{
-				file.createNewFile();
-			}
-			catch(Exception e){
-				e.printStackTrace();
-				return;
-			}
-		}
-		try{
-			OutputStream output = new LZFOutputStream(new FileOutputStream(file.getAbsoluteFile()));
-			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(output));
-			String line = "";
-			
-			bw.write("[Resource Madness v"+pdfFile.getVersion()+" Game Data]");
-			for(RMGame rmGame : RMGame.getGames()){
-				RMGameConfig config = rmGame.getConfig();
-				line = "";
-				bw.write("\n");
-				//Game
-				//Log
-				//line += encodeLogToString(config.getLog());
-				for(int i=0; i<100; i++){
-					bw.write(line);
-				}
-			}
-			bw.flush();
-			output.close();
-		}
-		catch(Exception e){
-			e.printStackTrace();
-		}
-		
+		File file = new File(folder.getAbsolutePath()+"/config.txt");
+		if(!file.exists()) save(DataType.CONFIG, false, file);
+		save(DataType.STATS, false, new File(folder.getAbsolutePath()+"/stats.txt"));
+		save(DataType.PLAYER, false, new File(folder.getAbsolutePath()+"/playerdata.txt"));
+		save(DataType.GAME, false, new File(folder.getAbsolutePath()+"/gamedata.txt"));
+		save(DataType.LOG, true, new File(folder.getAbsolutePath()+"/gamelogdata.txt"));
 	}
 	
 	//Save Data
-	public void save(DataType dataType){
-		File folder = getDataFolder();
-		File file = null;
-		switch(dataType){
-			case CONFIG: file = new File(folder.getAbsolutePath()+"/config.txt"); break;
-			case STATS: file = new File(folder.getAbsolutePath()+"/stats.txt"); break;
-			case PLAYER: file = new File(folder.getAbsolutePath()+"/playerdata.txt"); break;
-			case GAME: file = new File(folder.getAbsolutePath()+"/gamedata.txt"); break;
-			case LOG: file = new File(folder.getAbsolutePath()+"/gamelogdata.txt"); break;
-		}
+	public boolean save(DataType dataType, boolean useLZF, File file){
 		if(file==null){
 			log.log(Level.WARNING, "Cannot load data. Data type unknown!");
-			return;
+			return false;
 		}
 		if(!file.exists()){
 			switch(dataType){
-				case CONFIG: log.log(Level.INFO, "Data file not found! Creating one..."); break;
-				case STATS: log.log(Level.INFO, "Stats file not found! Creating one..."); break;
-				case PLAYER: log.log(Level.INFO, "Player Data file not found! Creating one..."); break;
-				case GAME: log.log(Level.INFO, "Game Data file not found! Creating one..."); break;
-				case LOG: log.log(Level.INFO, "Game Data file not found! Creating one..."); break;
+				case CONFIG: log.log(Level.INFO, RMText.preLog+"Data file not found! Creating one..."); break;
+				case STATS: log.log(Level.INFO, RMText.preLog+"Stats file not found! Creating one..."); break;
+				case PLAYER: log.log(Level.INFO, RMText.preLog+"Player Data file not found! Creating one..."); break;
+				case GAME: log.log(Level.INFO, RMText.preLog+"Game Data file not found! Creating one..."); break;
+				case LOG: log.log(Level.INFO, RMText.preLog+"Game Data file not found! Creating one..."); break;
 			}
 			try{
 				file.createNewFile();
 			}
 			catch(Exception e){
 				e.printStackTrace();
-				return;
+				return false;
+			}
+		}
+		if((file.exists())&&(file.length()>0)){
+			
+			File folderBackup = new File(getDataFolder()+"/backup");
+			if(!folderBackup.exists()){
+				try{
+					folderBackup.mkdir();
+				}
+				catch (Exception e){
+					e.printStackTrace();
+				}
+			}
+			if(!copyFile(file, new File(folderBackup.getAbsolutePath()+"/"+file.getName()))){
+				switch(dataType){
+					case CONFIG: log.log(Level.INFO, RMText.preLog+"Could not create config backup file."); break;
+					case STATS: log.log(Level.INFO, RMText.preLog+"Could not create stats backup file."); break;
+					case PLAYER: log.log(Level.INFO, RMText.preLog+"Could not create player data backup file."); break;
+					case GAME: log.log(Level.INFO, RMText.preLog+"Could not create game data backup file."); break;
+					case LOG: log.log(Level.INFO, RMText.preLog+"Could not create game log data backup file."); break;
+				}
 			}
 		}
 		try{
-			FileOutputStream output = new FileOutputStream(file.getAbsoluteFile());
+			OutputStream output;
+			if(useLZF) output = new LZFOutputStream(new FileOutputStream(file.getAbsoluteFile()));
+			else output = new FileOutputStream(file.getAbsoluteFile());
 			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(output));
 			String line = "";
 			switch(dataType){
 				case CONFIG:
-					bw.write("[Resource Madness v"+pdfFile.getVersion()+" Config]");
 					line = "";
-					bw.write("\n");
-					break;
-				case STATS:
-					bw.write("[Resource Madness v"+pdfFile.getVersion()+" Stats]");
-					//Stats
-					line = "";
-					bw.write("\n");
-					line += RMStats.getServerWins()+","+RMStats.getServerLosses()+","+RMStats.getServerTimesPlayed()+","+/*RMStats.getServerItemsFound()+","+*/RMStats.getServerItemsFoundTotal()+";";
+					//bw.write("[Resource Madness v"+pdfFile.getVersion()+" Config]");
+					line+=RMText.cAutoSave+"\n";
+					line+="autosave="+config.getAutoSave()+"\n\n";
+					line+=RMText.cUsePermissions+"\n";
+					line+="usePermissions="+config.getPermissionType().name().toLowerCase()+"\n\n";
+					line+=RMText.cUseRestore1+"\n";
+					line+=RMText.cUseRestore2+"\n";
+					line+="useRestore="+config.getRestore()+"\n\n";
+					line+=RMText.cServerWide+"\n\n";
+					line+=RMText.cMaxGames+"\n";
+					line+="maxGames="+config.getMaxGames()+"\n\n";
+					line+=RMText.cMaxGamesPerPlayer+"\n";
+					line+="maxGamesPerPlayer="+config.getMaxGamesPerPlayer()+"\n\n";
+					line+=RMText.cMaxGames+"\n";
+					line+="maxPlayersPerGame="+config.getMaxPlayersPerGame()+"\n\n";
+					line+=RMText.cMaxPlayersPerGame+"\n";
+					line+="maxPlayersPerTeam="+config.getMaxPlayersPerTeam()+"\n\n";
+					line+=RMText.cDefaultSettings1+"\n";
+					line+=RMText.cDefaultSettings2+"\n\n";
+					line+=RMText.cRestore+"\n";
+					line+="restore="+config.getRestore()+"\n\n";
+					line+=RMText.cWarpToSafety+"\n";
+					line+="warpToSafety="+config.getWarpToSafety()+"\n\n";
+					line+=RMText.cWarnHackedItems+"\n";
+					line+="warnHackedItems="+config.getWarnHackedItems()+"\n\n";
+					line+=RMText.cAllowHackedItems+"\n";
+					line+="allowHackedItems="+config.getAllowHackedItems()+"\n\n";
+					line+=RMText.cKeepIngame+"\n";
+					line+="keepingame="+config.getKeepIngame()+"\n\n";
+					line+=RMText.cAllowMidgameJoin+"\n";
+					line+="allowMidgameJoin="+config.getAllowMidgameJoin()+"\n\n";
+					line+=RMText.cClearPlayerInventory+"\n";
+					line+="clearPlayerInventory="+config.getClearPlayerInventory();
 					bw.write(line);
 					break;
+				case STATS:
+					//bw.write("[Resource Madness v"+pdfFile.getVersion()+" Stats]");
+					//Stats
+					line = "";
+					line += RMStats.getServerWins()+","+RMStats.getServerLosses()+","+RMStats.getServerTimesPlayed()+","+/*RMStats.getServerItemsFound()+","+*/RMStats.getServerItemsFoundTotal()+";";
+					bw.write(line);
+					bw.write("\n");
+					break;
 				case PLAYER:
-					bw.write("[Resource Madness v"+pdfFile.getVersion()+" Player Data]");
+					//bw.write("[Resource Madness v"+pdfFile.getVersion()+" Player Data]");
 					for(RMPlayer rmp : RMPlayer.getPlayers().values()){
 						line = "";
-						bw.write("\n");
 						line = rmp.getName()+";";
 						//Stats
 						RMStats stats = rmp.getStats();
 						line += stats.getWins()+","+stats.getLosses()+","+stats.getTimesPlayed()+","+/*stats.getItemsFound()+","+*/stats.getItemsFoundTotal()+";";
 						//Inventory items
-						
 						line += encodeInventoryToString(rmp.getItems(), ClaimType.ITEMS) + ";";
 						line += encodeInventoryToString(rmp.getAward(), ClaimType.AWARD);
 						bw.write(line);
+						bw.write("\n");
 					}
 					break;
 				case GAME:
-					bw.write("[Resource Madness v"+pdfFile.getVersion()+" Game Data]");
+					//bw.write("[Resource Madness v"+pdfFile.getVersion()+" Game Data]");
 					for(RMGame rmGame : RMGame.getGames()){
 						RMGameConfig config = rmGame.getConfig();
 						line = "";
-						bw.write("\n");
 						//Game
 						Block b = config.getPartList().getMainBlock();
 						line = b.getX()+","+b.getY()+","+b.getZ()+",";
@@ -264,7 +375,7 @@ public class RM extends JavaPlugin {
 						line += encodeFilterToString(config.getItems().getItems(), FilterState.ITEMS)+";";
 						//Chest items
 						for(RMTeam rmt : config.getTeams()){
-							line += encodeInventoryToString(rmt.getChest().getInventory(), ClaimType.ITEMS)+".";
+							line += encodeInventoryToString(rmt.getChest().getInventory(), ClaimType.CHEST)+".";
 						}
 						line = stripLast(line, ".");
 						line += ";";
@@ -274,6 +385,7 @@ public class RM extends JavaPlugin {
 						}
 						line = stripLast(line, ".");
 						bw.write(line);
+						bw.write("\n");
 					}
 					break;
 				case LOG:
@@ -292,7 +404,9 @@ public class RM extends JavaPlugin {
 		}
 		catch(Exception e){
 			e.printStackTrace();
+			return false;
 		}
+		return true;
 	}
 	public String encodeLogListToString(HashMap<Location, RMBlock> logList){
 		String line = "";
@@ -352,17 +466,49 @@ public class RM extends JavaPlugin {
 	public void loadAll(){
 		File folder = getDataFolder();
 		if(!folder.exists()){
-			log.log(Level.INFO, "Config folder not found! Will create one on save...");
+			log.log(Level.INFO, RMText.preLog+"Config folder not found! Will create one on save...");
 			return;
 		}
-		//load(DataType.CONFIG);
-		load(DataType.STATS);
-		load(DataType.PLAYER);
-		load(DataType.GAME);
-		load(DataType.LOG);
+		load(DataType.CONFIG, false, true);
+		load(DataType.STATS, false, true);
+		load(DataType.PLAYER, false, true);
+		load(DataType.GAME, false, true);
+		load(DataType.LOG, true, true);
 	}
 	
-	public void load(DataType dataType){
+	public boolean copyFile(File inputFile, File outputFile){
+		File inputFolder = new File(inputFile.getParent());
+		File outputFolder = new File(outputFile.getParent());
+		if(!inputFolder.exists()) return false;
+		if(!inputFile.exists()) return false;
+		if(!outputFolder.exists()) return false;
+		if(outputFile.exists()) outputFile.delete();
+		if(!outputFile.exists()){
+			try{
+				outputFile.createNewFile();
+			}
+			catch(Exception e){
+				e.printStackTrace();
+				return false;
+			}
+		}
+		try{
+			FileReader in = new FileReader(inputFile);
+			FileWriter out = new FileWriter(outputFile);
+			int c;
+			while ((c = in.read()) != -1) out.write(c);
+			in.close();
+			out.close();
+		}
+		catch(Exception e){
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+	
+	public void load(DataType dataType, boolean useLZF, boolean loadBackup){
+		int lineNum = 0;
 		File folder = getDataFolder();
 		File file = null;
 		switch(dataType){
@@ -373,13 +519,15 @@ public class RM extends JavaPlugin {
 			case LOG: file = new File(folder.getAbsolutePath()+"/gamelogdata.txt"); break;
 		}
 		if(file==null){
-			log.log(Level.WARNING, "Cannot load data. Data type unknown!");
+			log.log(Level.WARNING, RMText.preLog+"Cannot load data. Data type unknown!");
 			return;
 		}
-		if(file.exists()){
-			FileInputStream input;
+		if((file.exists())&&(file.length()>0)){
+			InputStream input;
 			try {
-				input = new FileInputStream(file.getAbsoluteFile());
+				if(useLZF) input = new LZFInputStream(new FileInputStream(file.getAbsoluteFile()));
+				else input = new FileInputStream(file.getAbsoluteFile());
+				
 				InputStreamReader isr = new InputStreamReader(input);
 				BufferedReader br = new BufferedReader(isr);
 				
@@ -387,12 +535,33 @@ public class RM extends JavaPlugin {
 				while(true){
 					line = br.readLine();
 					if(line == null) break;
-					if(line.startsWith("[")) continue;
+					if(line.startsWith("#")) continue;
+					String[] args;
 					switch(dataType){
 						case CONFIG:
+							args = line.split("=");
+							if(args.length==2){
+								if(args[0].equalsIgnoreCase("autosave")) config.setAutoSave(getIntByString(args[1]));
+								else if(args[0].equalsIgnoreCase("usePermissions")) config.setPermissionTypeByString(args[1]);
+								else if(args[0].equalsIgnoreCase("useRestore")) config.setUseRestore(Boolean.parseBoolean(args[1]));
+								else if(args[0].equalsIgnoreCase("maxGames")) config.setMaxGames(getIntByString(args[1]));
+								else if(args[0].equalsIgnoreCase("maxGamesPerPlayer")) config.setMaxGamesPerPlayer(getIntByString(args[1]));
+								else if(args[0].equalsIgnoreCase("maxPlayersPerGame")) config.setMaxPlayersPerGame(getIntByString(args[1]));
+								else if(args[0].equalsIgnoreCase("maxPlayersPerTeam")) config.setMaxPlayersPerTeam(getIntByString(args[1]));
+								else{
+									boolean lockArg = args[1].substring(args[1].indexOf(":")+1).equalsIgnoreCase("lock")?true:false; 
+									if(args[0].equalsIgnoreCase("restore")) config.setRestore(Boolean.parseBoolean(args[1]), lockArg);
+									else if(args[0].equalsIgnoreCase("warpToSafety")) config.setWarpToSafety(Boolean.parseBoolean(args[1]), lockArg);
+									else if(args[0].equalsIgnoreCase("warnHackedItems")) config.setWarnHackedItems(Boolean.parseBoolean(args[1]), lockArg);
+									else if(args[0].equalsIgnoreCase("allowHackedItems")) config.setAllowHackedItems(Boolean.parseBoolean(args[1]), lockArg);
+									else if(args[0].equalsIgnoreCase("keepIngame")) config.setKeepIngame(Boolean.parseBoolean(args[1]), lockArg);
+									else if(args[0].equalsIgnoreCase("allowMidgameJoin")) config.setAllowMidgameJoin(Boolean.parseBoolean(args[1]), lockArg);
+									else if(args[0].equalsIgnoreCase("clearPlayerInventory")) config.setClearPlayerInventory(Boolean.parseBoolean(args[1]), lockArg);
+								}
+							}
 							break;
 						case STATS:
-							String[] args = line.split(",");
+							args = line.split(",");
 							//wins,losses,timesPlayed,itemsFound,itemsFoundTotal
 							RMStats.setServerWins(getIntByString(args[0]));
 							RMStats.setServerLosses(getIntByString(args[1]));
@@ -407,9 +576,10 @@ public class RM extends JavaPlugin {
 							parseLoadedData(line.split(";"));
 							break;
 						case LOG:
-							parseLoadedLogData(line.split(";"));
+							parseLoadedLogData(line.split(";"), lineNum);
 							break;
 					}
+					lineNum++;
 				}
 				input.close();
 				//saveConfig();
@@ -419,11 +589,28 @@ public class RM extends JavaPlugin {
 			}
 		}
 		else{
-			switch(dataType){
+			if(loadBackup){
+				if(copyFile(new File(getDataFolder().getAbsolutePath()+"/backup/"+file.getName()), file)){
+					load(dataType, useLZF, false);
+				}
+				else{
+					switch(dataType){
+						case CONFIG: System.out.println("Could not find config backup file"); break;
+						case STATS: System.out.println("Could not find stats backup file"); break;
+						case PLAYER: System.out.println("Could not find player data backup file"); break;
+						case GAME: System.out.println("Could not find game data backup file"); break;
+						case LOG: System.out.println("Could not find game log data backup file"); break;
+					}
+				}
+			}
+			else{
+				switch(dataType){
 				case CONFIG: System.out.println("Could not find config file"); break;
 				case STATS: System.out.println("Could not find stats file"); break;
 				case PLAYER: System.out.println("Could not find player data file"); break;
 				case GAME: System.out.println("Could not find game data file"); break;
+				case LOG: System.out.println("Could not find game log data file"); break;
+				}
 			}
 		}
 	}
@@ -465,13 +652,12 @@ public class RM extends JavaPlugin {
 		return hashLog;
 	}
 	
-	public void parseLoadedLogData(String[] strArgs){
-		for(RMGame rmGame : RMGame.getGames()){
-			if(rmGame!=null){
-				RMGameConfig config = rmGame.getConfig();
-				if((strArgs[0].length()>0)&&(strArgs[0]!="LOG")) config.getLog().setList(getLogDataByString(strArgs[0]));
-				if((strArgs[1].length()>0)&&(strArgs[1]!="LOG")) config.getLog().setItemList(getLogDataByString(strArgs[1]));
-			}
+	public void parseLoadedLogData(String[] strArgs, int lineNum){
+		RMGame rmGame = RMGame.getGame(lineNum);
+		if(rmGame!=null){
+			RMGameConfig config = rmGame.getConfig();
+			if((strArgs[0].length()>0)&&(strArgs[0]!="LOG")) config.getLog().setList(getLogDataByString(strArgs[0]));
+			if((strArgs[1].length()>0)&&(strArgs[1]!="LOG")) config.getLog().setItemList(getLogDataByString(strArgs[1]));
 		}
 	}
 	
@@ -490,13 +676,17 @@ public class RM extends JavaPlugin {
 		stats.setItemsFoundTotal(getIntByString(args[3]));
 		
 		//inventory items
-		if(!strArgs[2].equalsIgnoreCase("ITEMS")){
-			rmp.addItemsByItemStack(getItemStackByStringArray(strArgs[2]));
+		if(strArgs[2].length()>0){
+			if(!strArgs[2].equalsIgnoreCase("ITEMS")){
+				rmp.addItemsByItemStack(getItemStackByStringArray(strArgs[2]));
+			}
 		}
 		
 		//award items
-		if(!strArgs[3].equalsIgnoreCase("AWARD")){
-			rmp.addItemsByItemStack(getItemStackByStringArray(strArgs[3]));
+		if(strArgs[3].length()>0){
+			if(!strArgs[3].equalsIgnoreCase("AWARD")){
+				rmp.addItemsByItemStack(getItemStackByStringArray(strArgs[3]));
+			}
 		}
 	}
 	
@@ -585,7 +775,8 @@ public class RM extends JavaPlugin {
 					for(String player : players){
 						RMTeam rmTeam = config.getTeams().get(j);
 						if(rmTeam!=null){
-							rmTeam.addPlayerSilent(RMPlayer.getPlayerByName(player));
+							RMPlayer rmp = RMPlayer.getPlayerByName(player);
+							if(rmp!=null) rmTeam.addPlayerSilent(rmp);
 						}
 					}
 				}
@@ -593,29 +784,35 @@ public class RM extends JavaPlugin {
 		}
 			
 		//filter items
-		if(!strArgs[3].equalsIgnoreCase("FILTER")){
-			HashMap<Integer, RMItem> rmItems = getRMItemsByStringArray(Arrays.asList(strArgs[3]), true);
-			config.setFilter(new RMFilter(rmItems));
+		if(strArgs[3].length()>0){
+			if(!strArgs[3].equalsIgnoreCase("FILTER")){
+				HashMap<Integer, RMItem> rmItems = getRMItemsByStringArray(Arrays.asList(strArgs[3]), true);
+				config.setFilter(new RMFilter(rmItems));
+			}
 		}
 		
 		//game items
-		if(!strArgs[4].equalsIgnoreCase("ITEMS")){
-			HashMap<Integer, RMItem> rmItems = getRMItemsByStringArray(Arrays.asList(strArgs[4]), true);
-			config.setItems(new RMFilter(rmItems));
+		if(strArgs[4].length()>0){
+			if(!strArgs[4].equalsIgnoreCase("ITEMS")){
+				HashMap<Integer, RMItem> rmItems = getRMItemsByStringArray(Arrays.asList(strArgs[4]), true);
+				config.setItems(new RMFilter(rmItems));
+			}
 		}
 		
 		//chest items
 		args = strArgs[5].split("\\.");
 		for(int j=0; j<args.length; j++){
-			if(!args[j].equalsIgnoreCase("ITEMS")){
-				ItemStack[] items = getItemStackByStringArray(args[j]);
-				List<ItemStack> inventory = new ArrayList<ItemStack>();
-				for(ItemStack item : items){
-					inventory.add(item);
-				}
-				RMTeam rmTeam = config.getTeams().get(j);
-				if(rmTeam!=null){
-					rmTeam.getChest().setInventory(inventory);
+			if(args[j].length()>0){
+				if(!args[j].equalsIgnoreCase("CHEST")){
+					ItemStack[] items = getItemStackByStringArray(args[j]);
+					List<ItemStack> inventory = new ArrayList<ItemStack>();
+					for(ItemStack item : items){
+						inventory.add(item);
+					}
+					RMTeam rmTeam = config.getTeams().get(j);
+					if(rmTeam!=null){
+						rmTeam.getChest().setInventory(inventory);
+					}
 				}
 			}
 		}
@@ -623,11 +820,13 @@ public class RM extends JavaPlugin {
 		//team items
 		args = strArgs[6].split("\\.");
 		for(int j=0; j<args.length; j++){
-			if(!args[j].equalsIgnoreCase("ITEMS")){
-				HashMap<Integer, RMItem> rmItems = getRMItemsByStringArray(Arrays.asList(args[j]), true);
-				RMTeam rmTeam = config.getTeams().get(j);
-				if(rmTeam!=null){
-					rmTeam.getChest().setItems(rmItems);
+			if(args[j].length()>0){
+				if(!args[j].equalsIgnoreCase("ITEMS")){
+					HashMap<Integer, RMItem> rmItems = getRMItemsByStringArray(Arrays.asList(args[j]), true);
+					RMTeam rmTeam = config.getTeams().get(j);
+					if(rmTeam!=null){
+						rmTeam.getChest().setItems(rmItems);
+					}
 				}
 			}
 		}
@@ -644,8 +843,9 @@ public class RM extends JavaPlugin {
 					if(item.getData()!=null) idData += ":"+Byte.toString(item.getData().getData());
 					if(hashItems.containsKey(idData)){
 						int amount = hashItems.get(idData).getAmount()+item.getAmount();
-						item.setAmount(amount);
-						hashItems.put(idData, item);
+						ItemStack itemClone = item.clone();
+						itemClone.setAmount(amount);
+						hashItems.put(idData, itemClone);
 					}
 					else hashItems.put(idData, item);
 				}
@@ -667,6 +867,8 @@ public class RM extends JavaPlugin {
 					return "ITEMS";
 				case AWARD:
 					return "AWARD";
+				case CHEST:
+					return "CHEST";
 			}
 		}
 		line = stripLast(line,",");
@@ -753,6 +955,7 @@ public class RM extends JavaPlugin {
 			RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
 			if(rmp!=null){
 				if(cmd.getName().equals("resourcemadness")){
+					if(!rmp.hasPermission("resourcemadness")) return rmp.sendMessage(RMText.noPermissionCommand);
 					if(args.length==0){
 						rmInfo(rmp);
 					}
@@ -772,12 +975,14 @@ public class RM extends JavaPlugin {
 						}
 						//ADD
 						if(args[0].equalsIgnoreCase("add")){
+							if(!rmp.hasPermission("resourcemadness.add")) return rmp.sendMessage(RMText.noPermissionCommand);
 							rmp.setPlayerAction(PlayerAction.ADD);
 							rmp.sendMessage("Left click a game block to create your new game.");
 							return true;
 						}
 						//REMOVE
 						else if(args[0].equalsIgnoreCase("remove")){
+							if(!rmp.hasPermission("resourcemadness.remove")) return rmp.sendMessage(RMText.noPermissionCommand);
 							if(rmGame!=null){
 								RMGame.tryRemoveGame(rmGame, rmp, true);
 								return true;
@@ -790,6 +995,7 @@ public class RM extends JavaPlugin {
 						}
 						//LIST
 						else if(args[0].equalsIgnoreCase("list")){
+							if(!rmp.hasPermission("resourcemadness.list")) return rmp.sendMessage(RMText.noPermissionCommand);
 							if(args.length==2){
 								sendListById(args[1], rmp);
 								return true;
@@ -801,6 +1007,7 @@ public class RM extends JavaPlugin {
 						}
 						//INFO
 						else if(args[0].equalsIgnoreCase("info")){
+							if(!rmp.hasPermission("resourcemadness.info")) return rmp.sendMessage(RMText.noPermissionCommand);
 							if(rmGame!=null){
 								rmGame.sendInfo(rmp);
 								return true;
@@ -834,6 +1041,7 @@ public class RM extends JavaPlugin {
 						*/
 						//JOIN
 						else if(args[0].equalsIgnoreCase("join")){
+							if(!rmp.hasPermission("resourcemadness.join")) return rmp.sendMessage(RMText.noPermissionCommand);
 							if(args.length==2){
 								if(rmGame!=null){								
 									RMTeam rmTeam = getTeamById(args[1], rmGame);
@@ -858,6 +1066,7 @@ public class RM extends JavaPlugin {
 						}
 						//QUIT
 						else if(args[0].equalsIgnoreCase("quit")){
+							if(!rmp.hasPermission("resourcemadness.quit")) return rmp.sendMessage(RMText.noPermissionCommand);
 							for(RMTeam rmTeam : RMTeam.getTeams()){
 								RMPlayer rmPlayer = rmTeam.getPlayer(rmp.getName());
 								if(rmPlayer!=null){
@@ -871,6 +1080,7 @@ public class RM extends JavaPlugin {
 						}
 						//START
 						else if(args[0].equalsIgnoreCase("start")){
+							if(!rmp.hasPermission("resourcemadness.start")) return rmp.sendMessage(RMText.noPermissionCommand);
 							if(args.length==2){
 								int amount = getIntByString(args[1]);
 								if(amount!=-1){
@@ -901,6 +1111,7 @@ public class RM extends JavaPlugin {
 						}
 						//RESTART
 						else if(args[0].equalsIgnoreCase("restart")){
+							if(!rmp.hasPermission("resourcemadness.restart")) return rmp.sendMessage(RMText.noPermissionCommand);
 							if(rmGame!=null){
 								rmGame.restartGame(rmp);
 								return true;
@@ -913,6 +1124,7 @@ public class RM extends JavaPlugin {
 						}
 						//STOP
 						else if(args[0].equalsIgnoreCase("stop")){
+							if(!rmp.hasPermission("resourcemadness.stop")) return rmp.sendMessage(RMText.noPermissionCommand);
 							if(rmGame!=null){
 								rmGame.stopGame(rmp);
 								return true;
@@ -925,6 +1137,7 @@ public class RM extends JavaPlugin {
 						}
 						//RESTORE WORLD
 						else if(args[0].equalsIgnoreCase("restore")){
+							if(!rmp.hasPermission("resourcemadness.restore")) return rmp.sendMessage(RMText.noPermissionCommand);
 							if(rmGame!=null){
 								rmGame.restoreWorld(rmp);
 								return true;
@@ -937,6 +1150,7 @@ public class RM extends JavaPlugin {
 						}
 						//ITEMS
 						else if(args[0].equalsIgnoreCase("items")){
+							if(!rmp.hasPermission("resourcemadness.items")) return rmp.sendMessage(RMText.noPermissionCommand);
 							RMTeam rmTeam = rmp.getTeam();
 							if(rmTeam!=null){
 								RMGame rmg = rmTeam.getGame(); 
@@ -947,13 +1161,12 @@ public class RM extends JavaPlugin {
 									}
 								}
 							}
-							else{
-								rmp.sendMessage("You must be in a game to use this command.");
-								return false;
-							}
+							rmp.sendMessage("You must be in a game to use this command.");
+							return false;
 						}
 						//FILTER
 						else if(args[0].equalsIgnoreCase("filter")){
+							if(!rmp.hasPermission("resourcemadness.filter")) return rmp.sendMessage(RMText.noPermissionCommand);
 							if(args.length>1){
 								List<String> listArgs = new ArrayList<String>();
 								for(int i=1; i<args.length; i++){
@@ -978,8 +1191,10 @@ public class RM extends JavaPlugin {
 						}
 						//CLAIM
 						else if(args[0].equalsIgnoreCase("claim")){
+							if(!rmp.hasPermission("resourcemadness.claim")) return rmp.sendMessage(RMText.noPermissionCommand);
 							if(args.length==2){
 								if(args[1].equalsIgnoreCase("items")){
+									if(!rmp.hasPermission("resourcemadness.claim.items")) return rmp.sendMessage(RMText.noPermissionCommand);
 									RMTeam rmTeam = rmp.getTeam();
 									if((rmTeam==null)||((rmTeam!=null)&&(rmTeam.getGame().getConfig().getState()==GameState.SETUP))){
 										rmp.claimItems();
@@ -988,6 +1203,7 @@ public class RM extends JavaPlugin {
 									return true;
 								}
 								else if(args[1].equalsIgnoreCase("award")){
+									if(!rmp.hasPermission("resourcemadness.claim.award")) return rmp.sendMessage(RMText.noPermissionCommand);
 									RMTeam rmTeam = rmp.getTeam();
 									if((rmTeam==null)||((rmTeam!=null)&&(rmTeam.getGame().getConfig().getState()==GameState.SETUP))){
 										rmp.claimAward();
@@ -999,16 +1215,30 @@ public class RM extends JavaPlugin {
 						}
 						//SET
 						else if(args[0].equalsIgnoreCase("set")){
+							if(!rmp.hasPermission("resourcemadness.set")) return rmp.sendMessage(RMText.noPermissionCommand);
+							
 							if(args.length>1){
 								PlayerAction action = null;
 								//MAX PLAYERS
-								if(args[1].equalsIgnoreCase("maxplayers")) action = PlayerAction.SET_MAX_PLAYERS;
+								if(args[1].equalsIgnoreCase("maxplayers")){
+									if(!rmp.hasPermission("resourcemadness.set.maxplayers")) return rmp.sendMessage(RMText.noPermissionCommand);
+									action = PlayerAction.SET_MAX_PLAYERS;
+								}
 								//MAX TEAM PLAYERS
-								else if(args[1].equalsIgnoreCase("maxteamplayers")) action = PlayerAction.SET_MAX_TEAM_PLAYERS;
+								else if(args[1].equalsIgnoreCase("maxteamplayers")){
+									if(!rmp.hasPermission("resourcemadness.set.maxteamplayers")) return rmp.sendMessage(RMText.noPermissionCommand);
+									action = PlayerAction.SET_MAX_TEAM_PLAYERS;
+								}
 								//MAX ITEMS
-								else if(args[1].equalsIgnoreCase("maxitems")) action = PlayerAction.SET_MAX_ITEMS;
+								else if(args[1].equalsIgnoreCase("maxitems")){
+									if(!rmp.hasPermission("resourcemadness.set.maxitems")) return rmp.sendMessage(RMText.noPermissionCommand);
+									action = PlayerAction.SET_MAX_ITEMS;
+								}
 								//AUTO RANDOM ITEMS
-								else if(args[1].equalsIgnoreCase("random")) action = PlayerAction.SET_RANDOM;
+								else if(args[1].equalsIgnoreCase("random")){
+									if(!rmp.hasPermission("resourcemadness.set.random")) return rmp.sendMessage(RMText.noPermissionCommand);
+									action = PlayerAction.SET_RANDOM;
+								}
 								
 								if(action!=null){
 									if(args.length==3){
@@ -1052,19 +1282,40 @@ public class RM extends JavaPlugin {
 								//SET & TOGGLE
 								action = null;
 								//GATHER PLAYERS
-								if(args[1].equalsIgnoreCase("teleport")) action = PlayerAction.SET_WARP;
+								if(args[1].equalsIgnoreCase("warp")){
+									if(!rmp.hasPermission("resourcemadness.set.warp")) return rmp.sendMessage(RMText.noPermissionCommand);
+									action = PlayerAction.SET_WARP;
+								}
 								//AUTO RESTORE WORLD
-								else if(args[1].equalsIgnoreCase("restore")) action = PlayerAction.SET_RESTORE;
+								else if(args[1].equalsIgnoreCase("restore")){
+									if(!rmp.hasPermission("resourcemadness.set.restore")) return rmp.sendMessage(RMText.noPermissionCommand);
+									action = PlayerAction.SET_RESTORE;
+								}
 								//WARN HACK ITEMS
-								else if(args[1].equalsIgnoreCase("warnhacked")) action = PlayerAction.SET_WARN_HACKED;
+								else if(args[1].equalsIgnoreCase("warnhacked")){
+									if(!rmp.hasPermission("resourcemadness.set.warnhacked")) return rmp.sendMessage(RMText.noPermissionCommand);
+									action = PlayerAction.SET_WARN_HACKED;
+								}
 								//ALLOW HACK ITEMS
-								else if(args[1].equalsIgnoreCase("allowhacked")) action = PlayerAction.SET_ALLOW_HACKED;
+								else if(args[1].equalsIgnoreCase("allowhacked")){
+									if(!rmp.hasPermission("resourcemadness.set.allowhacked")) return rmp.sendMessage(RMText.noPermissionCommand);
+									action = PlayerAction.SET_ALLOW_HACKED;
+								}
 								//ALLOW PLAYER LEAVE
-								else if(args[1].equalsIgnoreCase("keepingame")) action = PlayerAction.SET_KEEP_INGAME;
-								//CLEAR PLAYER INVENTORY
-								else if(args[1].equalsIgnoreCase("clearinventory")) action = PlayerAction.SET_CLEAR_INVENTORY;
+								else if(args[1].equalsIgnoreCase("keepingame")){
+									if(!rmp.hasPermission("resourcemadness.set.keepingame")) return rmp.sendMessage(RMText.noPermissionCommand);
+									action = PlayerAction.SET_KEEP_INGAME;
+								}
 								//ALLOW MIDGAME JOIN
-								else if(args[1].equalsIgnoreCase("joinmidgame")) action = PlayerAction.SET_MIDGAME_JOIN;
+								else if(args[1].equalsIgnoreCase("midgamejoin")){
+									if(!rmp.hasPermission("resourcemadness.set.random")) return rmp.sendMessage(RMText.noPermissionCommand);
+									action = PlayerAction.SET_MIDGAME_JOIN;
+								}
+								//CLEAR PLAYER INVENTORY
+								else if(args[1].equalsIgnoreCase("clearinventory")){
+									if(!rmp.hasPermission("resourcemadness.set.clearinventory")) return rmp.sendMessage(RMText.noPermissionCommand);
+									action = PlayerAction.SET_CLEAR_INVENTORY;
+								}
 								
 								if(action!=null){
 									int i=-1;
@@ -1081,8 +1332,8 @@ public class RM extends JavaPlugin {
 											case SET_WARN_HACKED: rmGame.setWarnHackedItems(rmp, i); break;
 											case SET_ALLOW_HACKED: rmGame.setAllowHackedItems(rmp, i); break;
 											case SET_KEEP_INGAME: rmGame.setKeepIngame(rmp, i); break;
-											case SET_CLEAR_INVENTORY: rmGame.setClearPlayerInventory(rmp, i); break;
 											case SET_MIDGAME_JOIN: rmGame.setAllowMidgameJoin(rmp, i); break;
+											case SET_CLEAR_INVENTORY: rmGame.setClearPlayerInventory(rmp, i); break;
 										}
 									}
 									else{
@@ -1108,13 +1359,13 @@ public class RM extends JavaPlugin {
 												rmp.setPlayerAction(PlayerAction.SET_KEEP_INGAME);
 												rmp.sendMessage("Left click a game block to toggle allow player leave.");
 												break;
-											case SET_CLEAR_INVENTORY:
-												rmp.setPlayerAction(PlayerAction.SET_CLEAR_INVENTORY);
-												rmp.sendMessage("Left click a game block to toggle clear player inventory.");
-												break;
 											case SET_MIDGAME_JOIN:
 												rmp.setPlayerAction(PlayerAction.SET_MIDGAME_JOIN);
 												rmp.sendMessage("Left click a game block to toggle allow midgame join.");
+												break;
+											case SET_CLEAR_INVENTORY:
+												rmp.setPlayerAction(PlayerAction.SET_CLEAR_INVENTORY);
+												rmp.sendMessage("Left click a game block to toggle clear player inventory.");
 												break;
 										}
 									}
@@ -1125,7 +1376,7 @@ public class RM extends JavaPlugin {
 							return true;
 						}
 						//Get Item NAME by ID or Item ID by NAME
-						else{
+						else if(rmp.hasPermission("resourcemadness.iteminfo")){
 							List<String> items = new ArrayList<String>();
 							List<String> itemsWarn = new ArrayList<String>();
 							for(String str : argsItems){
@@ -1574,9 +1825,9 @@ public class RM extends JavaPlugin {
 	
 	public InterfaceState getInterfaceByInt(int i){
 		switch(i){
-			case 0: return InterfaceState.MAIN;
+			case 0: return InterfaceState.FILTER;
 			case 1: return InterfaceState.FILTER_CLEAR;
-			default: return InterfaceState.MAIN;
+			default: return InterfaceState.FILTER;
 		}
 	}
 	
@@ -1619,51 +1870,66 @@ public class RM extends JavaPlugin {
 	}
 	
 	public void rmInfo(RMPlayer rmp){
-		rmp.sendMessage("ResourceMadness Commands:");
+		rmp.sendMessage(ChatColor.GOLD+"ResourceMadness Commands:");
 		rmp.sendMessage(ChatColor.GRAY+"Gray/green text is optional.");
-		rmp.sendMessage("/rm "+ChatColor.YELLOW+"add "+ChatColor.WHITE+"Create a new game.");
-		rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"remove "+ChatColor.WHITE+"Remove an existing game.");
-		rmp.sendMessage("/rm "+ChatColor.YELLOW+"list "+ChatColor.GRAY+"[page] "+ChatColor.WHITE+"List games.");
-		rmp.sendMessage("/rm "+ChatColor.AQUA+"[items(id/name)] "+ChatColor.WHITE+"Get the item's name or id");
-		rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"join "+ChatColor.AQUA+"[team(id/color)] "+ChatColor.WHITE+"Join a team.");
-		rmp.sendMessage("/rm "+ChatColor.YELLOW+"quit "+ChatColor.WHITE+"Quit a team.");
-		rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"start "+ChatColor.GREEN+"[amount] "+ChatColor.WHITE+"Start a game. Randomize with "+ChatColor.GREEN+"amount"+ChatColor.WHITE+".");
-		rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"restart/stop "+ChatColor.WHITE+"Restart/Stop a game.");
-		rmp.sendMessage("/rm "+ChatColor.YELLOW+"items "+ChatColor.WHITE+"Get which items you need to find.");
-		rmp.sendMessage("/rm "+ChatColor.YELLOW+"claim items/award "+ChatColor.WHITE+"Claim your items or award.");
-		rmp.sendMessage("/rm "+ChatColor.YELLOW+"set "+ChatColor.WHITE+"Set various game related settings.");
-		rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.WHITE+" Add items to filter");
+		if(rmp.hasPermission("resourcemadness.add")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"add "+ChatColor.WHITE+"Create a new game.");
+		if(rmp.hasPermission("resourcemadness.remove")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"remove "+ChatColor.WHITE+"Remove an existing game.");
+		if(rmp.hasPermission("resourcemadness.list")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"list "+ChatColor.GRAY+"[page] "+ChatColor.WHITE+"List games.");
+		if(rmp.hasPermission("resourcemadness.info")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"info "+ChatColor.WHITE+"Show game info.");
+		if(rmp.hasPermission("resourcemadness.set")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"set "+ChatColor.WHITE+"Set various game related settings.");
+		if(rmp.hasPermission("resourcemadness.filter")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.WHITE+"Add items to filter");
+		if(rmp.hasPermission("resourcemadness.iteminfo")) rmp.sendMessage("/rm "+ChatColor.AQUA+"[items(id/name)] "+ChatColor.WHITE+"Get the item's name or id");
+		if(rmp.hasPermission("resourcemadness.join")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"join "+ChatColor.GREEN+"[team(id/color)] "+ChatColor.WHITE+"Join a team.");
+		if(rmp.hasPermission("resourcemadness.quit")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"quit "+ChatColor.WHITE+"Quit a team.");
+		if(rmp.hasPermission("resourcemadness.start")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"start "+ChatColor.GREEN+"[amount] "+ChatColor.WHITE+"Start a game. Randomize with "+ChatColor.GREEN+"amount"+ChatColor.WHITE+".");
+		
+		//Restart/Stop
+		if((rmp.hasPermission("resourcemadness.restart"))&&(rmp.hasPermission("resourcemadness.stop"))) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"restart/stop "+ChatColor.WHITE+"Restart/Stop a game.");
+		else if(rmp.hasPermission("resourcemadness.restart")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"restart "+ChatColor.WHITE+"Restart a game.");
+		else if(rmp.hasPermission("resourcemadness.stop")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"stop "+ChatColor.WHITE+"Stop a game.");
+		
+		if(rmp.hasPermission("resourcemadness.restore")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"restore "+ChatColor.WHITE+"Restores world changes.");
+		if(rmp.hasPermission("resourcemadness.items")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"items "+ChatColor.WHITE+"Get which items you need to find.");
+		
+		//Claim Items/Award
+		if((rmp.hasPermission("resourcemadness.claim.items"))&&(rmp.hasPermission("resourcemadness.claim.award"))) rmp.sendMessage("/rm "+ChatColor.YELLOW+"claim items/award "+ChatColor.WHITE+"Claim your items or award.");
+		else if(rmp.hasPermission("resourcemadness.claim.items")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"claim items "+ChatColor.WHITE+"Claim your items.");
+		else if(rmp.hasPermission("resourcemadness.claim.award")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"claim award "+ChatColor.WHITE+"Claim your award.");
 	}
 	
 	public void rmSetInfo(RMPlayer rmp){
-		rmp.sendMessage(ChatColor.GOLD+"/rm set");
-		rmp.sendMessage(ChatColor.AQUA+"maxplayers "+ChatColor.AQUA+"[amount] "+ChatColor.WHITE+"Set max players.");
-		rmp.sendMessage(ChatColor.AQUA+"maxteamplayers "+ChatColor.AQUA+"[amount] "+ChatColor.WHITE+"Set max team players.");
-		rmp.sendMessage(ChatColor.AQUA+"random "+ChatColor.AQUA+"[amount] "+ChatColor.WHITE+"Randomly pick "+ChatColor.GREEN+"amount "+ChatColor.WHITE+"of items every match.");
-		rmp.sendMessage(ChatColor.AQUA+"warp "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.warpToSafety+".");
-		rmp.sendMessage(ChatColor.AQUA+"restore "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.autoRestoreWorld+".");
-		rmp.sendMessage(ChatColor.AQUA+"warnhacked "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.warnHackedItems+".");
-		rmp.sendMessage(ChatColor.AQUA+"allowhacked "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.allowHackedItems+".");
-		rmp.sendMessage(ChatColor.AQUA+"keepingame "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.keepIngame+".");
-		rmp.sendMessage(ChatColor.AQUA+"clearinventory "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.clearPlayerInventory+".");
-		rmp.sendMessage(ChatColor.AQUA+"midgamejoin "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.allowMidgameJoin+".");
+		if(rmp.hasPermission("resourcemadness.set")){
+			rmp.sendMessage(ChatColor.GOLD+"/rm set");
+			if(rmp.hasPermission("resourcemadness.set.maxplayers")) rmp.sendMessage(ChatColor.AQUA+"maxplayers "+ChatColor.AQUA+"[amount] "+ChatColor.WHITE+"Set max players.");
+			if(rmp.hasPermission("resourcemadness.set.maxteamplayers")) rmp.sendMessage(ChatColor.AQUA+"maxteamplayers "+ChatColor.AQUA+"[amount] "+ChatColor.WHITE+"Set max team players.");
+			if(rmp.hasPermission("resourcemadness.set.random")) rmp.sendMessage(ChatColor.AQUA+"random "+ChatColor.AQUA+"[amount] "+ChatColor.WHITE+"Randomly pick "+ChatColor.GREEN+"amount "+ChatColor.WHITE+"of items every match.");
+			if(rmp.hasPermission("resourcemadness.set.warp")) rmp.sendMessage(ChatColor.AQUA+"warp "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.warpToSafety+".");
+			if(rmp.hasPermission("resourcemadness.set.restore")) rmp.sendMessage(ChatColor.AQUA+"restore "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.autoRestoreWorld+".");
+			if(rmp.hasPermission("resourcemadness.set.warnhacked")) rmp.sendMessage(ChatColor.AQUA+"warnhacked "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.warnHackedItems+".");
+			if(rmp.hasPermission("resourcemadness.set.allowhacked")) rmp.sendMessage(ChatColor.AQUA+"allowhacked "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.allowHackedItems+".");
+			if(rmp.hasPermission("resourcemadness.set.keepingame")) rmp.sendMessage(ChatColor.AQUA+"keepingame "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.keepIngame+".");
+			if(rmp.hasPermission("resourcemadness.set.clearinventory")) rmp.sendMessage(ChatColor.AQUA+"clearinventory "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.clearPlayerInventory+".");
+			if(rmp.hasPermission("resourcemadness.set.midgamejoin")) rmp.sendMessage(ChatColor.AQUA+"midgamejoin "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.allowMidgameJoin+".");
+		}
 	}
 	
 	public void rmFilterInfo(RMPlayer rmp){
-		rmp.sendMessage(ChatColor.GOLD+"/rm filter");
-		/*
-		rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear"+ChatColor.BLUE+":[amount/stack]");
-		rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.YELLOW+"remove "+ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear");
-		rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.YELLOW+"random "+ChatColor.GREEN+"[amount] "+ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear"+ChatColor.BLUE+":[amount/stack]");
-		*/
-		rmp.sendMessage(ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear"+ChatColor.BLUE+":[amount/stack]");
-		rmp.sendMessage(ChatColor.YELLOW+"remove "+ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear");
-		rmp.sendMessage(ChatColor.YELLOW+"random "+ChatColor.GREEN+"[amount] "+ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear"+ChatColor.BLUE+":[amount/stack]");
-		rmp.sendMessage(ChatColor.GOLD+"Examples:");
-		rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.YELLOW+"clear");
-		rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.AQUA+"1-5 6-9"+ChatColor.BLUE+":32 "+ChatColor.AQUA+"10-20,22,24"+ChatColor.BLUE+":stack "+ChatColor.AQUA+"27-35"+ChatColor.BLUE+":8-32");
-		rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.YELLOW+"remove "+ChatColor.AQUA+"1-10,20,288");
-		rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.YELLOW+"random "+ChatColor.GREEN+"20 "+ChatColor.AQUA+"all"+ChatColor.BLUE+":100-200");
+		if(rmp.hasPermission("resourcemadness.filter")){
+			rmp.sendMessage(ChatColor.GOLD+"/rm filter");
+			/*
+			rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear"+ChatColor.BLUE+":[amount/stack]");
+			rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.YELLOW+"remove "+ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear");
+			rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.YELLOW+"random "+ChatColor.GREEN+"[amount] "+ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear"+ChatColor.BLUE+":[amount/stack]");
+			 */
+			rmp.sendMessage(ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear"+ChatColor.BLUE+":[amount/stack]");
+			rmp.sendMessage(ChatColor.YELLOW+"remove "+ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear");
+			rmp.sendMessage(ChatColor.YELLOW+"random "+ChatColor.GREEN+"[amount] "+ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear"+ChatColor.BLUE+":[amount/stack]");
+			rmp.sendMessage(ChatColor.GOLD+"Examples:");
+			rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.YELLOW+"clear");
+			rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.AQUA+"1-5 6-9"+ChatColor.BLUE+":32 "+ChatColor.AQUA+"10-20,22,24"+ChatColor.BLUE+":stack "+ChatColor.AQUA+"27-35"+ChatColor.BLUE+":8-32");
+			rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.YELLOW+"remove "+ChatColor.AQUA+"1-10,20,288");
+			rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.YELLOW+"random "+ChatColor.GREEN+"20 "+ChatColor.AQUA+"all"+ChatColor.BLUE+":100-200");
+		}
 	}
 	
 	public String stripLast(String str, String s){

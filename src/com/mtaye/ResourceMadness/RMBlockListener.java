@@ -37,14 +37,16 @@ public class RMBlockListener extends BlockListener{
 							break;
 					}
 				}
-				RMGame rmGame = rmp.getTeam().getGame();
-				if(rmGame!=null){
-					switch(rmGame.getConfig().getState()){
-						case SETUP:
-							break;
-						case COUNTDOWN: case GAMEPLAY: case GAMEOVER:
-							rmGame.addLog(b.getState());
-							break;
+				if(rmp.isIngame()){
+					RMGame rmGame = rmp.getTeam().getGame();
+					if(rmGame!=null){
+						switch(rmGame.getConfig().getState()){
+							case SETUP:
+								break;
+							case COUNTDOWN: case GAMEPLAY: case GAMEOVER:
+								rmGame.addLog(b.getState());
+								break;
+						}
 					}
 				}
 			}
@@ -57,14 +59,16 @@ public class RMBlockListener extends BlockListener{
 			Player p = e.getPlayer();
 			RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
 			if(rmp!=null){
-				RMGame rmGame = rmp.getTeam().getGame();
-				if(rmGame!=null){
-					switch(rmGame.getConfig().getState()){
-						case SETUP:
-							break;
-						case COUNTDOWN: case GAMEPLAY: case GAMEOVER:
-							rmGame.addLog(e.getBlockReplacedState());
-							break;
+				if(rmp.isIngame()){
+					RMGame rmGame = rmp.getTeam().getGame();
+					if(rmGame!=null){
+						switch(rmGame.getConfig().getState()){
+							case SETUP:
+								break;
+							case COUNTDOWN: case GAMEPLAY: case GAMEOVER:
+								rmGame.addLog(e.getBlockReplacedState());
+								break;
+						}
 					}
 				}
 			}

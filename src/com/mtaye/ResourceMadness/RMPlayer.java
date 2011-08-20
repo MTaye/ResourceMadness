@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import com.mtaye.ResourceMadness.RM.ClaimType;
 import com.mtaye.ResourceMadness.RMGame.FilterType;
 import com.mtaye.ResourceMadness.RMGame.ForceState;
 import com.mtaye.ResourceMadness.RMGame.GameState;
@@ -41,8 +42,6 @@ public class RMPlayer {
 	private List<ItemStack> _items = new ArrayList<ItemStack>();
 	private List<ItemStack> _award = new ArrayList<ItemStack>();
 	private boolean _isOnline = false;
-	
-	public enum ClaimType { ITEMS, AWARD };
 	
 	public ItemStack[] getItems(){
 		return _items.toArray(new ItemStack[_items.size()]);
@@ -257,22 +256,35 @@ public class RMPlayer {
 	}
 	
 	//SendMessage
-	public void sendMessage(String message){
-		if(getPlayer()!=null) getPlayer().sendMessage(message);
+	public boolean sendMessage(String message){
+		if(getPlayer()!=null){
+			getPlayer().sendMessage(message);
+			return true;
+		}
+		return false;
 	}
 	
 	public void warpToSafety(){
 		if(getPlayer()!=null){
 			Player p = getPlayer();
-			double pLocX = p.getLocation().getX();
-			double pLocY = p.getLocation().getY();
-			double pLocZ = p.getLocation().getZ();
-			Location loc = _team.getWarpLocation();
-			if((Math.abs(pLocX-loc.getX())>4)||(Math.abs(pLocY-loc.getY())>4)||(Math.abs(pLocZ-loc.getZ())>4)){
+			//double pLocX = p.getLocation().getBlockX();
+			//double pLocY = p.getLocation().getBlockY();
+			//double pLocZ = p.getLocation().getBlockZ();
+			Location loc = _team.getWarpLocation().clone();
+			//if((Math.abs(pLocX-loc.getX())>4)||(Math.abs(pLocY-loc.getY())>4)||(Math.abs(pLocZ-loc.getZ())>4)){
 				loc.setPitch(p.getLocation().getPitch());
 				loc.setYaw(p.getLocation().getYaw());
-				getPlayer().teleport(loc.add(0.5, -2+p.getEyeHeight(), 0.5));
-			}
+				p.teleport(loc);
+			//}
+		}
+	}
+	
+	public static void warpToSafety(Player p){
+		RMPlayer rmp = getPlayerByName(p.getName());
+		if(rmp!=null){
+			Location loc = rmp.getTeam().getWarpLocation().clone();
+			loc.setPitch(p.getLocation().getPitch());
+			loc.setYaw(p.getLocation().getYaw());
 		}
 	}
 	
@@ -286,17 +298,22 @@ public class RMPlayer {
 		return _sneak;
 	}
 	
-	public boolean isInGame(){
+	public boolean isIngame(){
+		if(getGame()!=null) return true;
+		return false;
+	}
+	
+	public RMGame getGame(){
 		RMTeam rmTeam = getTeam();
 		if(rmTeam!=null){
 			RMGame rmGame = rmTeam.getGame();
 			if(rmGame!=null){
 				if(rmGame.getConfig().getState()==GameState.GAMEPLAY){
-					return true;
+					return rmGame;
 				}
 			}
 		}
-		return false;
+		return null;
 	}
 	
 	public void onPlayerJoin(){
@@ -333,5 +350,11 @@ public class RMPlayer {
 	
 	public void isOnline(boolean isOnline){
 		_isOnline = isOnline;
+	}
+	
+	public boolean hasPermission(String node){
+		Player p = getPlayer();
+		if(p!=null) return (plugin.hasPermission(p, node));
+		return false;
 	}
 }

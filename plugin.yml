@@ -5,6 +5,6 @@ author: mtaye
 description: ResourceMadness!
 commands:
  resourcemadness:
-  description: Access to all DropChest related commands
+  description: Access to all ResourceMadness commands
   aliases:
       - rm

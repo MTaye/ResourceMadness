@@ -48,7 +48,7 @@ public class RMChest{
 			if(_inventory.size()>0){
 				Inventory inv =_chest.getInventory();
 				inv.clear();
-				inv.setContents(_inventory.toArray(new ItemStack[inv.getContents().length]));
+				inv.setContents(_inventory.toArray(new ItemStack[27]));
 				_inventory.clear();
 			}
 		}
