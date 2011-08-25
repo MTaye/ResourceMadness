@@ -13,9 +13,12 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import com.mtaye.ResourceMadness.RM.ClaimType;
+import com.mtaye.ResourceMadness.RMGame.FilterState;
 import com.mtaye.ResourceMadness.RMGame.FilterType;
 import com.mtaye.ResourceMadness.RMGame.ForceState;
 import com.mtaye.ResourceMadness.RMGame.GameState;
+import com.mtaye.ResourceMadness.RMGame.HandleState;
+import com.mtaye.ResourceMadness.RMGame.InterfaceState;
 
 /**
  * ResourceMadness for Bukkit
@@ -24,30 +27,44 @@ import com.mtaye.ResourceMadness.RMGame.GameState;
  */
 public class RMPlayer {
 	public enum PlayerAction{
-		ADD, REMOVE, INFO,
+		ADD, REMOVE, INFO, SETTINGS, MODE, MODE_CYCLE,
 		JOIN, QUIT, START, START_RANDOM, RESTART, STOP,
-		RESTORE, FILTER,
-		SET_MAX_PLAYERS, SET_MAX_TEAM_PLAYERS, SET_MAX_ITEMS, SET_RANDOM,
+		RESTORE, FILTER, AWARD, TOOLS,
+		SET_MIN_PLAYERS, SET_MAX_PLAYERS, SET_MIN_TEAM_PLAYERS, SET_MAX_TEAM_PLAYERS, SET_MAX_ITEMS, SET_RANDOM,
 		SET_WARP, SET_RESTORE, SET_WARN_HACKED, SET_ALLOW_HACKED,
-		SET_KEEP_INGAME, SET_CLEAR_INVENTORY, SET_MIDGAME_JOIN,
+		SET_KEEP_INGAME, SET_MIDGAME_JOIN, SET_CLEAR_INVENTORY,
+		SET_WARN_UNEQUAL, SET_ALLOW_UNEQUAL, SET_INFINITE_AWARD, SET_INFINITE_TOOLS,
 		NONE;
 	}
 	private String _name;
 	private RMTeam _team;
 	//private List<RMGame> _games;
 	private RMRequestFilter _requestFilter;
-	private boolean _sneak = false;
 	private int _requestInt = 0;
+	private InterfaceState _requestInterface = InterfaceState.FILTER;
 	private RMStats _stats = new RMStats();
 	private List<ItemStack> _items = new ArrayList<ItemStack>();
 	private List<ItemStack> _award = new ArrayList<ItemStack>();
+	private List<ItemStack> _tools = new ArrayList<ItemStack>();
 	private boolean _isOnline = false;
 	
-	public ItemStack[] getItems(){
-		return _items.toArray(new ItemStack[_items.size()]);
+	public List<ItemStack> getItems(){
+		return _items;
 	}
-	public ItemStack[] getAward(){
-		return _award.toArray(new ItemStack[_award.size()]);
+	public List<ItemStack> getAward(){
+		return _award;
+	}
+	public List<ItemStack> getTools(){
+		return _tools;
+	}
+	public void setItems(List<ItemStack> items){
+		_items = items;
+	}
+	public void setAward(List<ItemStack> award){
+		_award = award;
+	}
+	public void setTools(List<ItemStack> tools){
+		_tools = tools;
 	}
 	public void clearItems(){
 		_items.clear();
@@ -55,81 +72,210 @@ public class RMPlayer {
 	public void clearAward(){
 		_award.clear();
 	}
+	public void clearTools(){
+		_tools.clear();
+	}
 	
-	public void addItems(){
+	public List<ItemStack> getItemsFromInventory(){
 		if(getPlayer()!=null){
 			Inventory inv = getPlayer().getInventory();
-			//clearInventoryContents();
+			List<ItemStack> items = new ArrayList<ItemStack>();
 			for(ItemStack item : inv.getContents()){
+				if(item!=null) items.add(item);
+			}
+			return items;
+		}
+		return null;
+	}
+	
+	public void addItems(ClaimType claimType){
+		if(getPlayer()!=null){
+			//_items = getItemsFromInventory();
+			ItemStack[] contents = getPlayer().getInventory().getContents();
+			for(ItemStack item : contents){
 				if((item!=null)&&(item.getType()!=Material.AIR)){
-					_items.add(item);
+					addItem(item, claimType);
 				}
 			}
-			inv.clear();
+			getPlayer().getInventory().clear();
 		}
+	}
+	
+	public HandleState addItem(ItemStack item, ClaimType claimType){
+		if((item!=null)&&(item.getType()!=Material.AIR)){
+			List<ItemStack> items = new ArrayList<ItemStack>();
+			switch(claimType){
+				case ITEMS: items = _items; break;
+				case AWARD: items = _award; break;
+				case TOOLS: items = _tools; break;
+			}
+			for(ItemStack isItem : items){
+				if(isItem.getType() == item.getType()){
+					isItem.setAmount(isItem.getAmount()+item.getAmount());
+					return HandleState.MODIFY;
+				}
+			}
+			items.add(item);
+			return HandleState.ADD;
+		}
+		return HandleState.NO_CHANGE;
 	}
 
 	public void addItemsByItemStack(ItemStack[] items){
-		//clearInventoryContents();
 		for(ItemStack item : items){
 			if((item!=null)&&(item.getType()!=Material.AIR)){
 				_items.add(item);
 			}
 		}
 	}
-	public void addAwardByItemStack(ItemStack[] items){
-		//clearInventoryContents();
+	public void addByListItemStack(List<ItemStack> items, ClaimType claimType){
 		for(ItemStack item : items){
 			if((item!=null)&&(item.getType()!=Material.AIR)){
-				_award.add(item);
+				addItem(item, claimType);
+			}
+		}
+	}
+	public void addByItemStack(ItemStack[] items, ClaimType claimType){
+		for(ItemStack item : items){
+			if((item!=null)&&(item.getType()!=Material.AIR)){
+				addItem(item, claimType);
 			}
 		}
 	}
 	
-	public void claim(List<ItemStack> items, ClaimType claimType){
-		if(_items.size()==0){
+	public void claimTransfer(ClaimType source, ClaimType destination){
+		List<ItemStack> itemsSource = new ArrayList<ItemStack>();
+		if(source==destination) return;
+		switch(source){
+			case ITEMS:	itemsSource = _items; break;
+			case AWARD:	itemsSource = _award; break;
+			case TOOLS:	itemsSource = _tools; break;
+		}
+		if(itemsSource==null) return;
+		addByListItemStack(itemsSource, destination);
+		itemsSource.clear();
+	}
+
+	public HandleState claim(List<ItemStack> items, ClaimType claimType){
+		if(items.size()==0){
 			switch(claimType){
 				case ITEMS:	sendMessage("No items to return."); break;
-				case AWARD:	sendMessage("No award to return."); break;
+				case AWARD:	sendMessage("No award to give."); break;
+				case TOOLS:	sendMessage("No tools to give."); break;
 			}
-			return;
+			return HandleState.NO_CHANGE;
 		}
 		if(getPlayer()!=null){
 			Inventory inv = getPlayer().getInventory();
 			if(inv.firstEmpty()==-1){
 				switch(claimType){
-					case ITEMS:	sendMessage("Your inventory is full. Cannot return items."); break;
-					case AWARD:	sendMessage("Your inventory is full. Cannot give award."); break;
+					case ITEMS:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot return items."); break;
+					case AWARD:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot give award."); break;
+					case TOOLS:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot give tools."); break;
 				}
-				return;
+				return HandleState.NO_CHANGE;
 			}
 			List<ItemStack> removeItems = new ArrayList<ItemStack>();
-			for(int i=0; i<_items.size(); i++){
+			for(int i=0; i<items.size(); i++){
 				if(inv.firstEmpty()!=-1){
-					ItemStack item = _items.get(i);
+					ItemStack item = items.get(i);
 					if((item!=null)&&(item.getType()!=Material.AIR)){
-						inv.addItem(item);
-						//removeItems.add(item);
-						removeItems.add(item);
+						Material mat = item.getType();
+						while(item.getAmount()>mat.getMaxStackSize()){
+							if(inv.firstEmpty()!=-1){
+								ItemStack itemClone = item.clone();
+								itemClone.setAmount(mat.getMaxStackSize());
+								inv.addItem(itemClone);
+								item.setAmount(item.getAmount()-mat.getMaxStackSize());
+							}
+							else break;
+						}
+						if(item.getAmount()<=mat.getMaxStackSize()){
+							inv.addItem(item);
+							removeItems.add(item);
+						}
 					}
 				}
 				else break;
 			}
 			for(ItemStack item : removeItems){
-				_items.remove(item);
+				items.remove(item);
 			}
 			//inv.clear();
 			//clearInventoryContents();
-			if(_items.size()>0){
-				sendMessage("Inventory is full. "+ChatColor.YELLOW+_items.size()+ChatColor.WHITE+" item(s) remaining.");
+			if(items.size()>0){
+				sendMessage(ChatColor.RED+"Your Inventory is full. "+ChatColor.YELLOW+plugin.getListItemStackTotalStack(items)+ChatColor.WHITE+" item(s) remaining.");
+				return HandleState.CLAIM_RETURNED_SOME;
 			}
 			else{
 				switch(claimType){
-					case ITEMS:	sendMessage("All items were returned. Check your inventory."); break;
-					case AWARD:	sendMessage("Award was given. Check your inventory."); break;
+					case ITEMS:	sendMessage(ChatColor.YELLOW+"All items were returned. "+ChatColor.WHITE+"Check your inventory."); break;
+					case AWARD:	sendMessage(ChatColor.YELLOW+"Award was given. "+ChatColor.WHITE+"Check your inventory."); break;
+					case TOOLS:	sendMessage(ChatColor.YELLOW+"Tools were given. "+ChatColor.WHITE+"Check your inventory."); break;
 				}
+				return HandleState.CLAIM_RETURNED_ALL;
 			}
 		}
+		return HandleState.NO_CHANGE;
+	}
+	
+	public HandleState claimItem(List<ItemStack> items, ItemStack isItem, ClaimType claimType){
+		if(items.size()==0){
+			switch(claimType){
+				case ITEMS:	sendMessage("No item to return."); break;
+				case AWARD:	sendMessage("No award to give."); break;
+				case TOOLS:	sendMessage("No tools to give."); break;
+			}
+			return HandleState.NO_CHANGE;
+		}
+		if(getPlayer()!=null){
+			Inventory inv = getPlayer().getInventory();
+			if(inv.firstEmpty()==-1){
+				switch(claimType){
+					case ITEMS:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot return item."); break;
+					case AWARD:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot give award."); break;
+					case TOOLS:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot give tools."); break;
+				}
+				return HandleState.NO_CHANGE;
+			}
+			ItemStack removeItem = null;
+			for(int i=0; i<items.size(); i++){
+				if(inv.firstEmpty()!=-1){
+					ItemStack item = items.get(i);
+					if((item!=null)&&(item.getType()!=Material.AIR)){
+						Material mat = item.getType();
+						while(item.getAmount()>mat.getMaxStackSize()){
+							if(inv.firstEmpty()!=-1){
+								ItemStack itemClone = item.clone();
+								itemClone.setAmount(mat.getMaxStackSize());
+								inv.addItem(itemClone);
+								item.setAmount(item.getAmount()-mat.getMaxStackSize());
+							}
+							else break;
+						}
+						if(item.getAmount()<=mat.getMaxStackSize()){
+							inv.addItem(item);
+							removeItem = item;
+						}
+					}
+				}
+				else break;
+			}
+			if(removeItem!=null){
+				items.remove(removeItem);
+				switch(claimType){
+					case ITEMS:	sendMessage("Item was returned. Check your inventory."); break;
+					case AWARD:	sendMessage("Award was given. Check your inventory."); break;
+					case TOOLS:	sendMessage("Tools were given. Check your inventory."); break;
+				}
+				return HandleState.REMOVE;
+			}
+			else{
+				sendMessage("Inventory is full. "+ChatColor.YELLOW+plugin.getListItemStackTotalStack(items)+ChatColor.WHITE+" item(s) remaining.");
+				return HandleState.MODIFY;
+			}
+		}
+		return HandleState.NO_CHANGE;
 	}
 	
 	public void claimItems(){
@@ -138,9 +284,19 @@ public class RMPlayer {
 	public void claimAward(){
 		claim(_award, ClaimType.AWARD);
 	}
+	public void claimTools(){
+		claim(_tools, ClaimType.TOOLS);
+	}
 	
 	public RMStats getStats(){
 		return _stats;
+	}
+	
+	public InterfaceState getRequestInterface(){
+		return _requestInterface;
+	}
+	public void setRequestInterface(InterfaceState requestInterface){
+		_requestInterface = requestInterface;
 	}
 	
 	public void setRequestInt(int value){
@@ -171,8 +327,8 @@ public class RMPlayer {
 		_playerAction = PlayerAction.NONE;
 	}
 	
-	public void setRequestFilter(HashMap<Integer, RMItem> items, FilterType type, ForceState force, int randomize){
-		_requestFilter = new RMRequestFilter(items,type,force,randomize);
+	public void setRequestFilter(HashMap<Integer, RMItem> items, FilterState state, FilterType type, ForceState force, int randomize){
+		_requestFilter = new RMRequestFilter(items,state,type,force,randomize);
 	}
 	public RMRequestFilter getRequestFilter(){
 		if(_requestFilter!=null) return _requestFilter;
@@ -287,15 +443,9 @@ public class RMPlayer {
 			loc.setYaw(p.getLocation().getYaw());
 		}
 	}
-	
-	public void sneakOn(){
-		_sneak = true;
-	}
-	public void sneakOff(){
-		_sneak = false;
-	}
 	public boolean isSneaking(){
-		return _sneak;
+		if(getPlayer()!=null) return getPlayer().isSneaking();
+		return false;
 	}
 	
 	public boolean isIngame(){
@@ -352,9 +502,15 @@ public class RMPlayer {
 		_isOnline = isOnline;
 	}
 	
+	public boolean hasOwnerPermission(String node){
+		Player p = getPlayer();
+		if(p!=null) return (plugin.hasPermission(p, node, false));
+		return false;
+	}
+	
 	public boolean hasPermission(String node){
 		Player p = getPlayer();
-		if(p!=null) return (plugin.hasPermission(p, node));
+		if(p!=null) return (plugin.hasPermission(p, node, true));
 		return false;
 	}
 }

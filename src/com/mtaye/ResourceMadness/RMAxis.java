@@ -20,4 +20,3 @@ public enum RMAxis{
 		return RMAxis.NONE;
 	}
 }
-

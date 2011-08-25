@@ -2,6 +2,7 @@ package com.mtaye.ResourceMadness;
 
 import java.util.HashMap;
 
+import com.mtaye.ResourceMadness.RMGame.FilterState;
 import com.mtaye.ResourceMadness.RMGame.FilterType;
 import com.mtaye.ResourceMadness.RMGame.ForceState;
 
@@ -12,12 +13,14 @@ import com.mtaye.ResourceMadness.RMGame.ForceState;
  */
 public class RMRequestFilter {
 	HashMap<Integer, RMItem> _items;
+	FilterState _state;
 	FilterType _type;
 	ForceState _force;
 	int _randomize;
 	
-	public RMRequestFilter(HashMap<Integer, RMItem> items, FilterType type, ForceState force, int randomize){
+	public RMRequestFilter(HashMap<Integer, RMItem> items, FilterState state, FilterType type, ForceState force, int randomize){
 		_items = items;
+		_state = state;
 		_type = type;
 		_force = force;
 		_randomize = randomize;
@@ -25,6 +28,9 @@ public class RMRequestFilter {
 	
 	public HashMap<Integer, RMItem> getItems(){
 		return _items;
+	}
+	public FilterState getFilterState(){
+		return _state;
 	}
 	public FilterType getType(){
 		return _type;

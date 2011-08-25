@@ -32,7 +32,7 @@ public class RMBlockListener extends BlockListener{
 			if(rmp!=null){
 				if(RMGame.isMaterial(b.getType(), RMGame.getMaterials())){
 					switch(RMGame.tryRemoveGame(b, rmp, false)){
-						case NOCHANGE:
+						case NO_CHANGE:
 							e.setCancelled(true);
 							break;
 					}
@@ -44,7 +44,7 @@ public class RMBlockListener extends BlockListener{
 							case SETUP:
 								break;
 							case COUNTDOWN: case GAMEPLAY: case GAMEOVER:
-								rmGame.addLog(b.getState());
+								if(plugin.config.getUseRestore()) rmGame.addLog(b.getState());
 								break;
 						}
 					}
@@ -66,7 +66,7 @@ public class RMBlockListener extends BlockListener{
 							case SETUP:
 								break;
 							case COUNTDOWN: case GAMEPLAY: case GAMEOVER:
-								rmGame.addLog(e.getBlockReplacedState());
+								if(plugin.config.getUseRestore()) rmGame.addLog(e.getBlockReplacedState());
 								break;
 						}
 					}

@@ -1,5 +1,7 @@
 package com.mtaye.ResourceMadness;
 
+import java.util.logging.Level;
+
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -10,6 +12,7 @@ import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 
+import com.mtaye.ResourceMadness.RMGame.FilterState;
 import com.mtaye.ResourceMadness.RMPlayer.PlayerAction;
 
 /**
@@ -32,19 +35,19 @@ public class RMPlayerListener extends PlayerListener{
 			if(b.getType().isBlock()){
 				RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
 				if(rmp!=null){
-					if(b.getType() == Material.CHEST){
+					if(RMGame.isMaterial(b.getType(), RMGame.getMaterials())){
 						RMGame rmGame = RMGame.getGameByBlock(b);
 						if(rmGame!=null){
 							switch(rmGame.getConfig().getState()){
 								case SETUP:
-									if(!rmp.getName().equalsIgnoreCase(rmGame.getConfig().getOwnerName())){
-										e.setCancelled(true);
-									}
-									else{
-										if(p.isSneaking()){
+									if((rmp.getName().equalsIgnoreCase(rmGame.getConfig().getOwnerName()))||(rmp.hasOwnerPermission("resourcemadness.admin"))){
+										if(rmp.getPlayer().isSneaking()){
 											e.setCancelled(true);
 											rmGame.handleRightClick(b, rmp);
 										}
+									}
+									else{
+										e.setCancelled(true);
 									}
 									break;
 								case COUNTDOWN:
@@ -86,6 +89,18 @@ public class RMPlayerListener extends PlayerListener{
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.sendInfo(rmp);
 								break;
+							case SETTINGS:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.sendSettings(rmp);
+								break;
+							case MODE:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.changeMode(rmp.getRequestInterface(), rmp);
+								break;
+							case MODE_CYCLE:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.cycleMode(rmp);
+								break;
 								/*
 							case SAVE_TEMPLATE:
 								rmGame = RMGame.getGameByBlock(b);
@@ -123,13 +138,29 @@ public class RMPlayerListener extends PlayerListener{
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.tryParseFilter(rmp);
 								break;
+							case AWARD:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.tryParseFilter(rmp);
+								break;
+							case TOOLS:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.tryParseFilter(rmp);
+								break;
 							case RESTORE:
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.restoreWorld(rmp);
 								break;
+							case SET_MIN_PLAYERS:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.setMinPlayers(rmp, rmp.getRequestInt());
+								break;
 							case SET_MAX_PLAYERS:
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.setMaxPlayers(rmp, rmp.getRequestInt());
+								break;
+							case SET_MIN_TEAM_PLAYERS:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.setMinTeamPlayers(rmp, rmp.getRequestInt());
 								break;
 							case SET_MAX_TEAM_PLAYERS:
 								rmGame = RMGame.getGameByBlock(b);
@@ -163,13 +194,33 @@ public class RMPlayerListener extends PlayerListener{
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.setKeepIngame(rmp, rmp.getRequestInt());
 								break;
+							case SET_MIDGAME_JOIN:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.setAllowMidgameJoin(rmp, rmp.getRequestInt());
+								break;
 							case SET_CLEAR_INVENTORY:
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.setClearPlayerInventory(rmp, rmp.getRequestInt());
 								break;
-							case SET_MIDGAME_JOIN:
+							case SET_WARN_UNEQUAL:
 								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null) rmGame.setAllowMidgameJoin(rmp, rmp.getRequestInt());
+								if(rmGame!=null) rmGame.setWarnUnequal(rmp, rmp.getRequestInt());
+								break;
+							case SET_ALLOW_UNEQUAL:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.setAllowUnequal(rmp, rmp.getRequestInt());
+								break;
+							case SET_INFINITE_AWARD:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.setInfiniteAward(rmp, rmp.getRequestInt());
+								break;
+							case SET_INFINITE_TOOLS:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.setInfiniteTools(rmp, rmp.getRequestInt());
+								break;
+							default:
+								rmp.sendMessage("This is not a game block");
+								rmp.setPlayerAction(PlayerAction.NONE);
 								break;
 							}
 							rmp.setPlayerAction(PlayerAction.NONE);
