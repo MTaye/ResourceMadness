@@ -1,8 +1,5 @@
 package com.mtaye.ResourceMadness;
 
-import java.util.logging.Level;
-
-import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
@@ -12,7 +9,6 @@ import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 
-import com.mtaye.ResourceMadness.RMGame.FilterState;
 import com.mtaye.ResourceMadness.RMPlayer.PlayerAction;
 
 /**
@@ -89,9 +85,13 @@ public class RMPlayerListener extends PlayerListener{
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.sendInfo(rmp);
 								break;
-							case SETTINGS:
+							case INFO_SETTINGS:
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.sendSettings(rmp);
+								break;
+							case INFO_FOUND:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.getInfoFound(rmp);
 								break;
 							case MODE:
 								rmGame = RMGame.getGameByBlock(b);
@@ -149,6 +149,10 @@ public class RMPlayerListener extends PlayerListener{
 							case RESTORE:
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.restoreWorld(rmp);
+								break;
+							case CLAIM_FOUND:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.claimFound(rmp);
 								break;
 							case SET_MIN_PLAYERS:
 								rmGame = RMGame.getGameByBlock(b);

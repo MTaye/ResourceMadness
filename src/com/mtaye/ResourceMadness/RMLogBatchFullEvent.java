@@ -5,6 +5,11 @@ import java.util.HashMap;
 import org.bukkit.Location;
 import org.bukkit.event.Event;
 
+/**
+ * ResourceMadness for Bukkit
+ *
+ * @author M-Taye
+ */
 public class RMLogBatchFullEvent extends Event {
 	private HashMap<Location, RMBlock> _logList;
 	private HashMap<Location, RMBlock> _logItemList;

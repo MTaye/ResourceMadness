@@ -1,0 +1,2 @@
+Manifest-Version: 1.0
+Class-Path: ResourceMadness/ning-compress-compress-lzf-0.8.4-0.jar

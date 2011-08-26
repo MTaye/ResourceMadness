@@ -1,16 +1,14 @@
 package com.mtaye.ResourceMadness;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-import com.mtaye.ResourceMadness.RMConfig.Lock;
 import com.mtaye.ResourceMadness.RMGame.GameState;
 import com.mtaye.ResourceMadness.RMGame.InterfaceState;
+
 /**
  * ResourceMadness for Bukkit
  *
@@ -44,13 +42,13 @@ public class RMGameConfig {
 	//private List<RMTeam> _teams = new ArrayList<RMTeam>();
 	private RMFilter _filter = new RMFilter();
 	private RMFilter _items = new RMFilter();
+	private List<ItemStack> _found = new ArrayList<ItemStack>();
 	private List<ItemStack> _award = new ArrayList<ItemStack>();
 	private List<ItemStack> _tools = new ArrayList<ItemStack>();
 	private List<RMTeam> _teams = new ArrayList<RMTeam>();
 	private RMLog _log = new RMLog(plugin);
 	private GameState _state = GameState.SETUP;
 	private InterfaceState _interface = InterfaceState.FILTER;
-	private int _wordLimit = 40;
 	
 	private boolean _addWholeStack = false;
 	private boolean _addOnlyOneStack = false;
@@ -86,13 +84,13 @@ public class RMGameConfig {
 		this._players = rmGameConfig._players;
 		this._filter = rmGameConfig._filter;
 		this._items = rmGameConfig._items;
+		this._found = rmGameConfig._found;
 		this._award = rmGameConfig._award;
 		this._tools = rmGameConfig._tools;
 		this._teams = rmGameConfig._teams;
 		this._log = rmGameConfig._log;
 		this._state = rmGameConfig._state;
 		this._interface = rmGameConfig._interface;
-		this._wordLimit = rmGameConfig._wordLimit;
 		this._gameStats = rmGameConfig._gameStats;
 	}
 	
@@ -122,8 +120,10 @@ public class RMGameConfig {
 	//public List<RMTeam> getTeams() { return _teams; }
 	public RMFilter getFilter() { return _filter; }
 	public RMFilter getItems() { return _items; }
+	public List<ItemStack> getFound() { return _found; }
 	public List<ItemStack> getAward() { return _award; }
 	public List<ItemStack> getTools() { return _tools; }
+	public ItemStack[] getFoundArray() { return _found.toArray(new ItemStack[_found.size()]); }
 	public ItemStack[] getAwardArray() { return _award.toArray(new ItemStack[_award.size()]); }
 	public ItemStack[] getToolsArray() { return _tools.toArray(new ItemStack[_tools.size()]); }
 	public List<RMTeam> getTeams() { return _teams; }
@@ -131,7 +131,6 @@ public class RMGameConfig {
 	public GameState getState() { return _state; }
 	public InterfaceState getInterface() { return _interface; }
 	
-	public int getWordLimit() { return _wordLimit; }
 	public boolean getAddWholeStack() { return _addWholeStack; }
 	public boolean getAddOnlyOneStack() { return _addOnlyOneStack; }
 	public int getMaxItems() { return _maxItems; }
@@ -229,6 +228,9 @@ public class RMGameConfig {
 	public void setItems(RMFilter items){
 		_items = items;
 	}
+	public void setFound(List<ItemStack> found){
+		_tools = found;
+	}
 	public void setAward(List<ItemStack> award){
 		_award = award;
 	}
@@ -247,10 +249,6 @@ public class RMGameConfig {
 	public void setInterface(InterfaceState interfaceState){
 		_interface = interfaceState;
 	}
-	public void setWordLimit(int limit){
-		_wordLimit = limit;
-		if(_wordLimit<10) _wordLimit = 10;
-	}
 	public void setGameStats(RMStats stats){
 		_gameStats = stats;
 	}
@@ -267,6 +265,9 @@ public class RMGameConfig {
 	}
 	public void clearTools(){
 		_tools.clear();
+	}
+	public void clearFound(){
+		_found.clear();
 	}
 	
 	//Parse
@@ -343,12 +344,12 @@ public class RMGameConfig {
 		setPlayers(rmGameConfig.getPlayers());
 		setFilter(rmGameConfig.getFilter());
 		setItems(rmGameConfig.getItems());
+		setFound(rmGameConfig.getFound());
 		setAward(rmGameConfig.getAward());
 		setTools(rmGameConfig.getTools());
 		setLog(rmGameConfig.getLog());
 		setState(rmGameConfig.getState());
 		setInterface(rmGameConfig.getInterface());
-		setWordLimit(rmGameConfig.getWordLimit());
 		setGameStats(rmGameConfig.getGameStats());
 	}
 }

@@ -3,7 +3,6 @@ package com.mtaye.ResourceMadness;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.logging.Level;
 
 import org.bukkit.Material;
 import org.bukkit.block.Chest;
@@ -78,6 +77,20 @@ public class RMChest{
 	}
 	
 	public ItemStack[] getContents(){
+		if(_chest!=null){
+			List<ItemStack> items = new ArrayList<ItemStack>();
+			Inventory inv = _chest.getInventory();
+			for(ItemStack item : inv.getContents()){
+				if((item!=null)&&(item.getType()!=Material.AIR)){
+					items.add(item);
+				}
+			}
+			return items.toArray(new ItemStack[items.toArray().length]);
+		}
+		return null;
+	}
+	
+	public ItemStack[] getContentsStacked(){
 		if(_chest!=null){
 			List<ItemStack> items = new ArrayList<ItemStack>();
 			Inventory inv = _chest.getInventory();

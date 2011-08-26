@@ -3,6 +3,11 @@ package com.mtaye.ResourceMadness;
 import org.bukkit.event.CustomEventListener;
 import org.bukkit.event.Event;
 
+/**
+ * ResourceMadness for Bukkit
+ *
+ * @author M-Taye
+ */
 public class RMLogListener extends CustomEventListener{
 	RM plugin;
 	

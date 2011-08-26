@@ -1,11 +1,18 @@
 package com.mtaye.ResourceMadness;
 
+/**
+ * ResourceMadness for Bukkit
+ *
+ * @author M-Taye
+ */
 final class RMText {
 	
 	public static String preLog = "ResourceMadness: ";
 	public static String noPermissionCommand = "You don't have permission to use this command.";
 	public static String noPermissionAction = "You don't have permission to use this action.";
 	public static String noChangeLocked = "This setting is locked. It cannot be changed.";
+	public static String noOwnerCommand = "Only the owner can use this command.";
+	public static String noOwnerAction = "Only the owner can use this action.";
 	
 	public static String maxGames = "Max games";
 	public static String maxGamesPerPlayer = "Max games per player";
@@ -24,8 +31,8 @@ final class RMText {
 	public static String clearPlayerInventory = "Clear/return player's items at game start/finish";
 	public static String warnUnequal = "Warn when award/tools can't be distributed equally";
 	public static String allowUnequal = "Allow award/tools to be distributed unequally";
-	public static String infiniteAward = "Use infinite award items";
-	public static String infiniteTools = "Use infinite tools items";
+	public static String infiniteAward = "Use infinite award";
+	public static String infiniteTools = "Use infinite tools";
 	
 	public static String cAutoSave = "#Backup data at regular intervals to avoid loss. Interval is measured in minutes (0 = do not autosave).";
 	public static String cUsePermissions = "#If you don't use permissions just leave it at false. Supported permissions are: p3, pex";
@@ -49,8 +56,8 @@ final class RMText {
 	public static String cClearPlayerInventory = "#Clear/return player's items at game start/finish.";
 	public static String cWarnUnequal = "#Warn when award/tools can't be distributed equally.";
 	public static String cAllowUnequal = "#Allow award/tools to be distributed unequally.";
-	public static String cInfiniteAward = "#Use infinite award items";
-	public static String cInfiniteTools = "#Use infinite tools items";
+	public static String cInfiniteAward = "#Use infinite award";
+	public static String cInfiniteTools = "#Use infinite tools";
 	
 	public static String gStartMatch = "ResourceMadness!";
 	

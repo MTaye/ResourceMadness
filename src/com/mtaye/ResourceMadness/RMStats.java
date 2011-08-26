@@ -1,5 +1,10 @@
 package com.mtaye.ResourceMadness;
 
+/**
+ * ResourceMadness for Bukkit
+ *
+ * @author M-Taye
+ */
 public class RMStats {
 	private static int _serverWins = 0;
 	private static int _serverLosses = 0;

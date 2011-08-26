@@ -3,7 +3,14 @@ package com.mtaye.ResourceMadness;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * ResourceMadness for Bukkit
+ *
+ * @author M-Taye
+ */
 public class RMConfig {
+
+	private int _typeLimit = 40;
 	
 	public enum PermissionType { P3, PEX, BUKKIT, FALSE };
 	public enum Lock { restore, warpToSafety, warnHackedItems, allowHackedItems, keepIngame, allowMidgameJoin, clearPlayerInventory, warnUnequal, allowUnequal, infiniteAward, infiniteTools };
@@ -34,6 +41,7 @@ public class RMConfig {
 	}
 	
 	public RMConfig(RMConfig rmConfig){
+		setTypeLimit(rmConfig.getTypeLimit());
 		setLock(rmConfig.getLock());
 		setAutoSave(rmConfig.getAutoSave());
 		setPermissionType(rmConfig.getPermissionType());
@@ -58,6 +66,7 @@ public class RMConfig {
 	}
 	
 	//Get
+	public int getTypeLimit() { return _typeLimit; }
 	public List<Lock> getLock() { return _lock; }
 	public int getAutoSave() { return _autoSave; }
 	public PermissionType getPermissionType() { return _permissionType; }
@@ -81,6 +90,10 @@ public class RMConfig {
 	public boolean getInfiniteTools() { return _infiniteTools; }
 	
 	//Set
+	public void setTypeLimit(int typeLimit){
+		_typeLimit = typeLimit;
+		if(_typeLimit<10) _typeLimit = 10;
+	}
 	public void setLock(List<Lock> locked) { _lock = locked; }
 	public void setAutoSave(int value) { _autoSave = value<0?0:value; }
 	public void setPermissionType(PermissionType permissionType) { _permissionType = permissionType; }
