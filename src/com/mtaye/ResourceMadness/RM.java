@@ -9,8 +9,6 @@ import org.bukkit.ChatColor;
 
 import java.util.HashMap;
 import org.bukkit.entity.Player;
-import org.bukkit.DyeColor;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.event.Event.Priority;
@@ -46,6 +44,9 @@ import com.mtaye.ResourceMadness.RMGame.GameState;
 import com.mtaye.ResourceMadness.RMGame.ForceState;
 import com.mtaye.ResourceMadness.RMGame.InterfaceState;
 import com.mtaye.ResourceMadness.RMPlayer.PlayerAction;
+import com.mtaye.ResourceMadness.Helper.RMHelper;
+import com.mtaye.ResourceMadness.Helper.RMInventoryHelper;
+import com.mtaye.ResourceMadness.Helper.RMLogHelper;
 import com.nijikokun.bukkit.Permissions.Permissions;
 import com.nijiko.permissions.PermissionHandler;
 import com.ning.compress.lzf.LZFInputStream;
@@ -71,7 +72,7 @@ public class RM extends JavaPlugin {
 	private RMPlayerListener playerListener = new RMPlayerListener(this);
 	//private RMLogListener logListener = new RMLogListener(this);
 	
-	public static enum ClaimType { ITEMS, FOUND, AWARD, TOOLS, CHEST };
+	public static enum ClaimType { ITEMS, FOUND, REWARD, TOOLS, CHEST };
 	public static enum DataType { CONFIG, STATS, PLAYER, GAME, LOG };
 	
 	private RMWatcher watcher;
@@ -80,6 +81,8 @@ public class RM extends JavaPlugin {
 	
 	public PermissionHandler permissions = null;
 	public PermissionManager permissionsEx = null;
+	
+	RMLogHelper rmLogHelper;
 	
 	public RM(){
 		RMPlayer.plugin = this;
@@ -123,6 +126,8 @@ public class RM extends JavaPlugin {
 		
 		watcher = new RMWatcher(this);
 		watcherid = getServer().getScheduler().scheduleSyncRepeatingTask(this, watcher, 20,20);
+		
+		rmLogHelper = new RMLogHelper(this);
 	}
 	
 	public void onDisable(){
@@ -190,842 +195,6 @@ public class RM extends JavaPlugin {
 		}
 	}
 	
-	public void saveAllBackup(){
-		log.log(Level.INFO, RMText.preLog+"Autosaving...");
-		if(RMGame.getGames().size()==0) return;
-		File folder = new File(getDataFolder()+"/backup");
-		if(!folder.exists()){
-			log.log(Level.INFO, RMText.preLog+"Creating backup directory...");
-			folder.mkdir();
-		}
-		File file = new File(folder.getAbsolutePath()+"/config.txt");
-		if(!file.exists()) save(DataType.CONFIG, false, file);
-		save(DataType.STATS, false, new File(folder.getAbsolutePath()+"/stats.txt"));
-		save(DataType.PLAYER, false, new File(folder.getAbsolutePath()+"/playerdata.txt"));
-		save(DataType.GAME, false, new File(folder.getAbsolutePath()+"/gamedata.txt"));
-		save(DataType.LOG, true, new File(folder.getAbsolutePath()+"/gamelogdata.txt"));
-	}
-	
-	public void saveAll(){
-		if(RMGame.getGames().size()==0) return;
-		File folder = getDataFolder();
-		if(!folder.exists()){
-			log.log(Level.INFO, RMText.preLog+"Creating config directory...");
-			folder.mkdir();
-		}
-		File file = new File(folder.getAbsolutePath()+"/config.txt");
-		if(!file.exists()) save(DataType.CONFIG, false, file);
-		save(DataType.STATS, false, new File(folder.getAbsolutePath()+"/stats.txt"));
-		save(DataType.PLAYER, false, new File(folder.getAbsolutePath()+"/playerdata.txt"));
-		save(DataType.GAME, false, new File(folder.getAbsolutePath()+"/gamedata.txt"));
-		save(DataType.LOG, true, new File(folder.getAbsolutePath()+"/gamelogdata.txt"));
-	}
-	
-	//Save Data
-	public boolean save(DataType dataType, boolean useLZF, File file){
-		if(file==null){
-			log.log(Level.WARNING, "Cannot load data. Data type unknown!");
-			return false;
-		}
-		if(!file.exists()){
-			switch(dataType){
-				case CONFIG: log.log(Level.INFO, RMText.preLog+"Data file not found! Creating one..."); break;
-				case STATS: log.log(Level.INFO, RMText.preLog+"Stats file not found! Creating one..."); break;
-				case PLAYER: log.log(Level.INFO, RMText.preLog+"Player Data file not found! Creating one..."); break;
-				case GAME: log.log(Level.INFO, RMText.preLog+"Game Data file not found! Creating one..."); break;
-				case LOG: log.log(Level.INFO, RMText.preLog+"Game Data file not found! Creating one..."); break;
-			}
-			try{
-				file.createNewFile();
-			}
-			catch(Exception e){
-				e.printStackTrace();
-				return false;
-			}
-		}
-		if((file.exists())&&(file.length()>0)){
-			
-			File folderBackup = new File(getDataFolder()+"/backup");
-			if(!folderBackup.exists()){
-				try{
-					folderBackup.mkdir();
-				}
-				catch (Exception e){
-					e.printStackTrace();
-				}
-			}
-			if(!copyFile(file, new File(folderBackup.getAbsolutePath()+"/"+file.getName()))){
-				switch(dataType){
-					case CONFIG: log.log(Level.INFO, RMText.preLog+"Could not create config backup file."); break;
-					case STATS: log.log(Level.INFO, RMText.preLog+"Could not create stats backup file."); break;
-					case PLAYER: log.log(Level.INFO, RMText.preLog+"Could not create player data backup file."); break;
-					case GAME: log.log(Level.INFO, RMText.preLog+"Could not create game data backup file."); break;
-					case LOG: log.log(Level.INFO, RMText.preLog+"Could not create game log data backup file."); break;
-				}
-			}
-		}
-		try{
-			OutputStream output;
-			if(useLZF) output = new LZFOutputStream(new FileOutputStream(file.getAbsoluteFile()));
-			else output = new FileOutputStream(file.getAbsoluteFile());
-			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(output));
-			String line = "";
-			switch(dataType){
-				case CONFIG:
-					line = "";
-					//bw.write("[Resource Madness v"+pdfFile.getVersion()+" Config]");
-					line+=RMText.cAutoSave+"\n";
-					line+="autosave="+config.getAutoSave()+"\n\n";
-					line+=RMText.cUsePermissions+"\n";
-					line+="usePermissions="+config.getPermissionType().name().toLowerCase()+"\n\n";
-					line+=RMText.cUseRestore1+"\n";
-					line+=RMText.cUseRestore2+"\n";
-					line+="useRestore="+config.getRestore()+"\n\n";
-					line+=RMText.cServerWide+"\n\n";
-					//Max games
-					line+=RMText.cMaxGames+"\n";
-					line+="maxGames="+config.getMaxGames()+"\n\n";
-					//Max games per player
-					line+=RMText.cMaxGamesPerPlayer+"\n";
-					line+="maxGamesPerPlayer="+config.getMaxGamesPerPlayer()+"\n\n";
-					//Min players per game
-					line+=RMText.cMinPlayersPerGame+"\n";
-					line+="minPlayersPerGame="+config.getMinPlayersPerGame()+"\n\n";
-					//Max player per game
-					line+=RMText.cMaxPlayersPerGame+"\n";
-					line+="maxPlayersPerGame="+config.getMaxPlayersPerGame()+"\n\n";
-					//Min players per team
-					line+=RMText.cMinPlayersPerTeam+"\n";
-					line+="minPlayersPerTeam="+config.getMinPlayersPerTeam()+"\n\n";
-					//Max players per team
-					line+=RMText.cMaxPlayersPerTeam+"\n";
-					line+="maxPlayersPerTeam="+config.getMaxPlayersPerTeam()+"\n\n";
-					//Default game settings
-					line+=RMText.cDefaultSettings1+"\n";
-					line+=RMText.cDefaultSettings2+"\n\n";
-					//Auto restore world
-					line+=RMText.cRestore+"\n";
-					line+="restore="+config.getRestore()+"\n\n";
-					//Warp to safety
-					line+=RMText.cWarpToSafety+"\n";
-					line+="warpToSafety="+config.getWarpToSafety()+"\n\n";
-					//Warn when hacked items are added
-					line+=RMText.cWarnHackedItems+"\n";
-					line+="warnHackedItems="+config.getWarnHackedItems()+"\n\n";
-					//Allow the use of hacked items
-					line+=RMText.cAllowHackedItems+"\n";
-					line+="allowHackedItems="+config.getAllowHackedItems()+"\n\n";
-					//Keep offline players in-game
-					line+=RMText.cKeepIngame+"\n";
-					line+="keepingame="+config.getKeepIngame()+"\n\n";
-					//Allow players to join a game in progress
-					line+=RMText.cAllowMidgameJoin+"\n";
-					line+="allowMidgameJoin="+config.getAllowMidgameJoin()+"\n\n";
-					//Clear/return player's items at game start/finish
-					line+=RMText.cClearPlayerInventory+"\n";
-					line+="clearPlayerInventory="+config.getClearPlayerInventory()+"\n\n";
-					//Warn when award/tools can't be distributed equally
-					line+=RMText.cWarnUnequal+"\n";
-					line+="warnunequal="+config.getWarnUnequal()+"\n\n";
-					//Allow award/tools to be distributed unequally
-					line+=RMText.cAllowUnequal+"\n";
-					line+="allowunequal="+config.getAllowUnequal()+"\n\n";
-					//Use infinite award
-					line+=RMText.infiniteAward+"\n";
-					line+="infiniteaward="+config.getInfiniteAward()+"\n\n";
-					//Use infinite tools
-					line+=RMText.cInfiniteTools+"\n";
-					line+="infinitetools="+config.getInfiniteTools();
-					bw.write(line);
-					break;
-				case STATS:
-					//bw.write("[Resource Madness v"+pdfFile.getVersion()+" Stats]");
-					//Stats
-					line = "";
-					line += RMStats.getServerWins()+","+RMStats.getServerLosses()+","+RMStats.getServerTimesPlayed()+","+/*RMStats.getServerItemsFound()+","+*/RMStats.getServerItemsFoundTotal()+";";
-					bw.write(line);
-					bw.write("\n");
-					break;
-				case PLAYER:
-					//bw.write("[Resource Madness v"+pdfFile.getVersion()+" Player Data]");
-					for(RMPlayer rmp : RMPlayer.getPlayers().values()){
-						line = "";
-						line = rmp.getName()+";";
-						//Stats
-						RMStats stats = rmp.getStats();
-						line += stats.getWins()+","+stats.getLosses()+","+stats.getTimesPlayed()+","+/*stats.getItemsFound()+","+*/stats.getItemsFoundTotal()+";";
-						//Inventory items
-						line += encodeInventoryToString(rmp.getItems().toArray(new ItemStack[rmp.getItems().size()]), ClaimType.ITEMS) + ";";
-						line += encodeInventoryToString(rmp.getAward().toArray(new ItemStack[rmp.getAward().size()]), ClaimType.AWARD) + ";";
-						line += encodeInventoryToString(rmp.getTools().toArray(new ItemStack[rmp.getTools().size()]), ClaimType.TOOLS);
-						bw.write(line);
-						bw.write("\n");
-					}
-					break;
-				case GAME:
-					//bw.write("[Resource Madness v"+pdfFile.getVersion()+" Game Data]");
-					for(RMGame rmGame : RMGame.getGames()){
-						RMGameConfig config = rmGame.getConfig();
-						line = "";
-						//Game
-						Block b = config.getPartList().getMainBlock();
-						line = b.getX()+","+b.getY()+","+b.getZ()+",";
-						line += config.getWorldName()+",";
-						line += config.getId()+",";
-						line += config.getOwnerName()+",";
-						line += config.getState().ordinal()+",";
-						line += config.getInterface().ordinal()+",";
-						line += config.getMinPlayers()+",";
-						line += config.getMaxPlayers()+",";
-						line += config.getMinTeamPlayers()+",";
-						line += config.getMaxTeamPlayers()+",";
-						line += config.getAutoRandomizeAmount()+",";
-						line += config.getWarpToSafety()+",";
-						line += config.getAutoRestoreWorld()+",";
-						line += config.getWarnHackedItems()+",";
-						line += config.getAllowHackedItems()+",";
-						line += config.getKeepIngame()+",";
-						line += config.getAllowMidgameJoin()+",";
-						line += config.getClearPlayerInventory()+",";
-						line += config.getWarnUnequal()+",";
-						line += config.getAllowUnequal();
-						line += ";";
-						//Stats
-						RMStats stats = config.getGameStats();
-						line += stats.getWins()+","+stats.getLosses()+","+stats.getTimesPlayed()+","+/*stats.getItemsFound()+","+*/stats.getItemsFoundTotal()+";";
-						//Players
-						for(RMTeam rmt : config.getTeams()){
-							line+=rmt.getTeamColor().name()+":";
-							String players = "";
-							for(RMPlayer rmp : rmt.getPlayers()){
-								players += rmp.getName()+",";
-							}
-							players = stripLast(players,",");
-							line += players+" ";
-						}
-						line = stripLast(line, " ");
-						line += ";";
-						//Filter items
-						line += encodeFilterToString(config.getFilter().getItems(), FilterState.FILTER)+";";
-						//Game items
-						line += encodeFilterToString(config.getItems().getItems(), FilterState.ITEMS)+";";
-						//Found items
-						line += encodeInventoryToString(config.getFoundArray(), ClaimType.FOUND)+";";
-						//Award items
-						line += encodeInventoryToString(config.getAwardArray(), ClaimType.AWARD)+";";
-						//Tools items
-						line += encodeInventoryToString(config.getToolsArray(), ClaimType.TOOLS)+";";
-						//Chest items
-						for(RMTeam rmt : config.getTeams()){
-							line += encodeInventoryToString(rmt.getChest().getInventory(), ClaimType.CHEST)+".";
-						}
-						line = stripLast(line, ".");
-						line += ";";
-						//Team items
-						for(RMTeam rmt : config.getTeams()){
-							line += encodeFilterToString(rmt.getChest().getItems(), FilterState.ITEMS)+".";
-						}
-						line = stripLast(line, ".");
-						bw.write(line);
-						bw.write("\n");
-					}
-					break;
-				case LOG:
-					for(RMGame rmGame : RMGame.getGames()){
-						line = "";
-						//Log
-						RMGameConfig config = rmGame.getConfig();
-						line += encodeLogToString(config.getLog());
-						bw.write(line);
-						bw.write("\n");
-					}
-					break;
-			}
-			bw.flush();
-			output.close();
-		}
-		catch(Exception e){
-			e.printStackTrace();
-			return false;
-		}
-		return true;
-	}
-	public String encodeLogListToString(HashMap<Location, RMBlock> logList){
-		String line = "";
-		if(logList.size()==0) return "LOG";
-		
-		HashMap<String, HashMap<Integer, HashMap<Integer, List<String>>>> worldList = new HashMap<String, HashMap<Integer, HashMap<Integer, List<String>>>>();
-		
-		for(Location loc : logList.keySet()){
-			RMBlock rmBlock = logList.get(loc);
-			String world = loc.getWorld().getName();
-			int id = rmBlock.getType().getId();
-			int data = rmBlock.getData();
-			String pos = loc.getBlockX()+","+loc.getBlockY()+","+loc.getBlockZ();
-			if(!worldList.containsKey(world)) worldList.put(world, new HashMap<Integer, HashMap<Integer, List<String>>>());
-			
-			HashMap<Integer, HashMap<Integer, List<String>>> idList = worldList.get(world);
-			if(!idList.containsKey(id)) idList.put(id, new HashMap<Integer, List<String>>());
-				
-			HashMap<Integer, List<String>> dataList = idList.get(id);
-			if(!dataList.containsKey(data)) dataList.put(data, new ArrayList<String>());
-				
-			List<String> posList = dataList.get(data);
-			if(!posList.contains(pos)) posList.add(pos);
-		}
-		
-		for(String world : worldList.keySet()){
-			line+=world;
-			//ID
-			HashMap<Integer, HashMap<Integer, List<String>>> idList = worldList.get(world);
-			for(Integer id : idList.keySet()){
-				line+=":"+id;
-				//DATA
-				HashMap<Integer, List<String>> dataList = idList.get(id);
-				for(Integer data : dataList.keySet()){
-					line+="."+data;
-					//POS
-					List<String> posList = dataList.get(data);
-					for(String pos : posList){
-						line+=","+pos;
-					}
-				}
-			}
-			line+=" ";
-		}
-		line = stripLast(line, " ");
-		return line;
-	}
-	
-	public String encodeLogToString(RMLog log){
-		String line = "";
-		line += encodeLogListToString(log.getList())+";";
-		line += encodeLogListToString(log.getItemList());
-		return line;
-	}
-	
-	//Load All
-	public void loadAll(){
-		File folder = getDataFolder();
-		if(!folder.exists()){
-			log.log(Level.INFO, RMText.preLog+"Config folder not found! Will create one on save...");
-			return;
-		}
-		load(DataType.CONFIG, false, true);
-		load(DataType.STATS, false, true);
-		load(DataType.PLAYER, false, true);
-		load(DataType.GAME, false, true);
-		load(DataType.LOG, true, true);
-	}
-	
-	public boolean copyFile(File inputFile, File outputFile){
-		File inputFolder = new File(inputFile.getParent());
-		File outputFolder = new File(outputFile.getParent());
-		if(!inputFolder.exists()) return false;
-		if(!inputFile.exists()) return false;
-		if(!outputFolder.exists()) return false;
-		if(outputFile.exists()) outputFile.delete();
-		if(!outputFile.exists()){
-			try{
-				outputFile.createNewFile();
-			}
-			catch(Exception e){
-				e.printStackTrace();
-				return false;
-			}
-		}
-		try{
-			FileReader in = new FileReader(inputFile);
-			FileWriter out = new FileWriter(outputFile);
-			int c;
-			while ((c = in.read()) != -1) out.write(c);
-			in.close();
-			out.close();
-		}
-		catch(Exception e){
-			e.printStackTrace();
-			return false;
-		}
-		return true;
-	}
-	
-	public void load(DataType dataType, boolean useLZF, boolean loadBackup){
-		int lineNum = 0;
-		File folder = getDataFolder();
-		File file = null;
-		switch(dataType){
-			case CONFIG: file = new File(folder.getAbsolutePath()+"/config.txt"); break;
-			case STATS: file = new File(folder.getAbsolutePath()+"/stats.txt"); break;
-			case PLAYER: file = new File(folder.getAbsolutePath()+"/playerdata.txt"); break;
-			case GAME: file = new File(folder.getAbsolutePath()+"/gamedata.txt"); break;
-			case LOG: file = new File(folder.getAbsolutePath()+"/gamelogdata.txt"); break;
-		}
-		if(file==null){
-			log.log(Level.WARNING, RMText.preLog+"Cannot load data. Data type unknown!");
-			return;
-		}
-		if((file.exists())&&(file.length()>0)){
-			InputStream input;
-			try {
-				if(useLZF) input = new LZFInputStream(new FileInputStream(file.getAbsoluteFile()));
-				else input = new FileInputStream(file.getAbsoluteFile());
-				
-				InputStreamReader isr = new InputStreamReader(input);
-				BufferedReader br = new BufferedReader(isr);
-				
-				String line;
-				while(true){
-					line = br.readLine();
-					if(line == null) break;
-					if(line.startsWith("#")) continue;
-					String[] args;
-					switch(dataType){
-						case CONFIG:
-							args = line.split("=");
-							if(args.length==2){
-								if(args[0].equalsIgnoreCase("autosave")) config.setAutoSave(getIntByString(args[1]));
-								else if(args[0].equalsIgnoreCase("usePermissions")) config.setPermissionTypeByString(args[1]);
-								else if(args[0].equalsIgnoreCase("useRestore")) config.setUseRestore(Boolean.parseBoolean(args[1]));
-								else if(args[0].equalsIgnoreCase("maxGames")) config.setMaxGames(getIntByString(args[1]));
-								else if(args[0].equalsIgnoreCase("maxGamesPerPlayer")) config.setMaxGamesPerPlayer(getIntByString(args[1]));
-								else if(args[0].equalsIgnoreCase("minPlayersPerGame")) config.setMinPlayersPerGame(getIntByString(args[1]));
-								else if(args[0].equalsIgnoreCase("maxPlayersPerGame")) config.setMaxPlayersPerGame(getIntByString(args[1]));
-								else if(args[0].equalsIgnoreCase("minPlayersPerTeam")) config.setMinPlayersPerTeam(getIntByString(args[1]));
-								else if(args[0].equalsIgnoreCase("maxPlayersPerTeam")) config.setMaxPlayersPerTeam(getIntByString(args[1]));
-								else{
-									boolean lockArg = args[1].substring(args[1].indexOf(":")+1).equalsIgnoreCase("lock")?true:false; 
-									if(args[0].equalsIgnoreCase("restore")) config.setRestore(Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("warpToSafety")) config.setWarpToSafety(Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("warnHackedItems")) config.setWarnHackedItems(Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("allowHackedItems")) config.setAllowHackedItems(Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("keepIngame")) config.setKeepIngame(Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("allowMidgameJoin")) config.setAllowMidgameJoin(Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("clearPlayerInventory")) config.setClearPlayerInventory(Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("warnUnequal")) config.setWarnUnequal(Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("allowUnequal")) config.setAllowUnequal(Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("infiniteAward")) config.setInfiniteAward(Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("infiniteTools")) config.setInfiniteTools(Boolean.parseBoolean(args[1]), lockArg);
-								}
-							}
-							break;
-						case STATS:
-							args = line.split(",");
-							//wins,losses,timesPlayed,itemsFound,itemsFoundTotal
-							RMStats.setServerWins(getIntByString(args[0]));
-							RMStats.setServerLosses(getIntByString(args[1]));
-							RMStats.setServerTimesPlayed(getIntByString(args[2]));
-							//RMStats.setServerItemsFound(getIntByString(args[3]));
-							RMStats.setServerItemsFoundTotal(getIntByString(args[3]));
-							break;
-						case PLAYER:
-							parseLoadedPlayerData(line.split(";"));
-							break;
-						case GAME:
-							parseLoadedGameData(line.split(";"));
-							break;
-						case LOG:
-							parseLoadedLogData(line.split(";"), lineNum);
-							break;
-					}
-					lineNum++;
-				}
-				input.close();
-				//saveConfig();
-			}
-			catch(Exception e) {
-				e.printStackTrace();
-			}
-		}
-		else{
-			if(loadBackup){
-				if(copyFile(new File(getDataFolder().getAbsolutePath()+"/backup/"+file.getName()), file)){
-					load(dataType, useLZF, false);
-				}
-				else{
-					switch(dataType){
-						case CONFIG: System.out.println("Could not find config backup file"); break;
-						case STATS: System.out.println("Could not find stats backup file"); break;
-						case PLAYER: System.out.println("Could not find player data backup file"); break;
-						case GAME: System.out.println("Could not find game data backup file"); break;
-						case LOG: System.out.println("Could not find game log data backup file"); break;
-					}
-				}
-			}
-			else{
-				switch(dataType){
-				case CONFIG: System.out.println("Could not find config file"); break;
-				case STATS: System.out.println("Could not find stats file"); break;
-				case PLAYER: System.out.println("Could not find player data file"); break;
-				case GAME: System.out.println("Could not find game data file"); break;
-				case LOG: System.out.println("Could not find game log data file"); break;
-				}
-			}
-		}
-	}
-	
-	public HashMap<Location, RMBlock> getLogDataByString(String strArg){
-		HashMap<Location, RMBlock> hashLog = new HashMap<Location, RMBlock>();
-		String[] worldArgs = strArg.split(" ");
-		for(String worldArg : worldArgs){
-			String[] idArgs = worldArg.split(":"); 
-			World world = getServer().getWorld(idArgs[0]);
-			if(world!=null){
-				idArgs = Arrays.copyOfRange(idArgs, 1, idArgs.length);
-				for(String idArg : idArgs){
-					String[] dataArgs = idArg.split("\\.");
-					int id = getIntByString(dataArgs[0]);
-					if(id!=-1){
-						Material mat = Material.getMaterial(id);
-						if(mat!=null){
-							dataArgs = Arrays.copyOfRange(dataArgs, 1, dataArgs.length);
-							for(String dataArg : dataArgs){
-								String[] posArgs = dataArg.split(",");
-								byte data = getByteByString(posArgs[0]);
-								if(data!=-1){
-									posArgs = Arrays.copyOfRange(posArgs, 1, posArgs.length);
-									for(int i=0; i<posArgs.length-2; i+=3){
-										int xPos = getIntByString(posArgs[i]);
-										int yPos = getIntByString(posArgs[i+1]);
-										int zPos = getIntByString(posArgs[i+2]);
-										Block b = world.getBlockAt(xPos, yPos, zPos);
-										hashLog.put(b.getLocation(), new RMBlock(b, mat, data));
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		return hashLog;
-	}
-	
-	public void parseLoadedLogData(String[] strArgs, int lineNum){
-		RMGame rmGame = RMGame.getGame(lineNum);
-		if(rmGame!=null){
-			RMGameConfig config = rmGame.getConfig();
-			if((strArgs[0].length()>0)&&(strArgs[0]!="LOG")) config.getLog().setList(getLogDataByString(strArgs[0]));
-			if((strArgs[1].length()>0)&&(strArgs[1]!="LOG")) config.getLog().setItemList(getLogDataByString(strArgs[1]));
-		}
-	}
-	
-	public void parseLoadedPlayerData(String[] strArgs){
-		//name
-		RMPlayer rmp = new RMPlayer(strArgs[0]);
-		
-		//wins,losses,timesPlayed,itemsFound,itemsFoundTotal
-		String[] args = strArgs[1].split(",");
-		RMStats stats = rmp.getStats();
-		
-		stats.setWins(getIntByString(args[0]));
-		stats.setLosses(getIntByString(args[1]));
-		stats.setTimesPlayed(getIntByString(args[2]));
-		//stats.setItemsFound(getIntByString(args[3]));
-		stats.setItemsFoundTotal(getIntByString(args[3]));
-		
-		//inventory items
-		if(strArgs[2].length()>0){
-			if(!strArgs[2].equalsIgnoreCase("ITEMS")){
-				rmp.setItems(getItemStackByStringArray(strArgs[2]));
-			}
-		}
-		//award items
-		if(strArgs[3].length()>0){
-			if(!strArgs[3].equalsIgnoreCase("AWARD")){
-				rmp.setAward(getItemStackByStringArray(strArgs[3]));
-			}
-		}
-		//tools items
-		if(strArgs[4].length()>0){
-			if(!strArgs[4].equalsIgnoreCase("TOOLS")){
-				rmp.setTools(getItemStackByStringArray(strArgs[4]));
-			}
-		}
-	}
-	
-	public List<ItemStack> getItemStackByStringArray(String strArgs){
-		List<ItemStack> items = new ArrayList<ItemStack>();
-		String[] splitArgs = strArgs.split(",");
-		for(String splitArg : splitArgs){
-			String[] args = splitArg.split(":");
-			int id = getIntByString(args[0]);
-			int amount = getIntByString(args[1]);
-			short durability = getShortByString(args[2]);
-			if((id!=-1)&&(amount!=-1)&&(durability!=-1)){
-				if(args.length==4){
-					byte data = getByteByString(args[3]);
-					if(data!=-1){
-						Material mat = Material.getMaterial(id);
-						ItemStack item = new ItemStack(mat, amount, durability, data);
-						items.add(item);
-					}
-				}
-				else if(args.length==3){
-					Material mat = Material.getMaterial(id);
-					while(amount>mat.getMaxStackSize()){
-						ItemStack item = new ItemStack(mat, mat.getMaxStackSize(), durability);
-						items.add(item);
-						amount-=mat.getMaxStackSize();
-					}
-					ItemStack item = new ItemStack(mat,amount, durability);
-					items.add(item);
-				}
-			}
-		}
-		return items;
-	}
-	
-	public void parseLoadedGameData(String[] strArgs){
-		
-		String[] args = strArgs[0].split(",");
-		//x,y,z,world,id,owner
-		int xLoc = getIntByString(args[0]);
-		int yLoc = getIntByString(args[1]);
-		int zLoc = getIntByString(args[2]);
-		World world = getServer().getWorld(args[3]);
-		Block b = world.getBlockAt(xLoc, yLoc, zLoc);
-
-		//maxPlayers,maxTeamPlayers,autoRandomizeAmount
-		//warpToSafety,autoRestoreWorld,warnHackedItems,allowHackedItems,allowPlayerLeave 
-		RMGameConfig config = new RMGameConfig();
-		config.setPartList(new RMPartList(b, this));
-		
-		config.setOwnerName(args[5]);
-		
-		config.setState(getStateByInt(getIntByString(args[6])));
-		config.setInterface(getInterfaceByInt(getIntByString(args[7])));
-		config.setMinPlayers(getIntByString(args[8]));
-		config.setMaxPlayers(getIntByString(args[9]));
-		config.setMinTeamPlayers(getIntByString(args[10]));
-		config.setMaxTeamPlayers(getIntByString(args[11]));
-		config.setAutoRandomizeAmount(getIntByString(args[12]));
-		config.setWarpToSafety(Boolean.parseBoolean(args[13]));
-		config.setAutoRestoreWorld(Boolean.parseBoolean(args[14]));
-		config.setWarnHackedItems(Boolean.parseBoolean(args[15]));
-		config.setAllowHackedItems(Boolean.parseBoolean(args[16]));
-		config.setKeepIngame(Boolean.parseBoolean(args[17]));
-		config.setAllowMidgameJoin(Boolean.parseBoolean(args[18]));
-		config.setClearPlayerInventory(Boolean.parseBoolean(args[19]));
-		config.setWarnUnequal(Boolean.parseBoolean(args[20]));
-		config.setAllowUnequal(Boolean.parseBoolean(args[21]));
-		
-
-		//wins,losses,timesPlayed,itemsFound,itemsFoundTotal
-		args = strArgs[1].split(",");
-		RMStats gameStats = config.getGameStats();
-		
-		gameStats.setWins(getIntByString(args[0]));
-		gameStats.setLosses(getIntByString(args[1]));
-		gameStats.setTimesPlayed(getIntByString(args[2]));
-		//gameStats.setItemsFound(getIntByString(args[3]));
-		gameStats.setItemsFoundTotal(getIntByString(args[3]));
-		
-		//team players
-		args = strArgs[2].split(" ");
-		List<RMTeam> rmTeams = config.getPartList().fetchTeams();
-		for(RMTeam rmt : rmTeams){
-			config.getTeams().add(rmt);
-		}
-		for(int j=0; j<args.length; j++){
-			String[] splitArgs = args[j].split(":");
-			if(splitArgs.length==2){
-				if(splitArgs[1].length()>0){
-					String[] players = splitArgs[1].split(",");
-					for(String player : players){
-						RMTeam rmTeam = config.getTeams().get(j);
-						if(rmTeam!=null){
-							RMPlayer rmp = RMPlayer.getPlayerByName(player);
-							if(rmp!=null) rmTeam.addPlayerSilent(rmp);
-						}
-					}
-				}
-			}
-		}
-			
-		//filter items
-		if(strArgs[3].length()>0){
-			if(!strArgs[3].equalsIgnoreCase("FILTER")){
-				HashMap<Integer, RMItem> rmItems = getRMItemsByStringArray(Arrays.asList(strArgs[3]), true);
-				config.setFilter(new RMFilter(rmItems));
-			}
-		}
-		//game items
-		if(strArgs[4].length()>0){
-			if(!strArgs[4].equalsIgnoreCase("ITEMS")){
-				HashMap<Integer, RMItem> rmItems = getRMItemsByStringArray(Arrays.asList(strArgs[4]), true);
-				config.setItems(new RMFilter(rmItems));
-			}
-		}
-		//found items
-		if(strArgs[5].length()>0){
-			if(!strArgs[5].equalsIgnoreCase("FOUND")){
-				config.setFound(getItemStackByStringArray(strArgs[5]));
-			}
-		}
-		//award items
-		if(strArgs[6].length()>0){
-			if(!strArgs[6].equalsIgnoreCase("AWARD")){
-				config.setAward(getItemStackByStringArray(strArgs[6]));
-			}
-		}
-		//tools items
-		if(strArgs[7].length()>0){
-			if(!strArgs[7].equalsIgnoreCase("TOOLS")){
-				config.setTools(getItemStackByStringArray(strArgs[7]));
-			}
-		}
-		//chest items
-		args = strArgs[8].split("\\.");
-		for(int j=0; j<args.length; j++){
-			if(args[j].length()>0){
-				if(!args[j].equalsIgnoreCase("CHEST")){
-					List<ItemStack> items = getItemStackByStringArray(args[j]);
-					List<ItemStack> inventory = new ArrayList<ItemStack>();
-					for(ItemStack item : items){
-						inventory.add(item);
-					}
-					RMTeam rmTeam = config.getTeams().get(j);
-					if(rmTeam!=null){
-						rmTeam.getChest().setInventory(inventory);
-					}
-				}
-			}
-		}
-		
-		//team items
-		args = strArgs[9].split("\\.");
-		for(int j=0; j<args.length; j++){
-			if(args[j].length()>0){
-				if(!args[j].equalsIgnoreCase("ITEMS")){
-					HashMap<Integer, RMItem> rmItems = getRMItemsByStringArray(Arrays.asList(args[j]), true);
-					RMTeam rmTeam = config.getTeams().get(j);
-					if(rmTeam!=null){
-						rmTeam.getChest().setItems(rmItems);
-					}
-				}
-			}
-		}
-		RMGame.tryAddGameFromConfig(config);
-	}
-	
-	public String encodeInventoryToString(ItemStack[] items, ClaimType claimType){
-		String line = "";
-		if((items!=null)&&(items.length>0)){
-			HashMap<String, ItemStack> hashItems = new HashMap<String, ItemStack>();
-			for(ItemStack item : items){
-				if(item!=null){
-					String idData = ""+item.getTypeId()+":"+item.getDurability();
-					if(item.getData()!=null) idData += ":"+Byte.toString(item.getData().getData());
-					if(hashItems.containsKey(idData)){
-						int amount = hashItems.get(idData).getAmount()+item.getAmount();
-						ItemStack itemClone = item.clone();
-						itemClone.setAmount(amount);
-						hashItems.put(idData, itemClone);
-					}
-					else hashItems.put(idData, item);
-				}
-			}
-			String[] array = hashItems.keySet().toArray(new String[hashItems.size()]);
-			Arrays.sort(array);
-			for(String idData : array){
-				//String[] splitItems = idData.split(":");
-				//int id = getIntByString(splitItems[0]);
-				ItemStack item = hashItems.get(idData);
-				line+=item.getTypeId()+":"+item.getAmount()+":"+item.getDurability();
-				if(item.getData()!=null) line+=":"+Byte.toString(item.getData().getData());
-				line+=",";
-			}
-		}
-		if(line.length()==0){
-			switch(claimType){
-				case ITEMS:
-					return "ITEMS";
-				case FOUND:
-					return "FOUND";
-				case AWARD:
-					return "AWARD";
-				case TOOLS:
-					return "TOOLS";
-				case CHEST:
-					return "CHEST";
-			}
-		}
-		line = stripLast(line,",");
-		return line;
-	}
-
-	public String encodeFilterToString(HashMap<Integer, RMItem> filter, FilterState filterState){
-		if(filter.size()==0){
-			switch(filterState){
-				case FILTER: return "FILTER";
-				case ITEMS: return "ITEMS";
-			}
-		}
-		HashMap<Integer, String> rmItems = new HashMap<Integer, String>();
-		for(RMItem rmItem : filter.values()){
-			String amount = ""+rmItem.getAmount();
-			if(rmItem.getAmountHigh()>0) amount+="-"+rmItem.getAmountHigh();
-			rmItems.put(rmItem.getId(), amount);
-		}
-		
-		HashMap<String, List<Integer>> foundItems = new HashMap<String, List<Integer>>();
-		for(Integer i : rmItems.keySet()){
-			String amount = rmItems.get(i);
-			if(foundItems.containsKey(rmItems.get(i))){
-				List<Integer> list = foundItems.get(amount);
-				if(!list.contains(i)) list.add(i);
-				foundItems.put(amount, list);
-			}
-			else{
-				List<Integer> list = new ArrayList<Integer>();
-				list.add(i);
-				foundItems.put(amount, list);
-			}
-		}
-	
-		String line = "";
-		for(String amount : foundItems.keySet()){
-			if(line!=""){
-				line = stripLast(line, ",");
-				line+=" ";
-			}
-			line += amount+":";
-			List<Integer> listAmount = foundItems.get(amount);
-			Integer[] array = listAmount.toArray(new Integer[listAmount.size()]);
-			Arrays.sort(array);
-			
-			int firstItem = -1;
-			int lastItem = -1;
-			for(Integer item : array){
-				if(firstItem==-1){
-					firstItem = item;
-					lastItem = item;
-				}
-				else{
-					if(item-lastItem!=1){
-						if(lastItem-firstItem>1){
-							line += firstItem+"-"+lastItem+",";
-						}
-						else{
-							if(firstItem!=lastItem) line += firstItem+","+lastItem+",";
-							else line += firstItem+",";
-						}
-						firstItem = item;
-						lastItem = item;
-					}
-					else lastItem = item;
-				}
-			}
-			if(lastItem-firstItem>1) line += firstItem+"-"+lastItem+",";
-			else{
-				if(firstItem!=lastItem) line += firstItem+","+lastItem+",";
-				else line += firstItem+",";
-			}
-		}
-		line = stripLast(line,",");
-		return line;
-	}
-	
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String args[]){
 		Player p = null;
@@ -1042,9 +211,9 @@ public class RM extends JavaPlugin {
 						RMGame rmGame = null;
 						String[] argsItems = args.clone();
 						if(args.length>1){
-							int gameid = getIntByString(args[0]);
+							int gameid = RMHelper.getIntByString(args[0]);
 							if(gameid!=-1){
-								rmGame = getGameById(gameid);
+								rmGame = RMGame.getGameById(gameid);
 								if(rmGame!=null){
 									List<String> argsList = Arrays.asList(args);
 									argsList = argsList.subList(1, argsList.size());
@@ -1103,9 +272,9 @@ public class RM extends JavaPlugin {
 									rmp.getInfoItems();
 									return true;
 								}
-								else if(args[1].equalsIgnoreCase("award")){
-									if(!rmp.hasPermission("resourcemadness.info.award")) return rmp.sendMessage(RMText.noPermissionCommand);
-									rmp.getInfoAward();
+								else if(args[1].equalsIgnoreCase("reward")){
+									if(!rmp.hasPermission("resourcemadness.info.reward")) return rmp.sendMessage(RMText.noPermissionCommand);
+									rmp.getInfoReward();
 									return true;
 								}
 								else if(args[1].equalsIgnoreCase("tools")){
@@ -1139,15 +308,15 @@ public class RM extends JavaPlugin {
 									}
 									return true;
 								}
-								else if(args[1].equalsIgnoreCase("award")){
-									if(!rmp.hasPermission("resourcemadness.mode.award")) return rmp.sendMessage(RMText.noPermissionCommand);
+								else if(args[1].equalsIgnoreCase("reward")){
+									if(!rmp.hasPermission("resourcemadness.mode.reward")) return rmp.sendMessage(RMText.noPermissionCommand);
 									if(rmGame!=null){
-										rmGame.changeMode(InterfaceState.AWARD, rmp);
+										rmGame.changeMode(InterfaceState.REWARD, rmp);
 									}
 									else{
-										rmp.setRequestInterface(InterfaceState.AWARD);
+										rmp.setRequestInterface(InterfaceState.REWARD);
 										rmp.setPlayerAction(PlayerAction.MODE);
-										rmp.sendMessage("Left click a game block to change the interface mode to award.");
+										rmp.sendMessage("Left click a game block to change the interface mode to reward.");
 									}
 									return true;
 								}
@@ -1199,12 +368,12 @@ public class RM extends JavaPlugin {
 							if(!rmp.hasPermission("resourcemadness.join")) return rmp.sendMessage(RMText.noPermissionCommand);
 							if(args.length==2){
 								if(rmGame!=null){								
-									RMTeam rmTeam = getTeamById(args[1], rmGame);
+									RMTeam rmTeam = RMGame.getTeamById(args[1], rmGame);
 									if(rmTeam!=null){
 										rmGame.joinTeam(rmTeam, rmp);
 										return true;
 									}
-									rmTeam = getTeamByDye(args[1], rmGame);
+									rmTeam = rmGame.getTeamByDye(args[1], rmGame);
 									if(rmTeam!=null){
 										rmGame.joinTeam(rmTeam, rmp);
 										return true;
@@ -1237,7 +406,7 @@ public class RM extends JavaPlugin {
 						else if(args[0].equalsIgnoreCase("start")){
 							if(!rmp.hasPermission("resourcemadness.start")) return rmp.sendMessage(RMText.noPermissionCommand);
 							if(args.length==2){
-								int amount = getIntByString(args[1]);
+								int amount = RMHelper.getIntByString(args[1]);
 								if(amount!=-1){
 									if(!rmp.hasPermission("resourcemadness.start.random")) return rmp.sendMessage(RMText.noPermissionCommand);
 									if(rmGame!=null){
@@ -1274,7 +443,7 @@ public class RM extends JavaPlugin {
 						//STOP
 						else if(args[0].equalsIgnoreCase("stop")){
 							if(!rmp.hasPermission("resourcemadness.stop")) return rmp.sendMessage(RMText.noPermissionCommand);
-							if(rmGame!=null) rmGame.stopGame(rmp);
+							if(rmGame!=null) rmGame.stopGame(rmp, true);
 							else{
 								rmp.setPlayerAction(PlayerAction.STOP);
 								rmp.sendMessage("Left click a game block to stop the game.");
@@ -1313,9 +482,9 @@ public class RM extends JavaPlugin {
 							if(!rmp.hasPermission("resourcemadness.filter")) return rmp.sendMessage(RMText.noPermissionCommand);
 							filterState = FilterState.FILTER;
 						}
-						else if(args[0].equalsIgnoreCase("award")){
-							if(!rmp.hasPermission("resourcemadness.award")) return rmp.sendMessage(RMText.noPermissionCommand);
-							filterState = FilterState.AWARD;
+						else if(args[0].equalsIgnoreCase("reward")){
+							if(!rmp.hasPermission("resourcemadness.reward")) return rmp.sendMessage(RMText.noPermissionCommand);
+							filterState = FilterState.REWARD;
 						}
 						else if(args[0].equalsIgnoreCase("tools")){
 							if(!rmp.hasPermission("resourcemadness.tools")) return rmp.sendMessage(RMText.noPermissionCommand);
@@ -1340,9 +509,9 @@ public class RM extends JavaPlugin {
 												rmp.setPlayerAction(PlayerAction.FILTER);
 												rmp.sendMessage("Left click a game block to modify the filter.");
 												break;
-											case AWARD:
-												rmp.setPlayerAction(PlayerAction.AWARD);
-												rmp.sendMessage("Left click a game block to modify the award.");
+											case REWARD:
+												rmp.setPlayerAction(PlayerAction.REWARD);
+												rmp.sendMessage("Left click a game block to modify the reward.");
 												break;
 											case TOOLS:
 												rmp.setPlayerAction(PlayerAction.TOOLS);
@@ -1355,7 +524,7 @@ public class RM extends JavaPlugin {
 							}
 							switch(filterState){
 								case FILTER: rmFilterInfo(rmp); break;
-								case AWARD: rmAwardInfo(rmp); break;
+								case REWARD: rmRewardInfo(rmp); break;
 								case TOOLS: rmToolsInfo(rmp); break;
 							}
 							return true;
@@ -1384,13 +553,13 @@ public class RM extends JavaPlugin {
 									else rmp.sendMessage("You can't claim your items while you're in-game.");
 									return true;
 								}
-								else if(args[1].equalsIgnoreCase("award")){
-									if(!rmp.hasPermission("resourcemadness.claim.award")) return rmp.sendMessage(RMText.noPermissionCommand);
+								else if(args[1].equalsIgnoreCase("reward")){
+									if(!rmp.hasPermission("resourcemadness.claim.reward")) return rmp.sendMessage(RMText.noPermissionCommand);
 									RMTeam rmTeam = rmp.getTeam();
 									if((rmTeam==null)||((rmTeam!=null)&&(rmTeam.getGame().getConfig().getState()==GameState.SETUP))){
-										rmp.claimAward();
+										rmp.claimReward();
 									}
-									else rmp.sendMessage("You can't claim your award while you're in-game.");
+									else rmp.sendMessage("You can't claim your reward while you're in-game.");
 									return true;
 								}
 								else if(args[1].equalsIgnoreCase("tools")){
@@ -1439,7 +608,7 @@ public class RM extends JavaPlugin {
 								
 								if(action!=null){
 									if(args.length==3){
-										int amount = getIntByString(args[2]);
+										int amount = RMHelper.getIntByString(args[2]);
 										if(amount>-1){
 											if(rmGame!=null){
 												switch(action){
@@ -1453,7 +622,7 @@ public class RM extends JavaPlugin {
 												return true;
 											}
 											else{
-												rmp.setRequestInt(getIntByString(args[2]));
+												rmp.setRequestInt(RMHelper.getIntByString(args[2]));
 												switch(action){
 													case SET_MIN_PLAYERS:
 														rmp.setPlayerAction(PlayerAction.SET_MIN_PLAYERS);
@@ -1533,10 +702,10 @@ public class RM extends JavaPlugin {
 									if(!rmp.hasPermission("resourcemadness.set.allowunequal")) return rmp.sendMessage(RMText.noPermissionCommand);
 									action = PlayerAction.SET_ALLOW_UNEQUAL;
 								}
-								//INFINITE AWARD ITEMS
-								else if(args[1].equalsIgnoreCase("infiniteaward")){
-									if(!rmp.hasPermission("resourcemadness.set.infiniteaward")) return rmp.sendMessage(RMText.noPermissionCommand);
-									action = PlayerAction.SET_INFINITE_AWARD;
+								//INFINITE REWARD ITEMS
+								else if(args[1].equalsIgnoreCase("infinitereward")){
+									if(!rmp.hasPermission("resourcemadness.set.infinitereward")) return rmp.sendMessage(RMText.noPermissionCommand);
+									action = PlayerAction.SET_INFINITE_REWARD;
 								}
 								//INFINITE TOOLS ITEMS
 								else if(args[1].equalsIgnoreCase("infinitetools")){
@@ -1547,7 +716,7 @@ public class RM extends JavaPlugin {
 								if(action!=null){
 									int i=-1;
 									if(args.length==3){
-										i = getBoolIntByString(args[2]);
+										i = RMHelper.getBoolIntByString(args[2]);
 										if(i!=-1){
 											if(i>1) i=1;
 										}
@@ -1563,7 +732,7 @@ public class RM extends JavaPlugin {
 											case SET_CLEAR_INVENTORY: rmGame.setClearPlayerInventory(rmp, i); break;
 											case SET_WARN_UNEQUAL: rmGame.setWarnUnequal(rmp, i); break;
 											case SET_ALLOW_UNEQUAL: rmGame.setAllowUnequal(rmp, i); break;
-											case SET_INFINITE_AWARD: rmGame.setInfiniteAward(rmp, i); break;
+											case SET_INFINITE_REWARD: rmGame.setInfiniteReward(rmp, i); break;
 											case SET_INFINITE_TOOLS: rmGame.setInfiniteTools(rmp, i); break;
 										}
 									}
@@ -1606,9 +775,9 @@ public class RM extends JavaPlugin {
 												rmp.setPlayerAction(PlayerAction.SET_ALLOW_UNEQUAL);
 												rmp.sendMessage("Left click a game block to toggle allow unequal items.");
 												break;
-											case SET_INFINITE_AWARD:
-												rmp.setPlayerAction(PlayerAction.SET_INFINITE_AWARD);
-												rmp.sendMessage("Left click a game block to toggle infinite award.");
+											case SET_INFINITE_REWARD:
+												rmp.setPlayerAction(PlayerAction.SET_INFINITE_REWARD);
+												rmp.sendMessage("Left click a game block to toggle infinite reward.");
 												break;
 											case SET_INFINITE_TOOLS:
 												rmp.setPlayerAction(PlayerAction.SET_INFINITE_TOOLS);
@@ -1636,8 +805,8 @@ public class RM extends JavaPlugin {
 									}
 									if(strItem.contains("-")){
 										String[] strItems2 = strItem.split("-");
-										int id1=getIntByString(strItems2[0]);
-										int id2=getIntByString(strItems2[1]);
+										int id1=RMHelper.getIntByString(strItems2[0]);
+										int id2=RMHelper.getIntByString(strItems2[1]);
 										if((id1!=-1)&&(id2!=-1)){
 											if(id1>id2){
 												int id3=id1;
@@ -1655,7 +824,7 @@ public class RM extends JavaPlugin {
 										}
 									}
 									else{
-										int id = getIntByString(strItem);
+										int id = RMHelper.getIntByString(strItem);
 										if(id!=-1){
 											Material mat = Material.getMaterial(id);
 											if(mat!=null){
@@ -1667,7 +836,7 @@ public class RM extends JavaPlugin {
 								}
 							}
 							if(items.size()>0){
-								rmp.sendMessage(getFormattedStringByList(items));
+								rmp.sendMessage(RMText.getFormattedStringByList(items));
 								return true;
 							}
 							else if(itemsWarn.size()>0){
@@ -1682,6 +851,571 @@ public class RM extends JavaPlugin {
 			}
 		}
 		return true;
+	}
+	
+	public void saveAllBackup(){
+		log.log(Level.INFO, RMText.preLog+"Autosaving...");
+		if(RMGame.getGames().size()==0) return;
+		File folder = new File(getDataFolder()+"/backup");
+		if(!folder.exists()){
+			log.log(Level.INFO, RMText.preLog+"Creating backup directory...");
+			folder.mkdir();
+		}
+		File file = new File(folder.getAbsolutePath()+"/config.txt");
+		if(!file.exists()) save(DataType.CONFIG, false, file);
+		save(DataType.STATS, false, new File(folder.getAbsolutePath()+"/stats.txt"));
+		save(DataType.PLAYER, false, new File(folder.getAbsolutePath()+"/playerdata.txt"));
+		save(DataType.GAME, false, new File(folder.getAbsolutePath()+"/gamedata.txt"));
+		save(DataType.LOG, true, new File(folder.getAbsolutePath()+"/gamelogdata.txt"));
+	}
+	public void saveConfig(){
+		File folder = getDataFolder();
+		if(!folder.exists()){
+			log.log(Level.INFO, RMText.preLog+"Creating config directory...");
+			folder.mkdir();
+		}
+		File file = new File(folder.getAbsolutePath()+"/config.txt");
+		if(!file.exists()) save(DataType.CONFIG, false, file);
+	}
+	public void saveAll(){
+		if(RMGame.getGames().size()==0) return;
+		File folder = getDataFolder();
+		if(!folder.exists()){
+			log.log(Level.INFO, RMText.preLog+"Creating config directory...");
+			folder.mkdir();
+		}
+		File file = new File(folder.getAbsolutePath()+"/config.txt");
+		if(!file.exists()) save(DataType.CONFIG, false, file);
+		save(DataType.STATS, false, new File(folder.getAbsolutePath()+"/stats.txt"));
+		save(DataType.PLAYER, false, new File(folder.getAbsolutePath()+"/playerdata.txt"));
+		save(DataType.GAME, false, new File(folder.getAbsolutePath()+"/gamedata.txt"));
+		save(DataType.LOG, true, new File(folder.getAbsolutePath()+"/gamelogdata.txt"));
+	}
+	
+	//Save Data
+	public boolean save(DataType dataType, boolean useLZF, File file){
+		if(file==null){
+			log.log(Level.WARNING, "Cannot load data. Data type unknown!");
+			return false;
+		}
+		if(!file.exists()){
+			switch(dataType){
+				case CONFIG: log.log(Level.INFO, RMText.preLog+"Data file not found! Creating one..."); break;
+				case STATS: log.log(Level.INFO, RMText.preLog+"Stats file not found! Creating one..."); break;
+				case PLAYER: log.log(Level.INFO, RMText.preLog+"Player Data file not found! Creating one..."); break;
+				case GAME: log.log(Level.INFO, RMText.preLog+"Game Data file not found! Creating one..."); break;
+				case LOG: log.log(Level.INFO, RMText.preLog+"Game Data file not found! Creating one..."); break;
+			}
+			try{
+				file.createNewFile();
+			}
+			catch(Exception e){
+				e.printStackTrace();
+				return false;
+			}
+		}
+		if((file.exists())&&(file.length()>0)){
+			
+			File folderBackup = new File(getDataFolder()+"/backup");
+			if(!folderBackup.exists()){
+				try{
+					folderBackup.mkdir();
+				}
+				catch (Exception e){
+					e.printStackTrace();
+				}
+			}
+			if(!RMHelper.copyFile(file, new File(folderBackup.getAbsolutePath()+"/"+file.getName()))){
+				switch(dataType){
+					case CONFIG: log.log(Level.INFO, RMText.preLog+"Could not create config backup file."); break;
+					case STATS: log.log(Level.INFO, RMText.preLog+"Could not create stats backup file."); break;
+					case PLAYER: log.log(Level.INFO, RMText.preLog+"Could not create player data backup file."); break;
+					case GAME: log.log(Level.INFO, RMText.preLog+"Could not create game data backup file."); break;
+					case LOG: log.log(Level.INFO, RMText.preLog+"Could not create game log data backup file."); break;
+				}
+			}
+		}
+		try{
+			OutputStream output;
+			if(useLZF) output = new LZFOutputStream(new FileOutputStream(file.getAbsoluteFile()));
+			else output = new FileOutputStream(file.getAbsoluteFile());
+			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(output));
+			String line = "";
+			switch(dataType){
+				case CONFIG:
+					line = "";
+					//bw.write("[Resource Madness v"+pdfFile.getVersion()+" Config]");
+					line+=RMText.cAutoSave+"\n";
+					line+="autosave="+config.getAutoSave()+"\n\n";
+					line+=RMText.cUsePermissions+"\n";
+					line+="usePermissions="+config.getPermissionType().name().toLowerCase()+"\n\n";
+					line+=RMText.cUseRestore1+"\n";
+					line+=RMText.cUseRestore2+"\n";
+					line+="useRestore="+config.getRestore()+"\n\n";
+					line+=RMText.cServerWide+"\n\n";
+					//Max games
+					line+=RMText.cMaxGames+"\n";
+					line+="maxGames="+config.getMaxGames()+"\n\n";
+					//Max games per player
+					line+=RMText.cMaxGamesPerPlayer+"\n";
+					line+="maxGamesPerPlayer="+config.getMaxGamesPerPlayer()+"\n\n";
+					//Min players per game
+					line+=RMText.cMinPlayersPerGame+"\n";
+					line+="minPlayersPerGame="+config.getMinPlayersPerGame()+"\n\n";
+					//Max player per game
+					line+=RMText.cMaxPlayersPerGame+"\n";
+					line+="maxPlayersPerGame="+config.getMaxPlayersPerGame()+"\n\n";
+					//Min players per team
+					line+=RMText.cMinPlayersPerTeam+"\n";
+					line+="minPlayersPerTeam="+config.getMinPlayersPerTeam()+"\n\n";
+					//Max players per team
+					line+=RMText.cMaxPlayersPerTeam+"\n";
+					line+="maxPlayersPerTeam="+config.getMaxPlayersPerTeam()+"\n\n";
+					//Default game settings
+					line+=RMText.cDefaultSettings1+"\n";
+					line+=RMText.cDefaultSettings2+"\n\n";
+					//Auto restore world
+					line+=RMText.cRestore+"\n";
+					line+="restore="+config.getRestore()+(config.isLocked(Lock.restore)?":lock":"")+"\n\n";
+					//Warp to safety
+					line+=RMText.cWarpToSafety+"\n";
+					line+="warpToSafety="+config.getWarpToSafety()+(config.isLocked(Lock.warpToSafety)?":lock":"")+"\n\n";
+					//Warn when hacked items are added
+					line+=RMText.cWarnHackedItems+"\n";
+					line+="warnHackedItems="+config.getWarnHackedItems()+(config.isLocked(Lock.warnHackedItems)?":lock":"")+"\n\n";
+					//Allow the use of hacked items
+					line+=RMText.cAllowHackedItems+"\n";
+					line+="allowHackedItems="+config.getAllowHackedItems()+(config.isLocked(Lock.allowHackedItems)?":lock":"")+"\n\n";
+					//Keep offline players in-game
+					line+=RMText.cKeepIngame+"\n";
+					line+="keepingame="+config.getKeepIngame()+(config.isLocked(Lock.keepIngame)?":lock":"")+"\n\n";
+					//Allow players to join a game in progress
+					line+=RMText.cAllowMidgameJoin+"\n";
+					line+="allowMidgameJoin="+config.getAllowMidgameJoin()+(config.isLocked(Lock.allowMidgameJoin)?":lock":"")+"\n\n";
+					//Clear/return player's items at game start/finish
+					line+=RMText.cClearPlayerInventory+"\n";
+					line+="clearPlayerInventory="+config.getClearPlayerInventory()+(config.isLocked(Lock.clearPlayerInventory)?":lock":"")+"\n\n";
+					//Warn when reward/tools can't be distributed equally
+					line+=RMText.cWarnUnequal+"\n";
+					line+="warnunequal="+config.getWarnUnequal()+(config.isLocked(Lock.warnUnequal)?":lock":"")+"\n\n";
+					//Allow reward/tools to be distributed unequally
+					line+=RMText.cAllowUnequal+"\n";
+					line+="allowunequal="+config.getAllowUnequal()+(config.isLocked(Lock.allowUnequal)?":lock":"")+"\n\n";
+					//Use infinite reward
+					line+=RMText.infiniteReward+"\n";
+					line+="infinitereward="+config.getInfiniteReward()+(config.isLocked(Lock.infiniteReward)?":lock":"")+"\n\n";
+					//Use infinite tools
+					line+=RMText.cInfiniteTools+"\n";
+					line+="infinitetools="+config.getInfiniteTools()+(config.isLocked(Lock.infiniteTools)?":lock":"");
+					bw.write(line);
+					break;
+				case STATS:
+					//bw.write("[Resource Madness v"+pdfFile.getVersion()+" Stats]");
+					//Stats
+					line = "";
+					line += RMStats.getServerWins()+","+RMStats.getServerLosses()+","+RMStats.getServerTimesPlayed()+","+/*RMStats.getServerItemsFound()+","+*/RMStats.getServerItemsFoundTotal()+";";
+					bw.write(line);
+					bw.write("\n");
+					break;
+				case PLAYER:
+					//bw.write("[Resource Madness v"+pdfFile.getVersion()+" Player Data]");
+					for(RMPlayer rmp : RMPlayer.getPlayers().values()){
+						line = "";
+						line = rmp.getName()+";";
+						//Stats
+						RMStats stats = rmp.getStats();
+						line += stats.getWins()+","+stats.getLosses()+","+stats.getTimesPlayed()+","+/*stats.getItemsFound()+","+*/stats.getItemsFoundTotal()+";";
+						//Inventory items
+						line += RMInventoryHelper.encodeInventoryToString(rmp.getItems().toArray(new ItemStack[rmp.getItems().size()]), ClaimType.ITEMS) + ";";
+						line += RMInventoryHelper.encodeInventoryToString(rmp.getReward().toArray(new ItemStack[rmp.getReward().size()]), ClaimType.REWARD) + ";";
+						line += RMInventoryHelper.encodeInventoryToString(rmp.getTools().toArray(new ItemStack[rmp.getTools().size()]), ClaimType.TOOLS);
+						bw.write(line);
+						bw.write("\n");
+					}
+					break;
+				case GAME:
+					//bw.write("[Resource Madness v"+pdfFile.getVersion()+" Game Data]");
+					for(RMGame rmGame : RMGame.getGames()){
+						RMGameConfig config = rmGame.getConfig();
+						line = "";
+						//Game
+						Block b = config.getPartList().getMainBlock();
+						line = b.getX()+","+b.getY()+","+b.getZ()+",";
+						line += config.getWorldName()+",";
+						line += config.getId()+",";
+						line += config.getOwnerName()+",";
+						line += config.getState().ordinal()+",";
+						line += config.getInterface().ordinal()+",";
+						line += config.getMinPlayers()+",";
+						line += config.getMaxPlayers()+",";
+						line += config.getMinTeamPlayers()+",";
+						line += config.getMaxTeamPlayers()+",";
+						line += config.getAutoRandomizeAmount()+",";
+						line += config.getWarpToSafety()+",";
+						line += config.getAutoRestoreWorld()+",";
+						line += config.getWarnHackedItems()+",";
+						line += config.getAllowHackedItems()+",";
+						line += config.getKeepIngame()+",";
+						line += config.getAllowMidgameJoin()+",";
+						line += config.getClearPlayerInventory()+",";
+						line += config.getWarnUnequal()+",";
+						line += config.getAllowUnequal();
+						line += ";";
+						//Stats
+						RMStats stats = config.getGameStats();
+						line += stats.getWins()+","+stats.getLosses()+","+stats.getTimesPlayed()+","+/*stats.getItemsFound()+","+*/stats.getItemsFoundTotal()+";";
+						//Players
+						for(RMTeam rmt : config.getTeams()){
+							line+=rmt.getTeamColor().name()+":";
+							String players = "";
+							for(RMPlayer rmp : rmt.getPlayers()){
+								players += rmp.getName()+",";
+							}
+							players = RMText.stripLast(players,",");
+							line += players+" ";
+						}
+						line = RMText.stripLast(line, " ");
+						line += ";";
+						//Filter items
+						line += RMFilter.encodeFilterToString(config.getFilter().getItems(), FilterState.FILTER)+";";
+						//Game items
+						line += RMFilter.encodeFilterToString(config.getItems().getItems(), FilterState.ITEMS)+";";
+						//Found items
+						line += RMInventoryHelper.encodeInventoryToString(config.getFoundArray(), ClaimType.FOUND)+";";
+						//Reward items
+						line += RMInventoryHelper.encodeInventoryToString(config.getRewardArray(), ClaimType.REWARD)+";";
+						//Tools items
+						line += RMInventoryHelper.encodeInventoryToString(config.getToolsArray(), ClaimType.TOOLS)+";";
+						//Chest items
+						for(RMTeam rmt : config.getTeams()){
+							line += RMInventoryHelper.encodeInventoryToString(rmt.getChest().getInventory(), ClaimType.CHEST)+".";
+						}
+						line = RMText.stripLast(line, ".");
+						line += ";";
+						//Team items
+						for(RMTeam rmt : config.getTeams()){
+							line += RMFilter.encodeFilterToString(rmt.getChest().getItems(), FilterState.ITEMS)+".";
+						}
+						line = RMText.stripLast(line, ".");
+						bw.write(line);
+						bw.write("\n");
+					}
+					break;
+				case LOG:
+					for(RMGame rmGame : RMGame.getGames()){
+						line = "";
+						//Log
+						RMGameConfig config = rmGame.getConfig();
+						line += rmLogHelper.encodeLogToString(config.getLog());
+						bw.write(line);
+						bw.write("\n");
+					}
+					break;
+			}
+			bw.flush();
+			output.close();
+		}
+		catch(Exception e){
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+	
+	//Load All
+	public void loadAll(){
+		File folder = getDataFolder();
+		if(!folder.exists()){
+			log.log(Level.INFO, RMText.preLog+"Config folder not found! Will create one on save...");
+			return;
+		}
+		saveConfig();
+		load(DataType.CONFIG, false, true);
+		load(DataType.STATS, false, true);
+		load(DataType.PLAYER, false, true);
+		load(DataType.GAME, false, true);
+		load(DataType.LOG, true, true);
+	}
+	
+	public void load(DataType dataType, boolean useLZF, boolean loadBackup){
+		int lineNum = 0;
+		File folder = getDataFolder();
+		File file = null;
+		switch(dataType){
+			case CONFIG: file = new File(folder.getAbsolutePath()+"/config.txt"); break;
+			case STATS: file = new File(folder.getAbsolutePath()+"/stats.txt"); break;
+			case PLAYER: file = new File(folder.getAbsolutePath()+"/playerdata.txt"); break;
+			case GAME: file = new File(folder.getAbsolutePath()+"/gamedata.txt"); break;
+			case LOG: file = new File(folder.getAbsolutePath()+"/gamelogdata.txt"); break;
+		}
+		if(file==null){
+			log.log(Level.WARNING, RMText.preLog+"Cannot load data. Data type unknown!");
+			return;
+		}
+		if((file.exists())&&(file.length()>0)){
+			InputStream input;
+			try {
+				if(useLZF) input = new LZFInputStream(new FileInputStream(file.getAbsoluteFile()));
+				else input = new FileInputStream(file.getAbsoluteFile());
+				
+				InputStreamReader isr = new InputStreamReader(input);
+				BufferedReader br = new BufferedReader(isr);
+				
+				String line;
+				while(true){
+					line = br.readLine();
+					if(line == null) break;
+					if(line.startsWith("#")) continue;
+					String[] args;
+					switch(dataType){
+						case CONFIG:
+							args = line.split("=");
+							if(args.length==2){
+								if(args[0].equalsIgnoreCase("autosave")) config.setAutoSave(RMHelper.getIntByString(args[1]));
+								else if(args[0].equalsIgnoreCase("usePermissions")) config.setPermissionTypeByString(args[1]);
+								else if(args[0].equalsIgnoreCase("useRestore")) config.setUseRestore(Boolean.parseBoolean(args[1]));
+								else if(args[0].equalsIgnoreCase("maxGames")) config.setMaxGames(RMHelper.getIntByString(args[1]));
+								else if(args[0].equalsIgnoreCase("maxGamesPerPlayer")) config.setMaxGamesPerPlayer(RMHelper.getIntByString(args[1]));
+								else if(args[0].equalsIgnoreCase("minPlayersPerGame")) config.setMinPlayersPerGame(RMHelper.getIntByString(args[1]));
+								else if(args[0].equalsIgnoreCase("maxPlayersPerGame")) config.setMaxPlayersPerGame(RMHelper.getIntByString(args[1]));
+								else if(args[0].equalsIgnoreCase("minPlayersPerTeam")) config.setMinPlayersPerTeam(RMHelper.getIntByString(args[1]));
+								else if(args[0].equalsIgnoreCase("maxPlayersPerTeam")) config.setMaxPlayersPerTeam(RMHelper.getIntByString(args[1]));
+								else{
+									boolean lockArg = args[1].substring(args[1].indexOf(":")+1).equalsIgnoreCase("lock")?true:false; 
+									if(args[0].equalsIgnoreCase("restore")) config.setRestore(Boolean.parseBoolean(args[1]), lockArg);
+									else if(args[0].equalsIgnoreCase("warpToSafety")) config.setWarpToSafety(Boolean.parseBoolean(args[1]), lockArg);
+									else if(args[0].equalsIgnoreCase("warnHackedItems")) config.setWarnHackedItems(Boolean.parseBoolean(args[1]), lockArg);
+									else if(args[0].equalsIgnoreCase("allowHackedItems")) config.setAllowHackedItems(Boolean.parseBoolean(args[1]), lockArg);
+									else if(args[0].equalsIgnoreCase("keepIngame")) config.setKeepIngame(Boolean.parseBoolean(args[1]), lockArg);
+									else if(args[0].equalsIgnoreCase("allowMidgameJoin")) config.setAllowMidgameJoin(Boolean.parseBoolean(args[1]), lockArg);
+									else if(args[0].equalsIgnoreCase("clearPlayerInventory")) config.setClearPlayerInventory(Boolean.parseBoolean(args[1]), lockArg);
+									else if(args[0].equalsIgnoreCase("warnUnequal")) config.setWarnUnequal(Boolean.parseBoolean(args[1]), lockArg);
+									else if(args[0].equalsIgnoreCase("allowUnequal")) config.setAllowUnequal(Boolean.parseBoolean(args[1]), lockArg);
+									else if(args[0].equalsIgnoreCase("infiniteReward")) config.setInfiniteReward(Boolean.parseBoolean(args[1]), lockArg);
+									else if(args[0].equalsIgnoreCase("infiniteTools")) config.setInfiniteTools(Boolean.parseBoolean(args[1]), lockArg);
+								}
+							}
+							break;
+						case STATS:
+							args = line.split(",");
+							//wins,losses,timesPlayed,itemsFound,itemsFoundTotal
+							RMStats.setServerWins(RMHelper.getIntByString(args[0]));
+							RMStats.setServerLosses(RMHelper.getIntByString(args[1]));
+							RMStats.setServerTimesPlayed(RMHelper.getIntByString(args[2]));
+							//RMStats.setServerItemsFound(getIntByString(args[3]));
+							RMStats.setServerItemsFoundTotal(RMHelper.getIntByString(args[3]));
+							break;
+						case PLAYER:
+							parseLoadedPlayerData(line.split(";"));
+							break;
+						case GAME:
+							parseLoadedGameData(line.split(";"));
+							break;
+						case LOG:
+							rmLogHelper.parseLoadedLogData(line.split(";"), lineNum);
+							break;
+					}
+					lineNum++;
+				}
+				input.close();
+				//saveConfig();
+			}
+			catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
+		else{
+			if(loadBackup){
+				if(RMHelper.copyFile(new File(getDataFolder().getAbsolutePath()+"/backup/"+file.getName()), file)){
+					load(dataType, useLZF, false);
+				}
+				else{
+					switch(dataType){
+						case CONFIG: System.out.println("Could not find config backup file"); break;
+						case STATS: System.out.println("Could not find stats backup file"); break;
+						case PLAYER: System.out.println("Could not find player data backup file"); break;
+						case GAME: System.out.println("Could not find game data backup file"); break;
+						case LOG: System.out.println("Could not find game log data backup file"); break;
+					}
+				}
+			}
+			else{
+				switch(dataType){
+				case CONFIG: System.out.println("Could not find config file"); break;
+				case STATS: System.out.println("Could not find stats file"); break;
+				case PLAYER: System.out.println("Could not find player data file"); break;
+				case GAME: System.out.println("Could not find game data file"); break;
+				case LOG: System.out.println("Could not find game log data file"); break;
+				}
+			}
+		}
+	}
+	
+	public void parseLoadedPlayerData(String[] strArgs){
+		//name
+		RMPlayer rmp = new RMPlayer(strArgs[0]);
+		
+		//wins,losses,timesPlayed,itemsFound,itemsFoundTotal
+		String[] args = strArgs[1].split(",");
+		RMStats stats = rmp.getStats();
+		
+		stats.setWins(RMHelper.getIntByString(args[0]));
+		stats.setLosses(RMHelper.getIntByString(args[1]));
+		stats.setTimesPlayed(RMHelper.getIntByString(args[2]));
+		//stats.setItemsFound(getIntByString(args[3]));
+		stats.setItemsFoundTotal(RMHelper.getIntByString(args[3]));
+		
+		//inventory items
+		if(strArgs[2].length()>0){
+			if(!strArgs[2].equalsIgnoreCase("ITEMS")){
+				rmp.setItems(RMInventoryHelper.getItemStackByStringArray(strArgs[2]));
+			}
+		}
+		//reward items
+		if(strArgs[3].length()>0){
+			if(!strArgs[3].equalsIgnoreCase("REWARD")){
+				rmp.setReward(RMInventoryHelper.getItemStackByStringArray(strArgs[3]));
+			}
+		}
+		//tools items
+		if(strArgs[4].length()>0){
+			if(!strArgs[4].equalsIgnoreCase("TOOLS")){
+				rmp.setTools(RMInventoryHelper.getItemStackByStringArray(strArgs[4]));
+			}
+		}
+	}
+	
+	public void parseLoadedGameData(String[] strArgs){
+		
+		String[] args = strArgs[0].split(",");
+		//x,y,z,world,id,owner
+		int xLoc = RMHelper.getIntByString(args[0]);
+		int yLoc = RMHelper.getIntByString(args[1]);
+		int zLoc = RMHelper.getIntByString(args[2]);
+		World world = getServer().getWorld(args[3]);
+		Block b = world.getBlockAt(xLoc, yLoc, zLoc);
+
+		//maxPlayers,maxTeamPlayers,autoRandomizeAmount
+		//warpToSafety,autoRestoreWorld,warnHackedItems,allowHackedItems,allowPlayerLeave 
+		RMGameConfig config = new RMGameConfig(this);
+		config.setPartList(new RMPartList(b, this));
+		
+		config.setOwnerName(args[5]);
+		
+		config.setState(RMHelper.getStateByInt(RMHelper.getIntByString(args[6])));
+		config.setInterface(RMHelper.getInterfaceByInt(RMHelper.getIntByString(args[7])));
+		config.setMinPlayers(RMHelper.getIntByString(args[8]));
+		config.setMaxPlayers(RMHelper.getIntByString(args[9]));
+		config.setMinTeamPlayers(RMHelper.getIntByString(args[10]));
+		config.setMaxTeamPlayers(RMHelper.getIntByString(args[11]));
+		config.setAutoRandomizeAmount(RMHelper.getIntByString(args[12]));
+		config.setWarpToSafety(Boolean.parseBoolean(args[13]));
+		config.setAutoRestoreWorld(Boolean.parseBoolean(args[14]));
+		config.setWarnHackedItems(Boolean.parseBoolean(args[15]));
+		config.setAllowHackedItems(Boolean.parseBoolean(args[16]));
+		config.setKeepIngame(Boolean.parseBoolean(args[17]));
+		config.setAllowMidgameJoin(Boolean.parseBoolean(args[18]));
+		config.setClearPlayerInventory(Boolean.parseBoolean(args[19]));
+		config.setWarnUnequal(Boolean.parseBoolean(args[20]));
+		config.setAllowUnequal(Boolean.parseBoolean(args[21]));
+		
+
+		//wins,losses,timesPlayed,itemsFound,itemsFoundTotal
+		args = strArgs[1].split(",");
+		RMStats gameStats = config.getGameStats();
+		
+		gameStats.setWins(RMHelper.getIntByString(args[0]));
+		gameStats.setLosses(RMHelper.getIntByString(args[1]));
+		gameStats.setTimesPlayed(RMHelper.getIntByString(args[2]));
+		//gameStats.setItemsFound(getIntByString(args[3]));
+		gameStats.setItemsFoundTotal(RMHelper.getIntByString(args[3]));
+		
+		//team players
+		args = strArgs[2].split(" ");
+		List<RMTeam> rmTeams = config.getPartList().fetchTeams();
+		for(RMTeam rmt : rmTeams){
+			config.getTeams().add(rmt);
+		}
+		for(int j=0; j<args.length; j++){
+			String[] splitArgs = args[j].split(":");
+			if(splitArgs.length==2){
+				if(splitArgs[1].length()>0){
+					String[] players = splitArgs[1].split(",");
+					for(String player : players){
+						RMTeam rmTeam = config.getTeams().get(j);
+						if(rmTeam!=null){
+							RMPlayer rmp = RMPlayer.getPlayerByName(player);
+							if(rmp!=null) rmTeam.addPlayerSilent(rmp);
+						}
+					}
+				}
+			}
+		}
+			
+		//filter items
+		if(strArgs[3].length()>0){
+			if(!strArgs[3].equalsIgnoreCase("FILTER")){
+				HashMap<Integer, RMItem> rmItems = RMFilter.getRMItemsByStringArray(Arrays.asList(strArgs[3]), true);
+				config.setFilter(new RMFilter(rmItems));
+			}
+		}
+		//game items
+		if(strArgs[4].length()>0){
+			if(!strArgs[4].equalsIgnoreCase("ITEMS")){
+				HashMap<Integer, RMItem> rmItems = RMFilter.getRMItemsByStringArray(Arrays.asList(strArgs[4]), true);
+				config.setItems(new RMFilter(rmItems));
+			}
+		}
+		//found items
+		if(strArgs[5].length()>0){
+			if(!strArgs[5].equalsIgnoreCase("FOUND")){
+				config.setFound(RMInventoryHelper.getItemStackByStringArray(strArgs[5]));
+			}
+		}
+		//reward items
+		if(strArgs[6].length()>0){
+			if(!strArgs[6].equalsIgnoreCase("REWARD")){
+				config.setReward(RMInventoryHelper.getItemStackByStringArray(strArgs[6]));
+			}
+		}
+		//tools items
+		if(strArgs[7].length()>0){
+			if(!strArgs[7].equalsIgnoreCase("TOOLS")){
+				config.setTools(RMInventoryHelper.getItemStackByStringArray(strArgs[7]));
+			}
+		}
+		//chest items
+		args = strArgs[8].split("\\.");
+		for(int j=0; j<args.length; j++){
+			if(args[j].length()>0){
+				if(!args[j].equalsIgnoreCase("CHEST")){
+					List<ItemStack> items = RMInventoryHelper.getItemStackByStringArray(args[j]);
+					List<ItemStack> inventory = new ArrayList<ItemStack>();
+					for(ItemStack item : items){
+						inventory.add(item);
+					}
+					RMTeam rmTeam = config.getTeams().get(j);
+					if(rmTeam!=null){
+						rmTeam.getChest().setInventory(inventory);
+					}
+				}
+			}
+		}
+		
+		//team items
+		args = strArgs[9].split("\\.");
+		for(int j=0; j<args.length; j++){
+			if(args[j].length()>0){
+				if(!args[j].equalsIgnoreCase("ITEMS")){
+					HashMap<Integer, RMItem> rmItems = RMFilter.getRMItemsByStringArray(Arrays.asList(args[j]), true);
+					RMTeam rmTeam = config.getTeams().get(j);
+					if(rmTeam!=null){
+						rmTeam.getChest().setItems(rmItems);
+					}
+				}
+			}
+		}
+		RMGame.tryAddGameFromConfig(config);
 	}
 	
 	public void parseFilter(RMPlayer rmp, List<String> args, FilterState filterState){
@@ -1705,11 +1439,19 @@ public class RM extends JavaPlugin {
 			*/
 			if(filterState==FilterState.FILTER){
 				if(args.get(0).equalsIgnoreCase("remove")){
+					if(!rmp.hasPermission("resourcemadness.filter.remove")){
+						rmp.sendMessage(RMText.noPermissionCommand);
+						return;
+					}
 					force = ForceState.REMOVE;
 					size+=1;
 				}
 				if(args.get(0).equalsIgnoreCase("random")){
-					randomize = getIntByString(args.get(1));
+					if(!rmp.hasPermission("resourcemadness.filter.random")){
+						rmp.sendMessage(RMText.noPermissionCommand);
+						return;
+					}
+					randomize = RMHelper.getIntByString(args.get(1));
 					if(randomize>0){
 						force = ForceState.RANDOMIZE;
 						size+=2;
@@ -1738,8 +1480,8 @@ public class RM extends JavaPlugin {
 									return;
 								}
 								break;
-							case AWARD:
-								if(!rmp.hasPermission("resourcemadness.award.clear")){
+							case REWARD:
+								if(!rmp.hasPermission("resourcemadness.reward.clear")){
 									rmp.sendMessage(RMText.noPermissionCommand);
 									return;
 								}
@@ -1761,12 +1503,12 @@ public class RM extends JavaPlugin {
 							amount.clear();
 							if(arg0.contains("stack")) useDefaultAmount = true;
 							else if(arg0.contains(":")){
-								List<String> strArgs = splitArgs(arg0);
+								List<String> strArgs = RMFilter.splitArgsByColon(arg0);
 								String strAmount = ""; 
 								String[] strSplit = strArgs.get(0).split(":");
 								if(strSplit.length>1){
 									strAmount = strSplit[1];
-									Integer[] intAmount = checkInt(strAmount);
+									Integer[] intAmount = RMFilter.checkInt(strAmount);
 									if(intAmount!=null){
 										for(int i=0; i<items.size(); i++){							
 											amount.add(intAmount);
@@ -1784,7 +1526,7 @@ public class RM extends JavaPlugin {
 							}
 							if(useDefaultAmount) amount = getDefaultAmount(items);
 							break;
-						case AWARD: case TOOLS:
+						case REWARD: case TOOLS:
 							items = getItemsFromFilter(type);
 							for(Integer i : items){
 								isItems.add(new ItemStack(i));
@@ -1795,12 +1537,12 @@ public class RM extends JavaPlugin {
 								}
 							}
 							else if(arg0.contains(":")){
-								List<String> strArgs = splitArgs(arg0);
+								List<String> strArgs = RMFilter.splitArgsByColon(arg0);
 								String strAmount = ""; 
 								String[] strSplit = strArgs.get(0).split(":");
 								if(strSplit.length>1){
 									strAmount = strSplit[1];
-									Integer[] intAmount = checkInt(strAmount);
+									Integer[] intAmount = RMFilter.checkInt(strAmount);
 									if(intAmount!=null){
 										for(ItemStack item : isItems){
 											//log.log(Level.WARNING, "amount:"+intAmount[0]);
@@ -1824,13 +1566,13 @@ public class RM extends JavaPlugin {
 				}
 			}
 			else{
-				HashMap<Integer, Integer[]> hashItems = getItemsByStringArray(args, false);
+				HashMap<Integer, Integer[]> hashItems = RMFilter.getItemsByStringArray(args, false);
 				switch(filterState){
 					case FILTER:
 						items = Arrays.asList(hashItems.keySet().toArray(new Integer[hashItems.size()]));
 						amount = Arrays.asList(hashItems.values().toArray(new Integer[hashItems.size()][]));
 						break;
-					case AWARD: case TOOLS:
+					case REWARD: case TOOLS:
 						for(Integer id : hashItems.keySet()){
 							byte data = 0;
 							short durability = 0;
@@ -1865,7 +1607,7 @@ public class RM extends JavaPlugin {
 						rmItems.put(items.get(i), rmItem);
 					}
 					break;
-				case AWARD: case TOOLS:
+				case REWARD: case TOOLS:
 					/*
 					HashMap<Integer, ItemStack> hashItems = combineItemsByItemStack(isItems.toArray(new ItemStack[isItems.size()]));
 					for(Integer id : hashItems.keySet()){
@@ -1881,166 +1623,6 @@ public class RM extends JavaPlugin {
 			//rmp.setRequestFilter(hashItems, type, force);
 			rmp.setRequestFilter(rmItems, filterState, type, force, randomize);
 		}
-	}
-	
-	//Include Item
-	public String includeItem(RMItem rmItem, boolean... less){
-		int i1 = rmItem.getAmount();
-		int i2 = rmItem.getAmountHigh();
-		if((i1!=1)&&(less.length==0)){
-			if(i2>0) return ChatColor.GRAY+":"+i1+"-"+i2;
-			return ChatColor.GRAY+":"+i1;
-		}
-		return "";
-	}
-	
-	public String getSortedItemsFromItemStackArray(ItemStack[] items){
-		String strItems = "";
-		
-		HashMap<Integer, ItemStack> hashItems = combineItemsByItemStack(items);
-		
-		Integer[] array = hashItems.keySet().toArray(new Integer[hashItems.size()]);
-		Arrays.sort(array);
-		if(array.length>config.getTypeLimit()){
-			for(Integer id : array){
-				strItems += ChatColor.WHITE+""+id+":"+includeItem(new RMItem(hashItems.get(id)))+ChatColor.WHITE+", ";
-			}
-		}
-		else{
-			for(Integer id : array){
-				strItems += ChatColor.WHITE+""+Material.getMaterial(id)+includeItem(new RMItem(hashItems.get(id)))+ChatColor.WHITE+", ";
-			}
-		}
-		strItems = stripLast(strItems, ", ");
-		return strItems;
-	}
-	
-	public HashMap<Integer, ItemStack> combineItemsByItemStack(ItemStack[] items){
-		HashMap<Integer, ItemStack> hashItems = new HashMap<Integer, ItemStack>();
-		for(ItemStack awardItem : items){
-			ItemStack item = awardItem.clone();
-			if(item!=null){
-				int id = item.getTypeId();
-				if(hashItems.containsKey(id)){
-					int amount = hashItems.get(id).getAmount()+item.getAmount();
-					ItemStack itemClone = item.clone();
-					itemClone.setAmount(amount);
-					hashItems.put(id, itemClone);
-				}
-				else hashItems.put(id, item);
-			}
-		}
-		return hashItems;
-	}
-	
-	public HashMap<Integer, RMItem> getRMItemsByStringArray(List<String> args, boolean invert){
-		HashMap<Integer, RMItem> rmItems = new HashMap<Integer, RMItem>();
-		HashMap<Integer, Integer[]> items = getItemsByStringArray(args, invert);
-
-		for(Integer item : items.keySet()){
-			Integer[] amount = items.get(item);
-			int amount1 = -1;
-			int amount2 = -1;
-			if(amount.length>0) amount1 = amount[0];
-			if(amount.length>1) amount2 = amount[1];
-			
-			RMItem rmItem = new RMItem(item);
-			if(amount1 > -1) rmItem.setAmount(amount1);
-			if(amount2 > -1) rmItem.setAmountHigh(amount2);
-			
-			rmItems.put(item, rmItem);
-		}
-		return rmItems;
-	}
-	
-	public HashMap<Integer, Integer[]> getItemsByStringArray(List<String> args, boolean invert){
-		HashMap<Integer, Integer[]> items = new HashMap<Integer, Integer[]>();
-		for(String arg : args){
-			List<String> strArgs = new ArrayList<String>();
-			if(invert) strArgs = Arrays.asList(arg.split(" "));
-			else strArgs = splitArgs(arg);
-			for(String strArg : strArgs){
-				String strAmount = "";
-				String[] strSplit = strArg.split(":");
-				String[] strItems = strSplit[invert?1:0].split(",");
-				Integer[] intAmount = null;
-				if(strSplit.length>1){
-					strAmount = strSplit[invert?0:1];
-					intAmount = checkInt(strAmount);
-				}
-				for(String str : strItems){
-					if(str.contains("-")){
-						String[] strItems2 = str.split("-");
-						int id1=getIntByString(strItems2[0]);
-						int id2=getIntByString(strItems2[1]);
-						//Check if material name
-						if(id1==-1) id1=getIntByStringMaterial(strItems2[0]);
-						if(id2==-1) id2=getIntByStringMaterial(strItems2[1]);
-						if((id1!=-1)&&(id2!=-1)){
-							if(id1>id2){
-								int id3=id1;
-								id1=id2;
-								id2=id3;
-							}
-							while(id1<=id2){
-								Material mat = Material.getMaterial(id1);
-								if(mat!=null){
-									if(intAmount==null){
-										intAmount = new Integer[1];
-										if(strArg.contains("stack")){
-											intAmount[0] = mat.getMaxStackSize();
-										}
-										else intAmount[0] = 1;
-									}
-									items.put(mat.getId(),intAmount);
-								}
-								id1++;
-							}
-						}
-					}
-					else{
-						int id=getIntByString(str);
-						//Check if material name
-						if(id==-1) id=getIntByStringMaterial(str);
-						if(id!=-1){
-							Material mat = Material.getMaterial(id);
-							if(mat!=null){
-								if(intAmount==null){
-									intAmount = new Integer[1];
-									if(strArg.contains("stack")){
-										intAmount[0] = mat.getMaxStackSize();
-									}
-									else intAmount[0] = 1;
-								}
-								items.put(mat.getId(),intAmount);
-							}
-						}
-					}
-				}
-			}
-		}
-		return items;
-	}
-	
-	public Integer[] checkInt(String arg){
-		List<Integer> values = new ArrayList<Integer>();
-		
-		if(arg.contains("-")){
-			String[] split = arg.split("-");
-			int val1 = 0;
-			int val2 = 0;
-			if(split.length>0) val1 = getIntByString(split[0]);
-			if(split.length>1) val2 = getIntByString(split[1]);
-			if(val1>0) values.add(val1);
-			if(val2>0) values.add(val2);
-		}
-		else{
-			int val = getIntByString(arg);
-			if(val>=0) values.add(val);
-		}
-		if(values.size()==0) return null;
-		
-		return values.toArray(new Integer[values.size()]);
 	}
 	
 	public List<Integer[]> getDefaultAmount(List<Integer> items){
@@ -2078,33 +1660,8 @@ public class RM extends JavaPlugin {
 		return items;
 	}
 	
-	public List<String> splitArgs(String listArg){
-		List<String> args = new ArrayList<String>();
-		//getServer().broadcastMessage("listArg:"+listArg);
-		if(listArg.contains(":")){
-			int pos = 0;
-			int posEnd = 0;
-			while(pos!=-1){
-				posEnd = listArg.indexOf(":",pos);
-				if(posEnd!=-1) posEnd = listArg.indexOf(",",posEnd);
-				if(posEnd!=-1){
-					//getServer().broadcastMessage("add:"+listArg.substring(pos,posEnd));
-					args.add(listArg.substring(pos,posEnd));
-					pos = posEnd+1;
-				}
-				else{
-					//getServer().broadcastMessage("add:"+listArg.substring(pos));
-					args.add(listArg.substring(pos));
-					pos = -1;
-				}
-			}
-			return args;
-		}
-		else return Arrays.asList(listArg);
-	}
-	
 	public void sendListById(String arg, RMPlayer rmp){
-		int id = getIntByString(arg, 0);
+		int id = RMHelper.getIntByString(arg, 0);
 		if(id<0) id=0;
 		sendListByInt(id, rmp);
 	}
@@ -2131,150 +1688,6 @@ public class RM extends JavaPlugin {
 		}
 	}
 	
-	public RMGame getGameById(String arg){
-		int id = getIntByString(arg);
-		if(id!=-1) return RMGame.getGame(id);
-		return null;
-	}
-	public RMGame getGameById(int arg){
-		return RMGame.getGame(arg);
-	}
-	public RMTeam getTeamById(String arg, RMGame rmGame){
-		int id = getIntByString(arg);
-		if(id!=-1) return rmGame.getTeam(id);
-		return null;
-	}
-	
-	public DyeColor getDyeByString(String color){
-		for(DyeColor dyeColor : DyeColor.values()){
-			if(dyeColor.name().equalsIgnoreCase(color.toLowerCase())){
-				return dyeColor;
-			}
-		}
-		return null;
-	}
-	
-	public RMTeam getTeamByDye(String arg, RMGame rmGame){
-		DyeColor color = getDyeByString(arg);
-		if(color!=null) return rmGame.getTeam(color);
-		return null;
-	}
-	
-	public short getShortByString(String arg){
-		short data = 0;
-		try{
-			data = Byte.valueOf(arg);
-			return data;
-		} catch(Exception e){
-			return -1;
-		}
-	}
-	public byte getByteByString(String arg){
-		byte data = 0;
-		try{
-			data = Byte.valueOf(arg);
-			return data;
-		} catch(Exception e){
-			return -1;
-		}
-	}
-	public int getIntByString(String arg){
-		int i = 0;
-		try{
-			i = Integer.valueOf(arg);
-			return i;
-		} catch(Exception e){
-			return -1;
-		}
-	}
-	public int getBoolIntByString(String arg){
-		int i = 0;
-		try{
-			i = Integer.valueOf(arg);
-			return i;
-		} catch(Exception e){
-			try{
-				i = Boolean.valueOf(arg)?1:0;
-				return i;
-			}
-			catch(Exception ee){
-				return -1;
-			}
-		}
-	}
-	public int getIntByString(String arg, int def){
-		int i = 0;
-		try{
-			i = Integer.valueOf(arg);
-			return i;
-		} catch(Exception e){
-			return def;
-		}
-	}
-	public int getIntByStringMaterial(String arg){
-		Material mat = Material.getMaterial(arg.toUpperCase());
-		if(mat!=null) return mat.getId();
-		else return -1;
-	}
-	
-	public GameState getStateByInt(int i){
-		switch(i){
-			case 0: return GameState.SETUP;
-			case 1: return GameState.COUNTDOWN;
-			case 2: return GameState.GAMEPLAY;
-			case 3: return GameState.GAMEOVER;
-			default: return GameState.SETUP;
-		}
-	}
-	
-	public InterfaceState getInterfaceByInt(int i){
-		switch(i){
-			case 0: return InterfaceState.FILTER;
-			case 1: return InterfaceState.AWARD;
-			case 2: return InterfaceState.TOOLS;
-			case 3: return InterfaceState.FILTER_CLEAR;
-			default: return InterfaceState.FILTER;
-		}
-	}
-	
-	public ChatColor getChatColorByDye(DyeColor dye){
-		switch(dye){
-			case WHITE:
-				return ChatColor.WHITE;
-			case ORANGE:
-				return ChatColor.GOLD;
-			case MAGENTA:
-				return ChatColor.LIGHT_PURPLE;
-			case LIGHT_BLUE:
-				return ChatColor.BLUE;
-			case YELLOW:
-				return ChatColor.YELLOW;
-			case LIME:
-				return ChatColor.GREEN;
-			case PINK:
-				return ChatColor.RED;
-			case GRAY:
-				return ChatColor.DARK_GRAY;
-			case SILVER:
-				return ChatColor.GRAY;
-			case CYAN:
-				return ChatColor.DARK_AQUA;
-			case PURPLE:
-				return ChatColor.DARK_PURPLE;
-			case BLUE:
-				return ChatColor.DARK_BLUE;
-			case BROWN:
-				return ChatColor.GOLD;
-			case GREEN:
-				return ChatColor.DARK_GREEN;
-			case RED:
-				return ChatColor.DARK_RED;
-			case BLACK:
-				return ChatColor.BLACK;
-		}
-		return ChatColor.WHITE;
-	}
-	
 	public void rmInfo(RMPlayer rmp){
 		rmp.sendMessage(ChatColor.GOLD+"ResourceMadness Commands:");
 		rmp.sendMessage(ChatColor.GRAY+"Gray"+ChatColor.WHITE+"/"+ChatColor.GREEN+"green "+ChatColor.WHITE+"text is optional.");
@@ -2287,9 +1700,9 @@ public class RM extends JavaPlugin {
 		if(rmp.hasPermission("resourcemadness.info.settings")) line+="settings/";
 		if(rmp.hasPermission("resourcemadness.info.found")) line+="found/";
 		if(rmp.hasPermission("resourcemadness.info.items")) line+="items/";
-		if(rmp.hasPermission("resourcemadness.info.award")) line+="award/";
+		if(rmp.hasPermission("resourcemadness.info.reward")) line+="reward/";
 		if(rmp.hasPermission("resourcemadness.info.tools")) line+="tools/";
-		line = stripLast(line, "/");
+		line = RMText.stripLast(line, "/");
 		if(line.length()!=0) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"info "+ChatColor.GREEN+line+" "+ChatColor.WHITE+"Show "+line+".");
 		
 		if(rmp.hasPermission("resourcemadness.set")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"set "+ChatColor.WHITE+"Set various game related settings.");
@@ -2297,13 +1710,13 @@ public class RM extends JavaPlugin {
 		//Mode
 		line="";
 		if(rmp.hasPermission("resourcemadness.mode.filter")) line+="filter/";
-		if(rmp.hasPermission("resourcemadness.mode.award")) line+="award/";
+		if(rmp.hasPermission("resourcemadness.mode.reward")) line+="reward/";
 		if(rmp.hasPermission("resourcemadness.mode.tools")) line+="tools/";
-		line = stripLast(line, "/");
-		if(line.length()!=0) if(rmp.hasPermission("resourcemadness.mode")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"mode "+line+" "+ChatColor.WHITE+"Change filter mode.");
+		line = RMText.stripLast(line, "/");
+		if(line.length()!=0) if(rmp.hasPermission("resourcemadness.mode")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"mode "+ChatColor.GREEN+line+" "+ChatColor.WHITE+"Change filter mode.");
 		
 		if(rmp.hasPermission("resourcemadness.filter")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.WHITE+"Add items to filter.");
-		if(rmp.hasPermission("resourcemadness.award")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"award "+ChatColor.WHITE+"Add award items.");
+		if(rmp.hasPermission("resourcemadness.reward")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"reward "+ChatColor.WHITE+"Add reward items.");
 		if(rmp.hasPermission("resourcemadness.tools")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"tools "+ChatColor.WHITE+"Add tools items.");
 		if(rmp.hasPermission("resourcemadness.iteminfo")) rmp.sendMessage("/rm "+ChatColor.AQUA+"[items(id/name)] "+ChatColor.WHITE+"Get the item's name or id");
 		if(rmp.hasPermission("resourcemadness.restore")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"restore "+ChatColor.WHITE+"Restore game world changes.");
@@ -2313,20 +1726,20 @@ public class RM extends JavaPlugin {
 		line="";
 		if(rmp.hasPermission("resourcemadness.restart")) line+="Restart/";
 		if(rmp.hasPermission("resourcemadness.stop")) line+="Stop/";
-		line = stripLast(line, "/");
+		line = RMText.stripLast(line, "/");
 		if(line.length()!=0) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+line.toLowerCase()+" "+ChatColor.WHITE+line+" a game.");
 		
 		if(rmp.hasPermission("resourcemadness.join")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"join "+ChatColor.GREEN+"[team(id/color)] "+ChatColor.WHITE+"Join a team.");
 		if(rmp.hasPermission("resourcemadness.quit")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"quit "+ChatColor.WHITE+"Quit a team.");
-		if(rmp.hasPermission("resourcemadness.items")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"items "+ChatColor.WHITE+"Get which items you need to find.");
+		if(rmp.hasPermission("resourcemadness.items")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"items "+ChatColor.WHITE+"Get which items you need to gather.");
 		
-		//Claim Items/Award
+		//Claim Items/Reward
 		line="";
 		if(rmp.hasPermission("resourcemadness.claim.found")) line+="found/";
 		if(rmp.hasPermission("resourcemadness.claim.items")) line+="items/";
-		if(rmp.hasPermission("resourcemadness.claim.award")) line+="award/";
+		if(rmp.hasPermission("resourcemadness.claim.reward")) line+="reward/";
 		if(rmp.hasPermission("resourcemadness.claim.tools")) line+="tools/";
-		line = stripLast(line, "/");
+		line = RMText.stripLast(line, "/");
 		if(line.length()!=0) rmp.sendMessage("/rm "+ChatColor.YELLOW+"claim "+line+" "+ChatColor.WHITE+"Claim your "+line+".");
 	}
 	
@@ -2347,8 +1760,8 @@ public class RM extends JavaPlugin {
 			if(rmp.hasPermission("resourcemadness.set.clearinventory")) if(!config.getLock().contains(Lock.clearPlayerInventory)) rmp.sendMessage(ChatColor.YELLOW+"clearinventory "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.clearPlayerInventory+".");
 			if(rmp.hasPermission("resourcemadness.set.warnunequal")) if(!config.getLock().contains(Lock.warnUnequal)) rmp.sendMessage(ChatColor.YELLOW+"warnunequal "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.warnUnequal+".");
 			if(rmp.hasPermission("resourcemadness.set.allowunequal")) if(!config.getLock().contains(Lock.allowUnequal)) rmp.sendMessage(ChatColor.YELLOW+"allowunequal "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.allowUnequal+".");
-			if(rmp.hasPermission("resourcemadness.set.allowunequal")) if(!config.getLock().contains(Lock.infiniteAward)) rmp.sendMessage(ChatColor.YELLOW+"infiniteaward "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.infiniteAward+".");
-			if(rmp.hasPermission("resourcemadness.set.allowunequal")) if(!config.getLock().contains(Lock.infiniteTools)) rmp.sendMessage(ChatColor.YELLOW+"infinitetools "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.infiniteTools+".");
+			if(rmp.hasPermission("resourcemadness.set.infinitereward")) if(!config.getLock().contains(Lock.infiniteReward)) rmp.sendMessage(ChatColor.YELLOW+"infinitereward "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.infiniteReward+".");
+			if(rmp.hasPermission("resourcemadness.set.infinitetools")) if(!config.getLock().contains(Lock.infiniteTools)) rmp.sendMessage(ChatColor.YELLOW+"infinitetools "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.infiniteTools+".");
 		}
 	}
 	
@@ -2371,13 +1784,13 @@ public class RM extends JavaPlugin {
 		}
 	}
 	
-	public void rmAwardInfo(RMPlayer rmp){
-		if(rmp.hasPermission("resourcemadness.award")){
-			rmp.sendMessage(ChatColor.GOLD+"/rm award");
+	public void rmRewardInfo(RMPlayer rmp){
+		if(rmp.hasPermission("resourcemadness.reward")){
+			rmp.sendMessage(ChatColor.GOLD+"/rm reward");
 			rmp.sendMessage(ChatColor.AQUA+"[items(id)]"+ChatColor.YELLOW+"/all/block/item/clear"+ChatColor.BLUE+":[amount/stack]");
 			rmp.sendMessage(ChatColor.GOLD+"Examples:");
-			rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"award "+ChatColor.YELLOW+"clear");
-			rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"award "+ChatColor.AQUA+"1-5 6-9"+ChatColor.BLUE+":32 "+ChatColor.AQUA+"10-20,22,24"+ChatColor.BLUE+":stack "+ChatColor.AQUA+"27-35"+ChatColor.BLUE+":8-32");
+			rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"reward "+ChatColor.YELLOW+"clear");
+			rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"reward "+ChatColor.AQUA+"1-5 6-9"+ChatColor.BLUE+":32 "+ChatColor.AQUA+"10-20,22,24"+ChatColor.BLUE+":stack "+ChatColor.AQUA+"27-35"+ChatColor.BLUE+":8-32");
 		}
 	}
 	
@@ -2389,58 +1802,6 @@ public class RM extends JavaPlugin {
 			rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"tools "+ChatColor.YELLOW+"clear");
 			rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"tools "+ChatColor.AQUA+"1-5 6-9"+ChatColor.BLUE+":32 "+ChatColor.AQUA+"10-20,22,24"+ChatColor.BLUE+":stack "+ChatColor.AQUA+"27-35"+ChatColor.BLUE+":8-32");
 		}
-	}
-	
-	public String stripLast(String str, String s){
-		int pos = str.lastIndexOf(s);
-		if(pos!=-1){
-			String part1 = str.substring(0, pos);
-			String part2 = str.substring(pos+s.length());
-			return part1+part2;
-		}
-		return str;
-	}
-	
-	public String getFormattedStringByList(List<String> strList){
-		String line = "";
-		for(String str : strList){
-			line+=str+ChatColor.WHITE+", ";
-		}
-		line = stripLast(line, ",");
-		return line;
-	}
-	public String getFormattedStringByListMaterial(List<Material> materials){
-		String line = "";
-		for(Material mat : materials){
-			line+=mat.name()+", ";
-		}
-		line = stripLast(line, ",");
-		return line;
-	}
-	
-	public String getTextBlockList(List<List<Block>> blockList, boolean allowNull){
-		String line = "";
-		for(List<Block> bList : blockList){
-			for(Block b : bList){
-				if(b!=null){
-					line+=b.getType().name();
-				}
-				else if(allowNull) line+="null";
-				line+=",";
-			}
-		}
-		return stripLast(line, ",");
-	}
-	public String getTextList(List<Block> bList, boolean allowNull){
-		String line = "";
-		for(Block b : bList){
-			if(b!=null){
-				line+=b.getType().name();
-			}
-			else if(allowNull) line+="null";
-			line+=",";
-		}
-		return stripLast(line, ",");
 	}
 	
 	public int getListItemStackTotalStack(List<ItemStack> items){
@@ -2473,26 +1834,5 @@ public class RM extends JavaPlugin {
 			}
 		}
 		return total;
-	}
-	public String getStringByStringList(List<String> strList, String strSeparator){
-
-		if(strSeparator==null) strSeparator = ",";
-		String line = "";
-		for(String str : strList){
-			line+=str+strSeparator;
-		}
-		if(line.length()!=0) line = stripLast(line, strSeparator);
-		return line;
-	}
-	public String getStringByStringList(List<String> strList, String strPre, String strAfter, String strSeparator){
-		if(strPre==null) strPre = "";
-		if(strAfter==null) strAfter = "";
-		if(strSeparator==null) strSeparator = ",";
-		String line = "";
-		for(String str : strList){
-			line+=strPre+str+strAfter+strSeparator;
-		}
-		if(line.length()!=0) line = stripLast(line, strSeparator);
-		return line;
 	}
 }

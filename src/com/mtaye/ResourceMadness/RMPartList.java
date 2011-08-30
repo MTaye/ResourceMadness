@@ -294,7 +294,7 @@ public class RMPartList {
 				line+=",";
 			}
 		}
-		return plugin.stripLast(line, ",");
+		return RMText.stripLast(line, ",");
 	}
 	
 	//Match Part List

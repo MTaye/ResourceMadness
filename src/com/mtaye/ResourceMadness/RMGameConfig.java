@@ -3,6 +3,7 @@ package com.mtaye.ResourceMadness;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.bukkit.inventory.ItemStack;
 
@@ -15,7 +16,7 @@ import com.mtaye.ResourceMadness.RMGame.InterfaceState;
  * @author M-Taye
  */
 public class RMGameConfig {
-	public static RM plugin;
+	public RM plugin;
 
 	private RMPartList _partList = new RMPartList();
 	private String _worldName;
@@ -36,17 +37,17 @@ public class RMGameConfig {
 	private boolean _clearPlayerInventory = true;
 	private boolean _warnUnequal = true;
 	private boolean _allowUnequal = false;
-	private boolean _infiniteAward = false;
+	private boolean _infiniteReward = false;
 	private boolean _infiniteTools = false;
 	private HashMap<String, RMPlayer> _players = new HashMap<String, RMPlayer>();
 	//private List<RMTeam> _teams = new ArrayList<RMTeam>();
 	private RMFilter _filter = new RMFilter();
 	private RMFilter _items = new RMFilter();
 	private List<ItemStack> _found = new ArrayList<ItemStack>();
-	private List<ItemStack> _award = new ArrayList<ItemStack>();
+	private List<ItemStack> _reward = new ArrayList<ItemStack>();
 	private List<ItemStack> _tools = new ArrayList<ItemStack>();
 	private List<RMTeam> _teams = new ArrayList<RMTeam>();
-	private RMLog _log = new RMLog(plugin);
+	private RMLog _log;
 	private GameState _state = GameState.SETUP;
 	private InterfaceState _interface = InterfaceState.FILTER;
 	
@@ -57,10 +58,13 @@ public class RMGameConfig {
 	
 	private RMStats _gameStats = new RMStats();
 	
-	public RMGameConfig(){
+	public RMGameConfig(RM plugin){
+		this.plugin = plugin;
+		_log = new RMLog(plugin);
 	}
 	
-	public RMGameConfig(RMGameConfig rmGameConfig){
+	public RMGameConfig(RMGameConfig rmGameConfig, RM plugin){
+		this.plugin = plugin;
 		this._partList = rmGameConfig._partList;
 		this._id = rmGameConfig._id;
 		//this._owner = rmGameConfig._owner;
@@ -79,13 +83,13 @@ public class RMGameConfig {
 		this._clearPlayerInventory = rmGameConfig._clearPlayerInventory;
 		this._warnUnequal = rmGameConfig._warnUnequal;
 		this._allowUnequal = rmGameConfig._allowUnequal;
-		this._infiniteAward = rmGameConfig._infiniteAward;
+		this._infiniteReward = rmGameConfig._infiniteReward;
 		this._infiniteTools = rmGameConfig._infiniteTools;
 		this._players = rmGameConfig._players;
 		this._filter = rmGameConfig._filter;
 		this._items = rmGameConfig._items;
 		this._found = rmGameConfig._found;
-		this._award = rmGameConfig._award;
+		this._reward = rmGameConfig._reward;
 		this._tools = rmGameConfig._tools;
 		this._teams = rmGameConfig._teams;
 		this._log = rmGameConfig._log;
@@ -114,17 +118,17 @@ public class RMGameConfig {
 	public boolean getClearPlayerInventory() { return _clearPlayerInventory; }
 	public boolean getWarnUnequal() { return _warnUnequal; };
 	public boolean getAllowUnequal() { return _allowUnequal; };
-	public boolean getInfiniteAward() { return _infiniteAward; }
+	public boolean getInfiniteReward() { return _infiniteReward; }
 	public boolean getInfiniteTools() { return _infiniteTools; }
 	public HashMap<String, RMPlayer> getPlayers() { return _players; }
 	//public List<RMTeam> getTeams() { return _teams; }
 	public RMFilter getFilter() { return _filter; }
 	public RMFilter getItems() { return _items; }
 	public List<ItemStack> getFound() { return _found; }
-	public List<ItemStack> getAward() { return _award; }
+	public List<ItemStack> getReward() { return _reward; }
 	public List<ItemStack> getTools() { return _tools; }
 	public ItemStack[] getFoundArray() { return _found.toArray(new ItemStack[_found.size()]); }
-	public ItemStack[] getAwardArray() { return _award.toArray(new ItemStack[_award.size()]); }
+	public ItemStack[] getRewardArray() { return _reward.toArray(new ItemStack[_reward.size()]); }
 	public ItemStack[] getToolsArray() { return _tools.toArray(new ItemStack[_tools.size()]); }
 	public List<RMTeam> getTeams() { return _teams; }
 	public RMLog getLog() { return _log; }
@@ -212,8 +216,8 @@ public class RMGameConfig {
 	public void setAllowUnequal(boolean allow){
 		_allowUnequal = allow;
 	}
-	public void setInfiniteAward(boolean infiniteAward){
-		_infiniteAward = infiniteAward;
+	public void setInfiniteReward(boolean infiniteReward){
+		_infiniteReward = infiniteReward;
 	}
 	public void setInfiniteTools(boolean infiniteTools){
 		_infiniteTools = infiniteTools;
@@ -229,10 +233,10 @@ public class RMGameConfig {
 		_items = items;
 	}
 	public void setFound(List<ItemStack> found){
-		_tools = found;
+		_found = found;
 	}
-	public void setAward(List<ItemStack> award){
-		_award = award;
+	public void setReward(List<ItemStack> reward){
+		_reward = reward;
 	}
 	public void setTools(List<ItemStack> tools){
 		_tools = tools;
@@ -260,8 +264,8 @@ public class RMGameConfig {
 	public void clearTeams(){
 		_teams.clear();
 	}
-	public void clearAward(){
-		_award.clear();
+	public void clearReward(){
+		_reward.clear();
 	}
 	public void clearTools(){
 		_tools.clear();
@@ -314,9 +318,9 @@ public class RMGameConfig {
 		if(_allowUnequal) _allowUnequal = false;
 		else _allowUnequal = true;
 	}
-	public void toggleInfiniteAward(){
-		if(_infiniteAward) _infiniteAward = false;
-		else _infiniteAward = true;
+	public void toggleInfiniteReward(){
+		if(_infiniteReward) _infiniteReward = false;
+		else _infiniteReward = true;
 	}
 	public void toggleInfiniteTools(){
 		if(_infiniteTools) _infiniteTools = false;
@@ -339,13 +343,13 @@ public class RMGameConfig {
 		setClearPlayerInventory(rmGameConfig.getClearPlayerInventory());
 		setWarnUnequal(rmGameConfig.getWarnUnequal());
 		setAllowUnequal(rmGameConfig.getAllowUnequal());
-		setInfiniteAward(rmGameConfig.getInfiniteAward());
+		setInfiniteReward(rmGameConfig.getInfiniteReward());
 		setInfiniteTools(rmGameConfig.getInfiniteTools());
 		setPlayers(rmGameConfig.getPlayers());
 		setFilter(rmGameConfig.getFilter());
 		setItems(rmGameConfig.getItems());
 		setFound(rmGameConfig.getFound());
-		setAward(rmGameConfig.getAward());
+		setReward(rmGameConfig.getReward());
 		setTools(rmGameConfig.getTools());
 		setLog(rmGameConfig.getLog());
 		setState(rmGameConfig.getState());

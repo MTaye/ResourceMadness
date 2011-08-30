@@ -28,11 +28,11 @@ public class RMPlayer {
 	public enum PlayerAction{
 		ADD, REMOVE, INFO, INFO_SETTINGS, INFO_FOUND, MODE, MODE_CYCLE,
 		JOIN, QUIT, START, START_RANDOM, RESTART, STOP,
-		RESTORE, FILTER, AWARD, TOOLS, CLAIM_FOUND,
+		RESTORE, FILTER, REWARD, TOOLS, CLAIM_FOUND,
 		SET_MIN_PLAYERS, SET_MAX_PLAYERS, SET_MIN_TEAM_PLAYERS, SET_MAX_TEAM_PLAYERS, SET_MAX_ITEMS, SET_RANDOM,
 		SET_WARP, SET_RESTORE, SET_WARN_HACKED, SET_ALLOW_HACKED,
 		SET_KEEP_INGAME, SET_MIDGAME_JOIN, SET_CLEAR_INVENTORY,
-		SET_WARN_UNEQUAL, SET_ALLOW_UNEQUAL, SET_INFINITE_AWARD, SET_INFINITE_TOOLS,
+		SET_WARN_UNEQUAL, SET_ALLOW_UNEQUAL, SET_INFINITE_REWARD, SET_INFINITE_TOOLS,
 		NONE;
 	}
 	private String _name;
@@ -43,26 +43,26 @@ public class RMPlayer {
 	private InterfaceState _requestInterface = InterfaceState.FILTER;
 	private RMStats _stats = new RMStats();
 	private List<ItemStack> _items = new ArrayList<ItemStack>();
-	private List<ItemStack> _award = new ArrayList<ItemStack>();
+	private List<ItemStack> _reward = new ArrayList<ItemStack>();
 	private List<ItemStack> _tools = new ArrayList<ItemStack>();
 	private boolean _isOnline = false;
 
 	public void getInfoItems(){
-		String items = plugin.getSortedItemsFromItemStackArray(_items.toArray(new ItemStack[_items.size()]));
+		String items = RMText.getSortedItemsFromItemStackArray(_items.toArray(new ItemStack[_items.size()]));
 		if(items.length()>0){
 			sendMessage(ChatColor.YELLOW+"Items: "+items);
 		}
 		else sendMessage(ChatColor.YELLOW+"No items found.");
 	}
-	public void getInfoAward(){
-		String items = plugin.getSortedItemsFromItemStackArray(_award.toArray(new ItemStack[_award.size()]));
+	public void getInfoReward(){
+		String items = RMText.getSortedItemsFromItemStackArray(_reward.toArray(new ItemStack[_reward.size()]));
 		if(items.length()>0){
-			sendMessage(ChatColor.YELLOW+"Award items: "+items);
+			sendMessage(ChatColor.YELLOW+"Reward items: "+items);
 		}
-		else sendMessage(ChatColor.YELLOW+"No award found.");
+		else sendMessage(ChatColor.YELLOW+"No reward found.");
 	}
 	public void getInfoTools(){
-		String items = plugin.getSortedItemsFromItemStackArray(_tools.toArray(new ItemStack[_tools.size()]));
+		String items = RMText.getSortedItemsFromItemStackArray(_tools.toArray(new ItemStack[_tools.size()]));
 		if(items.length()>0){
 			sendMessage(ChatColor.YELLOW+"Tools items: "+items);
 		}
@@ -72,8 +72,8 @@ public class RMPlayer {
 	public List<ItemStack> getItems(){
 		return _items;
 	}
-	public List<ItemStack> getAward(){
-		return _award;
+	public List<ItemStack> getReward(){
+		return _reward;
 	}
 	public List<ItemStack> getTools(){
 		return _tools;
@@ -81,8 +81,8 @@ public class RMPlayer {
 	public void setItems(List<ItemStack> items){
 		_items = items;
 	}
-	public void setAward(List<ItemStack> award){
-		_award = award;
+	public void setReward(List<ItemStack> reward){
+		_reward = reward;
 	}
 	public void setTools(List<ItemStack> tools){
 		_tools = tools;
@@ -90,8 +90,8 @@ public class RMPlayer {
 	public void clearItems(){
 		_items.clear();
 	}
-	public void clearAward(){
-		_award.clear();
+	public void clearReward(){
+		_reward.clear();
 	}
 	public void clearTools(){
 		_tools.clear();
@@ -127,7 +127,7 @@ public class RMPlayer {
 			List<ItemStack> items = new ArrayList<ItemStack>();
 			switch(claimType){
 				case ITEMS: items = _items; break;
-				case AWARD: items = _award; break;
+				case REWARD: items = _reward; break;
 				case TOOLS: items = _tools; break;
 			}
 			for(ItemStack isItem : items){
@@ -169,7 +169,7 @@ public class RMPlayer {
 		if(source==destination) return;
 		switch(source){
 			case ITEMS:	itemsSource = _items; break;
-			case AWARD:	itemsSource = _award; break;
+			case REWARD: itemsSource = _reward; break;
 			case TOOLS:	itemsSource = _tools; break;
 		}
 		if(itemsSource==null) return;
@@ -182,7 +182,7 @@ public class RMPlayer {
 			switch(claimType){
 				case ITEMS:	sendMessage("No items to return."); break;
 				case FOUND:	sendMessage("No found items to give."); break;
-				case AWARD:	sendMessage("No award to give."); break;
+				case REWARD: sendMessage("No reward to give."); break;
 				case TOOLS:	sendMessage("No tools to give."); break;
 			}
 			return HandleState.NO_CHANGE;
@@ -193,7 +193,7 @@ public class RMPlayer {
 				switch(claimType){
 					case ITEMS:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot return items."); break;
 					case FOUND:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot give found items."); break;
-					case AWARD:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot give award."); break;
+					case REWARD: sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot give reward."); break;
 					case TOOLS:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot give tools."); break;
 				}
 				return HandleState.NO_CHANGE;
@@ -234,7 +234,7 @@ public class RMPlayer {
 				switch(claimType){
 					case ITEMS:	sendMessage(ChatColor.YELLOW+"All items were returned. "+ChatColor.WHITE+"Check your inventory."); break;
 					case FOUND:	sendMessage(ChatColor.YELLOW+"Found items were given. "+ChatColor.WHITE+"Check your inventory."); break;
-					case AWARD:	sendMessage(ChatColor.YELLOW+"Award was given. "+ChatColor.WHITE+"Check your inventory."); break;
+					case REWARD: sendMessage(ChatColor.YELLOW+"Reward was given. "+ChatColor.WHITE+"Check your inventory."); break;
 					case TOOLS:	sendMessage(ChatColor.YELLOW+"Tools were given. "+ChatColor.WHITE+"Check your inventory."); break;
 				}
 				return HandleState.CLAIM_RETURNED_ALL;
@@ -247,7 +247,7 @@ public class RMPlayer {
 		if(items.size()==0){
 			switch(claimType){
 				case ITEMS:	sendMessage("No item to return."); break;
-				case AWARD:	sendMessage("No award to give."); break;
+				case REWARD: sendMessage("No reward to give."); break;
 				case TOOLS:	sendMessage("No tools to give."); break;
 			}
 			return HandleState.NO_CHANGE;
@@ -257,7 +257,7 @@ public class RMPlayer {
 			if(inv.firstEmpty()==-1){
 				switch(claimType){
 					case ITEMS:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot return item."); break;
-					case AWARD:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot give award."); break;
+					case REWARD: sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot give reward."); break;
 					case TOOLS:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot give tools."); break;
 				}
 				return HandleState.NO_CHANGE;
@@ -289,7 +289,7 @@ public class RMPlayer {
 				items.remove(removeItem);
 				switch(claimType){
 					case ITEMS:	sendMessage("Item was returned. Check your inventory."); break;
-					case AWARD:	sendMessage("Award was given. Check your inventory."); break;
+					case REWARD: sendMessage("Reward was given. Check your inventory."); break;
 					case TOOLS:	sendMessage("Tools were given. Check your inventory."); break;
 				}
 				return HandleState.REMOVE;
@@ -305,8 +305,8 @@ public class RMPlayer {
 	public void claimItems(){
 		claim(_items, ClaimType.ITEMS);
 	}
-	public void claimAward(){
-		claim(_award, ClaimType.AWARD);
+	public void claimReward(){
+		claim(_reward, ClaimType.REWARD);
 	}
 	public void claimTools(){
 		claim(_tools, ClaimType.TOOLS);

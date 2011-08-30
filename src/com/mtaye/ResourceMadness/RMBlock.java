@@ -1,5 +1,6 @@
 package com.mtaye.ResourceMadness;
 
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -38,5 +39,8 @@ public class RMBlock {
 	}
 	public byte getData(){
 		return _data;
+	}
+	public Location getLocation(){
+		return _block.getLocation();
 	}
 }

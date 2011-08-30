@@ -13,6 +13,7 @@ import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
 
 import com.mtaye.ResourceMadness.RMGame.GameState;
+import com.mtaye.ResourceMadness.Helper.RMHelper;
 
 /**
  * ResourceMadness for Bukkit
@@ -65,7 +66,7 @@ public class RMTeam {
 		return _teamColor;
 	}
 	public String getTeamColorString(){
-		return plugin.getChatColorByDye(getTeamColor()) + _teamColor.name();
+		return RMHelper.getChatColorByDye(getTeamColor()) + _teamColor.name();
 	}
 	
 	public void setTeamColor(DyeColor color){
@@ -171,7 +172,7 @@ public class RMTeam {
 			names+=rmp.getName()+",";
 		}
 		if(names.length()>1){
-			names = plugin.stripLast(names, ",");
+			names = RMText.stripLast(names, ",");
 			names += "]";
 			return names;
 		}
@@ -227,6 +228,12 @@ public class RMTeam {
 		RMPlayer[] players = getPlayers();
 		for(RMPlayer rmp : players){
 			rmp.sendMessage(message);
+		}
+	}
+	public void teamMessage(String message, RMPlayer ignorePlayer){
+		RMPlayer[] players = getPlayers();
+		for(RMPlayer rmp : players){
+			if(rmp!=ignorePlayer) rmp.sendMessage(message);
 		}
 	}
 }

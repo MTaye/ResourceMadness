@@ -11,6 +11,8 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPlaceEvent;
 
+import com.mtaye.ResourceMadness.Helper.RMHelper;
+
 /**
  * ResourceMadness for Bukkit
  *
@@ -30,7 +32,7 @@ public class RMBlockListener extends BlockListener{
 			Player p = e.getPlayer();
 			RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
 			if(rmp!=null){
-				if(RMGame.isMaterial(b.getType(), RMGame.getMaterials())){
+				if(RMHelper.isMaterial(b.getType(), RMGame.getMaterials())){
 					switch(RMGame.tryRemoveGame(b, rmp, false)){
 						case NO_CHANGE:
 							e.setCancelled(true);

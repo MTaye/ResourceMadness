@@ -3,12 +3,15 @@ package com.mtaye.ResourceMadness;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
+
+import com.mtaye.ResourceMadness.Helper.RMHelper;
 
 /**
  * ResourceMadness for Bukkit
@@ -18,8 +21,9 @@ import org.bukkit.block.BlockState;
 public class RMLog {
 	RM plugin;
 	
-	HashMap<Location, RMBlock> _logList = new HashMap<Location, RMBlock>();
-	HashMap<Location, RMBlock> _logItemList = new HashMap<Location, RMBlock>();
+	List<Location> _locList = new ArrayList<Location>();
+	List<RMBlock> _logList = new ArrayList<RMBlock>();
+	List<RMBlock> _logItemList = new ArrayList<RMBlock>();
 	public static Material[] _blockItemMaterials = {Material.BED_BLOCK, Material.BROWN_MUSHROOM, Material.CACTUS, Material.CROPS, Material.DEAD_BUSH,
 		Material.DETECTOR_RAIL, Material.DIODE_BLOCK_OFF, Material.DIODE_BLOCK_ON, Material.IRON_DOOR_BLOCK, Material.LEVER, Material.LONG_GRASS,
 		Material.POWERED_RAIL, Material.RAILS, Material.RED_MUSHROOM, Material.RED_ROSE, Material.REDSTONE, Material.REDSTONE_WIRE, Material.SAPLING,
@@ -35,10 +39,19 @@ public class RMLog {
 	public void add(BlockState bState){
 		Block b = bState.getBlock();
 		Material mat = bState.getType();
-		if(RMGame.isMaterial(mat, _blockItemMaterials)){
-			if(!_logItemList.containsKey(bState.getBlock().getLocation())) _logItemList.put(b.getLocation(), new RMBlock(bState));
+		Location loc = bState.getBlock().getLocation();
+		if(!_locList.contains(loc)){
+			if(RMHelper.isMaterial(mat, _blockItemMaterials)){
+				//plugin.log.log(Level.WARNING, "addLogItemList:"+bState.getType().name());
+				_locList.add(loc);
+				_logItemList.add(new RMBlock(bState));
+			}
+			else{
+				//plugin.log.log(Level.WARNING, "addLogList:"+bState.getType().name());
+				_locList.add(loc);
+				_logList.add(new RMBlock(bState));
+			}
 		}
-		else if(!_logList.containsKey(bState.getBlock().getLocation())) _logList.put(b.getLocation(), new RMBlock(bState));
 		check(b);
 		/*
 		if(_logBatchSize!=0){
@@ -63,66 +76,104 @@ public class RMLog {
 				Material mat = block.getType();
 				if(i<5){ //NORTH,EAST,SOUTH,WEST
 					//if(isMaterial(mat, Material.TORCH, Material.REDSTONE_TORCH_ON, Material.REDSTONE_TORCH_OFF, Material.LEVER, Material.LADDER, Material.PAINTING, Material.STONE_BUTTON, Material.WALL_SIGN)){
-					if(RMGame.isMaterial(mat, _blockItemMaterials)){
-						if(!_logItemList.containsKey(loc)) _logItemList.put(loc, new RMBlock(block));
+					if(!_locList.contains(loc)){
+						if(RMHelper.isMaterial(mat, _blockItemMaterials)){
+								//plugin.log.log(Level.WARNING, i+",checkLogItemList:"+block.getType().name());
+								_locList.add(loc);
+								_logItemList.add(new RMBlock(block));
+						}
+						else{
+							//plugin.log.log(Level.WARNING, i+",checkLogList:"+block.getType().name());
+							_locList.add(loc);
+							_logList.add(new RMBlock(block));
+						}
 					}
-					else if(!_logList.containsKey(loc)) _logList.put(loc, new RMBlock(block));
 					//}
 				}
 				else{
-					if(RMGame.isMaterial(mat, Material.CACTUS, Material.CROPS, Material.SUGAR_CANE_BLOCK, Material.GRAVEL, Material.SAND)){
-						if(RMGame.isMaterial(mat, _blockItemMaterials)){
-							if(!_logItemList.containsKey(loc)) _logItemList.put(loc, new RMBlock(block));
+					if(RMHelper.isMaterial(mat, Material.CACTUS, Material.CROPS, Material.SUGAR_CANE_BLOCK, Material.GRAVEL, Material.SAND)){
+						if(!_locList.contains(loc)){
+							if(RMHelper.isMaterial(mat, _blockItemMaterials)){
+								//plugin.log.log(Level.WARNING, i+",checkLogItemListCCSGS:"+block.getType().name());
+								_locList.add(loc);
+								_logItemList.add(new RMBlock(block));
+							}
+							else{
+								//plugin.log.log(Level.WARNING, i+",checkLogListCCSGS:"+block.getType().name());
+								_locList.add(loc);
+								_logList.add(new RMBlock(block));
+							}
 						}
-						else if(!_logList.containsKey(loc)) _logList.put(loc, new RMBlock(block));
 						check(block);
 					}
 					else{
-						if(RMGame.isMaterial(mat, _blockItemMaterials)){
-							if(!_logItemList.containsKey(loc)) _logItemList.put(loc, new RMBlock(block));
+						if(!_locList.contains(loc)){
+							if(RMHelper.isMaterial(mat, _blockItemMaterials)){
+								//plugin.log.log(Level.WARNING, i+",checkLogItemList:"+block.getType().name());
+								_locList.add(loc);
+								_logItemList.add(new RMBlock(block));
+							}
+							else{
+								//plugin.log.log(Level.WARNING, i+",checkLogList:"+block.getType().name());
+								_locList.add(loc);
+								_logList.add(new RMBlock(block));
+							}
 						}
-						else if(!_logList.containsKey(loc)) _logList.put(loc, new RMBlock(block));
 					}
 				}
 			}
 		}
 	}
 	
-	public HashMap<Location, RMBlock> getList(){
+	public List<RMBlock> getList(){
 		return _logList;
 	}
-	public HashMap<Location, RMBlock> getItemList(){
+	public List<RMBlock> getItemList(){
 		return _logItemList;
 	}
 	
-	public void setList(HashMap<Location, RMBlock> logList){
+	public void setList(List<RMBlock> logList){
 		_logList = logList;
 	}
-	public void setItemList (HashMap<Location, RMBlock> logItemList){
+	public void setItemList (List<RMBlock> logItemList){
 		_logItemList = logItemList;
+	}
+	
+	public void resetLocList(){
+		_locList.clear();
+		for(RMBlock rmBlock : _logList){
+			Location loc = rmBlock.getLocation();
+			if(!_locList.contains(loc)) _locList.add(loc);
+		}
+		for(RMBlock rmBlock : _logItemList){
+			Location loc = rmBlock.getLocation();
+			if(!_locList.contains(loc)) _locList.add(loc);
+		}
 	}
 	
 	//Clear Log
 	public void clear(){
+		_locList.clear();
 		_logList.clear();
 		_logItemList.clear();
 	}
 	
 	//Restore Log
 	public boolean restore(){
-		if((_logList.size()==0)&&(_logItemList.size()==0)) return false;
+		if(_locList.size()==0) return false;
 		if(_logList.size()>0){
-			for(RMBlock rmBlock : _logList.values()){
+			for(RMBlock rmBlock : _logList){
 				rmBlock.restore();
 			}
 			_logList.clear();
 		}
 		if(_logItemList.size()>0){
-			for(RMBlock rmBlock : _logItemList.values()){
+			for(RMBlock rmBlock : _logItemList){
 				rmBlock.restore();
 			}
 			_logItemList.clear();
 		}
+		_locList.clear();
 		return true;
 	}
 }

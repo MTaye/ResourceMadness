@@ -13,7 +13,7 @@ public class RMConfig {
 	private int _typeLimit = 40;
 	
 	public enum PermissionType { P3, PEX, BUKKIT, FALSE };
-	public enum Lock { restore, warpToSafety, warnHackedItems, allowHackedItems, keepIngame, allowMidgameJoin, clearPlayerInventory, warnUnequal, allowUnequal, infiniteAward, infiniteTools };
+	public enum Lock { restore, warpToSafety, warnHackedItems, allowHackedItems, keepIngame, allowMidgameJoin, clearPlayerInventory, warnUnequal, allowUnequal, infiniteReward, infiniteTools };
 	
 	private List<Lock> _lock = new ArrayList<Lock>();
 	private int _autoSave = 10;
@@ -34,10 +34,12 @@ public class RMConfig {
 	private boolean _clearPlayerInventory = true;
 	private boolean _warnUnequal = true;
 	private boolean _allowUnequal = true;
-	private boolean _infiniteAward = false;
+	private boolean _infiniteReward = false;
 	private boolean _infiniteTools = false;
 	
 	public RMConfig(){
+		_lock.add(Lock.infiniteReward);
+		_lock.add(Lock.infiniteTools);
 	}
 	
 	public RMConfig(RMConfig rmConfig){
@@ -61,7 +63,7 @@ public class RMConfig {
 		setClearPlayerInventory(rmConfig.getClearPlayerInventory(), rmConfig.getLock().contains(Lock.clearPlayerInventory));
 		setWarnUnequal(rmConfig.getWarnUnequal(), rmConfig.getLock().contains(Lock.warnUnequal));
 		setAllowUnequal(rmConfig.getAllowUnequal(), rmConfig.getLock().contains(Lock.allowUnequal));
-		setInfiniteAward(rmConfig.getInfiniteAward(), rmConfig.getLock().contains(Lock.infiniteAward));
+		setInfiniteReward(rmConfig.getInfiniteReward(), rmConfig.getLock().contains(Lock.infiniteReward));
 		setInfiniteTools(rmConfig.getInfiniteTools(), rmConfig.getLock().contains(Lock.infiniteTools));
 	}
 	
@@ -86,7 +88,7 @@ public class RMConfig {
 	public boolean getClearPlayerInventory() { return _clearPlayerInventory; }
 	public boolean getWarnUnequal() { return _warnUnequal; }
 	public boolean getAllowUnequal() { return _allowUnequal; }
-	public boolean getInfiniteAward() { return _infiniteAward; }
+	public boolean getInfiniteReward() { return _infiniteReward; }
 	public boolean getInfiniteTools() { return _infiniteTools; }
 	
 	//Set
@@ -165,9 +167,9 @@ public class RMConfig {
 		if(lock) addLock(Lock.allowUnequal);
 		_allowUnequal = allowUnequal;
 	}
-	public void setInfiniteAward(boolean infiniteAward, boolean lock){
-		if(lock) addLock(Lock.infiniteAward);
-		_infiniteAward = infiniteAward;
+	public void setInfiniteReward(boolean infiniteReward, boolean lock){
+		if(lock) addLock(Lock.infiniteReward);
+		_infiniteReward = infiniteReward;
 	}
 	public void setInfiniteTools(boolean infiniteTools, boolean lock){
 		if(lock) addLock(Lock.infiniteTools);
@@ -181,5 +183,10 @@ public class RMConfig {
 	//Remove
 	public void removeLock(Lock lock){
 		if(_lock.contains(lock)) _lock.remove(lock);
+	}
+	
+	public boolean isLocked(Lock lock){
+		if(_lock.contains(lock)) return true;
+		return false;
 	}
 }

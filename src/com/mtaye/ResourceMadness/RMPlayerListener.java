@@ -10,6 +10,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 
 import com.mtaye.ResourceMadness.RMPlayer.PlayerAction;
+import com.mtaye.ResourceMadness.Helper.RMHelper;
 
 /**
  * ResourceMadness for Bukkit
@@ -31,7 +32,7 @@ public class RMPlayerListener extends PlayerListener{
 			if(b.getType().isBlock()){
 				RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
 				if(rmp!=null){
-					if(RMGame.isMaterial(b.getType(), RMGame.getMaterials())){
+					if(RMHelper.isMaterial(b.getType(), RMGame.getMaterials())){
 						RMGame rmGame = RMGame.getGameByBlock(b);
 						if(rmGame!=null){
 							switch(rmGame.getConfig().getState()){
@@ -69,7 +70,7 @@ public class RMPlayerListener extends PlayerListener{
 				RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
 				if(rmp!=null){
 					if(rmp.getPlayerAction() != PlayerAction.NONE){
-						if(RMGame.isMaterial(b.getType(), RMGame.getMaterials())){
+						if(RMHelper.isMaterial(b.getType(), RMGame.getMaterials())){
 							RMGame rmGame;
 							switch(rmp.getPlayerAction()){
 							case ADD:
@@ -132,13 +133,13 @@ public class RMPlayerListener extends PlayerListener{
 								break;
 							case STOP:
 								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null) rmGame.stopGame(rmp);
+								if(rmGame!=null) rmGame.stopGame(rmp, true);
 								break;
 							case FILTER:
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.tryParseFilter(rmp);
 								break;
-							case AWARD:
+							case REWARD:
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.tryParseFilter(rmp);
 								break;
@@ -214,9 +215,9 @@ public class RMPlayerListener extends PlayerListener{
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.setAllowUnequal(rmp, rmp.getRequestInt());
 								break;
-							case SET_INFINITE_AWARD:
+							case SET_INFINITE_REWARD:
 								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null) rmGame.setInfiniteAward(rmp, rmp.getRequestInt());
+								if(rmGame!=null) rmGame.setInfiniteReward(rmp, rmp.getRequestInt());
 								break;
 							case SET_INFINITE_TOOLS:
 								rmGame = RMGame.getGameByBlock(b);
@@ -237,7 +238,7 @@ public class RMPlayerListener extends PlayerListener{
 					else{
 						RMGame rmGame = RMGame.getGameByBlock(b);
 						if(rmGame!=null){
-							if(RMGame.isMaterial(b.getType(), RMGame.getMaterials())){
+							if(RMHelper.isMaterial(b.getType(), RMGame.getMaterials())){
 								if(!rmp.hasPermission("resourcemadness")){
 									rmp.sendMessage(RMText.noPermissionAction);
 									return;
