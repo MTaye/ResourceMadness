@@ -36,7 +36,9 @@ public class RMPartList {
 		if(b.getType()!=Material.GLASS){
 			b = getMainBlock(b);
 		}
+		if(b==null) return;
 		List<List<Block>> blockList = createListByBlock(b);
+		if(blockList==null) return;
 		if(bRemove!=null)  blockList = removeFromBlockList(bRemove, blockList);
 		blockList = getCompleteParts(blockList);
 		_blockList = blockList;

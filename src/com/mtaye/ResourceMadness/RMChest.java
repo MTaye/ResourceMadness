@@ -9,6 +9,8 @@ import org.bukkit.block.Chest;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import com.mtaye.ResourceMadness.Helper.RMHelper;
+
 /**
  * ResourceMadness for Bukkit
  *
@@ -20,39 +22,9 @@ public class RMChest{
 	private HashMap<Integer, RMItem> _items = new HashMap<Integer, RMItem>();
 	private RMTeam _team;
 	private List<ItemStack> _inventory = new ArrayList<ItemStack>();
-		
-	public void clearInventoryContents(){
-		_inventory.clear();
-	}
+	private RMStash _stash = new RMStash();
 	
-	public void addContentsToInventory(){
-		Inventory inv =_chest.getInventory();
-		_inventory.clear();
-		for(ItemStack item : inv.getContents()){
-			_inventory.add(item);
-		}
-		inv.clear();
-	}
-	
-	public void setInventory(List<ItemStack> inventory){
-		_inventory = inventory;
-	}
-	
-	public ItemStack[] getInventory(){
-		return _inventory.toArray(new ItemStack[_inventory.size()]);
-	}
-	
-	public void returnContentsFromInventory(){
-		if(_inventory!=null){
-			if(_inventory.size()>0){
-				Inventory inv =_chest.getInventory();
-				inv.clear();
-				inv.setContents(_inventory.toArray(new ItemStack[27]));
-				_inventory.clear();
-			}
-		}
-	}
-	
+	//Constructor
 	public RMChest(Chest chest, RM plugin){
 		this.plugin = plugin;
 		_chest = chest;
@@ -76,7 +48,7 @@ public class RMChest{
 		}
 	}
 	
-	public ItemStack[] getContents(){
+	public List<ItemStack> getContents(){
 		if(_chest!=null){
 			List<ItemStack> items = new ArrayList<ItemStack>();
 			Inventory inv = _chest.getInventory();
@@ -85,27 +57,31 @@ public class RMChest{
 					items.add(item);
 				}
 			}
-			return items.toArray(new ItemStack[items.toArray().length]);
+			return items;
 		}
 		return null;
 	}
 	
-	public ItemStack[] getContentsStacked(){
-		if(_chest!=null){
-			List<ItemStack> items = new ArrayList<ItemStack>();
-			Inventory inv = _chest.getInventory();
-			for(ItemStack item : inv.getContents()){
-				if((item!=null)&&(item.getType()!=Material.AIR)){
-					items.add(item);
+	public ItemStack[] getContentsArray(){
+		List<ItemStack> contents = getContents();
+		return contents.toArray(new ItemStack[contents.size()]);
+	}
+	
+	public void clearContents(){
+		getChest().getInventory().clear();
+	}
+	
+	public void clearContentsExceptHacked(){
+		Inventory inv = getChest().getInventory();
+		ItemStack[] contents = inv.getContents();
+		for(int i=0; i<contents.length; i++){
+			ItemStack item = contents[i];
+			if(item!=null){
+				if(!RMHelper.isMaterial(item.getType(), RMGame._hackMaterials)){
+					inv.clear(i);
 				}
 			}
-			return items.toArray(new ItemStack[items.toArray().length]);
 		}
-		return null;
-	}
-	
-	public void clearItems(){
-		_items.clear();
 	}
 	
 	public int addItem(ItemStack item){
@@ -117,7 +93,7 @@ public class RMChest{
 		}
 		else newAmount = item.getAmount();
 		
-		HashMap<Integer, RMItem> items = getTeam().getGame().getItems().getItems();
+		HashMap<Integer, RMItem> items = getTeam().getGame().getConfig().getItems().getItems();
 		if(items.containsKey(id)) overflow = items.get(id).getAmount() - newAmount;
 
 		if(overflow<0){
@@ -136,12 +112,25 @@ public class RMChest{
 		}
 		return -1;
 	}
-	public HashMap<Integer, RMItem> getItems(){
+	public HashMap<Integer, RMItem> getRMItems(){
 		return _items;
 	}
-	public void setItems(HashMap<Integer, RMItem> items){
+	public void setRMItems(HashMap<Integer, RMItem> items){
 		_items = items;
 	}
+	public void clearItems(){
+		_items.clear();
+	}
+	
+	public List<ItemStack> getItems(){
+		List<ItemStack> items = new ArrayList<ItemStack>();
+		for(RMItem rmItem : _items.values()){
+			items.add(rmItem.getItem());
+		}
+		return items;
+	}
+	
+	
 	public int getItemsTotal(){
 		int total = 0;
 		for(RMItem rmItem : _items.values()){
@@ -151,7 +140,7 @@ public class RMChest{
 	}
 	public int getItemsLeftInt(){
 		int itemsLeft = 0;
-		HashMap<Integer, RMItem> items = getTeam().getGame().getItems().getItems();
+		HashMap<Integer, RMItem> items = getTeam().getGame().getConfig().getItems().getItems();
 		for(Integer item : items.keySet()){
 			RMItem rmItem = items.get(item);
 			int amount = rmItem.getAmount();
@@ -162,7 +151,7 @@ public class RMChest{
 	}
 	public HashMap<Integer, RMItem> getItemsLeft(){
 		HashMap<Integer, RMItem> itemsLeft = new HashMap<Integer, RMItem>();
-		HashMap<Integer, RMItem> items = getTeam().getGame().getItems().getItems();
+		HashMap<Integer, RMItem> items = getTeam().getGame().getConfig().getItems().getItems();
 		for(Integer item : items.keySet()){
 			RMItem rmItem = items.get(item);
 			int amount = rmItem.getAmount();
@@ -173,11 +162,47 @@ public class RMChest{
 	}
 	
 	public RMItem getItemLeft(Integer item){
-		HashMap<Integer, RMItem> items = getTeam().getGame().getItems().getItems();
+		HashMap<Integer, RMItem> items = getTeam().getGame().getConfig().getItems().getItems();
 		return new RMItem(item, items.get(item).getAmount() - _items.get(item).getAmount());
 	}
 	
 	public int getTotalLeft(){
-		return getTeam().getGame().getItems().getItemsTotal() - getItemsTotal();
+		return getTeam().getGame().getConfig().getItems().getItemsTotal() - getItemsTotal();
+	}
+	
+	//Stash
+	public RMStash getStash(){
+		return _stash;
+	}
+	
+	public void setStash(RMStash rmStash){
+		_stash = rmStash;
+	}
+	
+	public void clearStash(){
+		_stash.clear();
+	}
+
+	public void addInventoryToStash(){
+		Inventory inv =_chest.getInventory();
+		_stash.addItems(inv.getContents());
+		inv.clear();
+	}
+	
+	public void returnInventoryFromStash(){
+		if(_stash==null) return;
+		if(_stash.size()>0){
+			Inventory inv =_chest.getInventory();
+			ItemStack[] items = _stash.getItemsArray();
+			HashMap<Integer, ItemStack> returnedItems = new HashMap<Integer, ItemStack>();
+			returnedItems = inv.addItem(items);
+			_stash.clear();
+			if(returnedItems.size()!=0){
+				RMGame rmGame = getTeam().getGame();
+				rmGame.getConfig().getFound().addItems(returnedItems.values().toArray(new ItemStack[returnedItems.values().size()]));
+				//RMPlayer rmp = rmGame.getConfig().getOwner();
+				//rmp.getItems().addItems(returnedItems.values().toArray(new ItemStack[returnedItems.values().size()]), false);
+			}
+		}
 	}
 }

@@ -20,9 +20,9 @@ import com.mtaye.ResourceMadness.RMText;
 public class RMLogHelper {
 	public RM plugin;
 	RMHelper rmHelper;
+	
 	public RMLogHelper(RM plugin){
 		this.plugin = plugin;
-		rmHelper = new RMHelper(plugin);
 	}
 	
 	public String encodeLogListToString(List<RMBlock> logList){
@@ -99,20 +99,20 @@ public class RMLogHelper {
 				idArgs = Arrays.copyOfRange(idArgs, 1, idArgs.length);
 				for(String idArg : idArgs){
 					String[] dataArgs = idArg.split("\\.");
-					int id = rmHelper.getIntByString(dataArgs[0]);
+					int id = RMHelper.getIntByString(dataArgs[0]);
 					if(id!=-1){
 						Material mat = Material.getMaterial(id);
 						if(mat!=null){
 							dataArgs = Arrays.copyOfRange(dataArgs, 1, dataArgs.length);
 							for(String dataArg : dataArgs){
 								String[] posArgs = dataArg.split(",");
-								byte data = rmHelper.getByteByString(posArgs[0]);
+								byte data = RMHelper.getByteByString(posArgs[0]);
 								if(data!=-1){
 									posArgs = Arrays.copyOfRange(posArgs, 1, posArgs.length);
 									for(int i=0; i<posArgs.length-2; i+=3){
-										int xPos = rmHelper.getIntByString(posArgs[i]);
-										int yPos = rmHelper.getIntByString(posArgs[i+1]);
-										int zPos = rmHelper.getIntByString(posArgs[i+2]);
+										int xPos = RMHelper.getIntByString(posArgs[i]);
+										int yPos = RMHelper.getIntByString(posArgs[i+1]);
+										int zPos = RMHelper.getIntByString(posArgs[i+2]);
 										Block b = world.getBlockAt(xPos, yPos, zPos);
 										listLog.add(new RMBlock(b, mat, data));
 									}

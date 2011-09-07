@@ -5,9 +5,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 
 import com.mtaye.ResourceMadness.Helper.RMHelper;
 import com.mtaye.ResourceMadness.RMGame.FilterState;
@@ -295,8 +297,9 @@ public class RMFilter {
 		HashMap<Integer, RMItem> rmItems = new HashMap<Integer, RMItem>();
 		HashMap<Integer, Integer[]> items = getItemsByStringArray(args, invert);
 
-		for(Integer item : items.keySet()){
-			Integer[] amount = items.get(item);
+		for(Map.Entry<Integer, Integer[]> map : items.entrySet()){
+			Integer item = map.getKey();
+			Integer[] amount = map.getValue();
 			int amount1 = -1;
 			int amount2 = -1;
 			if(amount.length>0) amount1 = amount[0];
@@ -321,6 +324,7 @@ public class RMFilter {
 			for(String strArg : strArgs){
 				String strAmount = "";
 				String[] strSplit = strArg.split(":");
+				if(strSplit.length==0) return items;
 				String[] strItems = strSplit[invert?1:0].split(",");
 				Integer[] intAmount = null;
 				if(strSplit.length>1){
@@ -331,10 +335,10 @@ public class RMFilter {
 					if(str.contains("-")){
 						String[] strItems2 = str.split("-");
 						int id1=RMHelper.getIntByString(strItems2[0]);
-						int id2=RMHelper.getIntByString(strItems2[1]);
+						int id2=RMHelper.getIntByString(strItems.length>1?strItems2[1]:"-1");
 						//Check if material name
-						if(id1==-1) id1=RMHelper.getIntByStringMaterial(strItems2[0]);
-						if(id2==-1) id2=RMHelper.getIntByStringMaterial(strItems2[1]);
+						if(id1==-1) id1=RMHelper.getMaterialIdByString(strItems2[0]);
+						if(id2==-1) id2=RMHelper.getMaterialIdByString(strItems2[1]);
 						if((id1!=-1)&&(id2!=-1)){
 							if(id1>id2){
 								int id3=id1;
@@ -360,7 +364,7 @@ public class RMFilter {
 					else{
 						int id=RMHelper.getIntByString(str);
 						//Check if material name
-						if(id==-1) id=RMHelper.getIntByStringMaterial(str);
+						if(id==-1) id=RMHelper.getMaterialIdByString(str);
 						if(id!=-1){
 							Material mat = Material.getMaterial(id);
 							if(mat!=null){
@@ -428,5 +432,26 @@ public class RMFilter {
 		if(values.size()==0) return null;
 		
 		return values.toArray(new Integer[values.size()]);
+	}
+	
+	public static List<ItemStack> convertToListItemStack(HashMap<Integer, RMItem> items){
+		List<ItemStack> listItems = new ArrayList<ItemStack>();
+		for(RMItem rmItem : items.values()){
+			listItems.add(rmItem.getItem());
+		}
+		return listItems;
+	}
+	
+	public static ItemStack[] convertToItemStackArray(HashMap<Integer, RMItem> items){
+		List<ItemStack> listItems = convertToListItemStack(items);
+		return listItems.toArray(new ItemStack[listItems.size()]);
+	}
+	
+	public static HashMap<Integer, ItemStack> convertRMHashToHash(HashMap<Integer, RMItem> hashRMItems){
+		HashMap<Integer, ItemStack> hashItems = new HashMap<Integer, ItemStack>();
+		for(Map.Entry<Integer, RMItem> map : hashRMItems.entrySet()){
+			hashItems.put(map.getKey(), map.getValue().getItem());
+		}
+		return hashItems;
 	}
 }

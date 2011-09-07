@@ -3,14 +3,21 @@ package com.mtaye.ResourceMadness.Helper;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 
 import com.mtaye.ResourceMadness.RM;
 import com.mtaye.ResourceMadness.RMGame;
+import com.mtaye.ResourceMadness.RMItem;
 import com.mtaye.ResourceMadness.RMTeam;
+import com.mtaye.ResourceMadness.RMText;
 import com.mtaye.ResourceMadness.RMGame.GameState;
 import com.mtaye.ResourceMadness.RMGame.InterfaceState;
 
@@ -102,10 +109,18 @@ public final class RMHelper {
 			}
 		}
 	}
-	public static int getIntByStringMaterial(String arg){
+	public static int getMaterialIdByString(String arg){
 		Material mat = Material.getMaterial(arg.toUpperCase());
 		if(mat!=null) return mat.getId();
 		else return -1;
+	}
+	
+	public static List<Integer> getMaterialIdListByString(String arg){
+		List<Integer> list = new ArrayList<Integer>();
+		for(Material mat : Material.values()){
+			if(mat.name().contains(arg)) list.add(mat.getId());
+		}
+		return list;
 	}
 	
 	public static GameState getStateByInt(int i){
@@ -114,6 +129,7 @@ public final class RMHelper {
 			case 1: return GameState.COUNTDOWN;
 			case 2: return GameState.GAMEPLAY;
 			case 3: return GameState.GAMEOVER;
+			case 4: return GameState.PAUSED;
 			default: return GameState.SETUP;
 		}
 	}
@@ -124,6 +140,8 @@ public final class RMHelper {
 			case 1: return InterfaceState.REWARD;
 			case 2: return InterfaceState.TOOLS;
 			case 3: return InterfaceState.FILTER_CLEAR;
+			case 4: return InterfaceState.REWARD_CLEAR;
+			case 5: return InterfaceState.TOOLS_CLEAR;
 			default: return InterfaceState.FILTER;
 		}
 	}
@@ -183,5 +201,13 @@ public final class RMHelper {
 			}
 		}
 		return false;
+	}
+	
+	public static List<ItemStack> cloneListItemStack(List<ItemStack> items){
+		List<ItemStack> clonedItems = new ArrayList<ItemStack>();
+		for(ItemStack item : items){
+			clonedItems.add(item.clone());
+		}
+		return clonedItems;
 	}
 }

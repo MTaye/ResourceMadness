@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 
+import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
 
 import com.mtaye.ResourceMadness.RMGame.GameState;
@@ -28,26 +29,27 @@ public class RMGameConfig {
 	private int _minTeamPlayers = 0;
 	private int _maxTeamPlayers = 0;
 	private int _autoRandomizeAmount = 0;
-	private boolean _warpToSafety = true;
 	private boolean _autoRestoreWorld = true;
-	private boolean _warnHackedItems = true;
-	private boolean _allowHackedItems = false;
-	private boolean _keepIngame = true;
-	private boolean _allowMidgameJoin = false;
+	private boolean _warpToSafety = true;
+	private boolean _allowMidgameJoin = true;
+	private boolean _healPlayer = false;
 	private boolean _clearPlayerInventory = true;
 	private boolean _warnUnequal = true;
-	private boolean _allowUnequal = false;
+	private boolean _allowUnequal = true;
+	private boolean _warnHackedItems = true;
+	private boolean _allowHackedItems = false;
 	private boolean _infiniteReward = false;
 	private boolean _infiniteTools = false;
 	private HashMap<String, RMPlayer> _players = new HashMap<String, RMPlayer>();
 	//private List<RMTeam> _teams = new ArrayList<RMTeam>();
 	private RMFilter _filter = new RMFilter();
 	private RMFilter _items = new RMFilter();
-	private List<ItemStack> _found = new ArrayList<ItemStack>();
-	private List<ItemStack> _reward = new ArrayList<ItemStack>();
-	private List<ItemStack> _tools = new ArrayList<ItemStack>();
+	private RMStash _found = new RMStash();
+	private RMStash _reward = new RMStash();
+	private RMStash _tools = new RMStash();
 	private List<RMTeam> _teams = new ArrayList<RMTeam>();
 	private RMLog _log;
+	private boolean _paused = false;
 	private GameState _state = GameState.SETUP;
 	private InterfaceState _interface = InterfaceState.FILTER;
 	
@@ -56,46 +58,49 @@ public class RMGameConfig {
 	private int _maxItems = 0;
 	private int _randomizeAmount = 0;
 	
-	private RMStats _gameStats = new RMStats();
+	private RMStats _stats = new RMStats();
+	private RMGameTimer _timer = new RMGameTimer();
 	
 	public RMGameConfig(RM plugin){
 		this.plugin = plugin;
 		_log = new RMLog(plugin);
 	}
 	
-	public RMGameConfig(RMGameConfig rmGameConfig, RM plugin){
+	public RMGameConfig(RMGameConfig config, RM plugin){
 		this.plugin = plugin;
-		this._partList = rmGameConfig._partList;
-		this._id = rmGameConfig._id;
+		this._partList = config._partList;
+		this._id = config._id;
 		//this._owner = rmGameConfig._owner;
-		this._ownerName = rmGameConfig._ownerName;
-		this._minPlayers = rmGameConfig._minPlayers;
-		this._maxPlayers = rmGameConfig._maxPlayers;
-		this._maxTeamPlayers = rmGameConfig._maxTeamPlayers;
-		this._minTeamPlayers = rmGameConfig._minTeamPlayers;
-		this._autoRandomizeAmount = rmGameConfig._autoRandomizeAmount;
-		this._warpToSafety = rmGameConfig._warpToSafety;
-		this._autoRestoreWorld = rmGameConfig._autoRestoreWorld;
-		this._warnHackedItems = rmGameConfig._warnHackedItems;
-		this._allowHackedItems = rmGameConfig._allowHackedItems;
-		this._keepIngame = rmGameConfig._keepIngame;
-		this._allowMidgameJoin = rmGameConfig._allowMidgameJoin;
-		this._clearPlayerInventory = rmGameConfig._clearPlayerInventory;
-		this._warnUnequal = rmGameConfig._warnUnequal;
-		this._allowUnequal = rmGameConfig._allowUnequal;
-		this._infiniteReward = rmGameConfig._infiniteReward;
-		this._infiniteTools = rmGameConfig._infiniteTools;
-		this._players = rmGameConfig._players;
-		this._filter = rmGameConfig._filter;
-		this._items = rmGameConfig._items;
-		this._found = rmGameConfig._found;
-		this._reward = rmGameConfig._reward;
-		this._tools = rmGameConfig._tools;
-		this._teams = rmGameConfig._teams;
-		this._log = rmGameConfig._log;
-		this._state = rmGameConfig._state;
-		this._interface = rmGameConfig._interface;
-		this._gameStats = rmGameConfig._gameStats;
+		this._ownerName = config._ownerName;
+		this._minPlayers = config._minPlayers;
+		this._maxPlayers = config._maxPlayers;
+		this._maxTeamPlayers = config._maxTeamPlayers;
+		this._minTeamPlayers = config._minTeamPlayers;
+		this._autoRandomizeAmount = config._autoRandomizeAmount;
+		this._autoRestoreWorld = config._autoRestoreWorld;
+		this._warpToSafety = config._warpToSafety;
+		this._allowMidgameJoin = config._allowMidgameJoin;
+		this._healPlayer = config._healPlayer;
+		this._clearPlayerInventory = config._clearPlayerInventory;
+		this._warnUnequal = config._warnUnequal;
+		this._allowUnequal = config._allowUnequal;
+		this._warnHackedItems = config._warnHackedItems;
+		this._allowHackedItems = config._allowHackedItems;
+		this._infiniteReward = config._infiniteReward;
+		this._infiniteTools = config._infiniteTools;
+		this._players = config._players;
+		this._filter = config._filter;
+		this._items = config._items;
+		this._found = config._found;
+		this._reward = config._reward;
+		this._tools = config._tools;
+		this._teams = config._teams;
+		this._log = config._log;
+		this._paused = config._paused;
+		this._state = config._state;
+		this._interface = config._interface;
+		this._stats = config._stats;
+		this._timer = config._timer;
 	}
 	
 	//Get
@@ -109,42 +114,46 @@ public class RMGameConfig {
 	public int getMinTeamPlayers() { return _minTeamPlayers; }
 	public int getMaxTeamPlayers() { return _maxTeamPlayers; }
 	public int getAutoRandomizeAmount() { return _autoRandomizeAmount; }
-	public boolean getWarpToSafety() { return _warpToSafety; }
 	public boolean getAutoRestoreWorld() { return _autoRestoreWorld; }
-	public boolean getWarnHackedItems() { return _warnHackedItems; }
-	public boolean getAllowHackedItems() { return _allowHackedItems; }
-	public boolean getKeepIngame() { return _keepIngame; }
+	public boolean getWarpToSafety() { return _warpToSafety; }
 	public boolean getAllowMidgameJoin() { return _allowMidgameJoin; }
+	public boolean getHealPlayer() { return _healPlayer; }
 	public boolean getClearPlayerInventory() { return _clearPlayerInventory; }
 	public boolean getWarnUnequal() { return _warnUnequal; };
 	public boolean getAllowUnequal() { return _allowUnequal; };
+	public boolean getWarnHackedItems() { return _warnHackedItems; }
+	public boolean getAllowHackedItems() { return _allowHackedItems; }
 	public boolean getInfiniteReward() { return _infiniteReward; }
 	public boolean getInfiniteTools() { return _infiniteTools; }
 	public HashMap<String, RMPlayer> getPlayers() { return _players; }
 	//public List<RMTeam> getTeams() { return _teams; }
 	public RMFilter getFilter() { return _filter; }
 	public RMFilter getItems() { return _items; }
-	public List<ItemStack> getFound() { return _found; }
-	public List<ItemStack> getReward() { return _reward; }
-	public List<ItemStack> getTools() { return _tools; }
-	public ItemStack[] getFoundArray() { return _found.toArray(new ItemStack[_found.size()]); }
-	public ItemStack[] getRewardArray() { return _reward.toArray(new ItemStack[_reward.size()]); }
-	public ItemStack[] getToolsArray() { return _tools.toArray(new ItemStack[_tools.size()]); }
+	public RMStash getFound() { return _found; }
+	public RMStash getReward() { return _reward; }
+	public RMStash getTools() { return _tools; }
+	public ItemStack[] getFoundArray() { return _found.getItemsArray(); }
+	public ItemStack[] getRewardArray() { return _reward.getItemsArray(); }
+	public ItemStack[] getToolsArray() { return _tools.getItemsArray(); }
 	public List<RMTeam> getTeams() { return _teams; }
 	public RMLog getLog() { return _log; }
+	public boolean getPaused() { return _paused; }
 	public GameState getState() { return _state; }
 	public InterfaceState getInterface() { return _interface; }
-	
 	public boolean getAddWholeStack() { return _addWholeStack; }
 	public boolean getAddOnlyOneStack() { return _addOnlyOneStack; }
 	public int getMaxItems() { return _maxItems; }
 	public int getRandomizeAmount() { return _randomizeAmount; }
 	
-	public RMStats getGameStats() { return _gameStats; }
+	public RMStats getStats() { return _stats; }
+	public RMGameTimer getTimer() { return _timer; }
 	
 	//Set
 	public void setPartList(RMPartList partList){
+		if(partList==null) return;
 		_partList = partList;
+		Block mainBlock = partList.getMainBlock();
+		if(mainBlock==null) return;
 		_worldName = partList.getMainBlock().getWorld().getName();
 	}
 	public void setId(int id){
@@ -189,23 +198,17 @@ public class RMGameConfig {
 		_autoRandomizeAmount = amount;
 		if(_autoRandomizeAmount<0) _autoRandomizeAmount = 0;
 	}
-	public void setWarpToSafety(boolean warp){
-		_warpToSafety = warp;
-	}
 	public void setAutoRestoreWorld(boolean restore){
 		_autoRestoreWorld = restore;
 	}
-	public void setWarnHackedItems(boolean warn){
-		_warnHackedItems = warn;
-	}
-	public void setAllowHackedItems(boolean allow){
-		_allowHackedItems = allow;
-	}
-	public void setKeepIngame(boolean keep){
-		_keepIngame = keep;
+	public void setWarpToSafety(boolean warp){
+		_warpToSafety = warp;
 	}
 	public void setAllowMidgameJoin(boolean allow){
 		_allowMidgameJoin = allow;
+	}
+	public void setHealPlayer(boolean restore){
+		_healPlayer = restore;
 	}
 	public void setClearPlayerInventory(boolean clear){
 		_clearPlayerInventory = clear;
@@ -215,6 +218,12 @@ public class RMGameConfig {
 	}
 	public void setAllowUnequal(boolean allow){
 		_allowUnequal = allow;
+	}
+	public void setWarnHackedItems(boolean warn){
+		_warnHackedItems = warn;
+	}
+	public void setAllowHackedItems(boolean allow){
+		_allowHackedItems = allow;
 	}
 	public void setInfiniteReward(boolean infiniteReward){
 		_infiniteReward = infiniteReward;
@@ -232,14 +241,17 @@ public class RMGameConfig {
 	public void setItems(RMFilter items){
 		_items = items;
 	}
-	public void setFound(List<ItemStack> found){
+	public void setFound(RMStash found){
 		_found = found;
+		_found.clearChanged();
 	}
-	public void setReward(List<ItemStack> reward){
+	public void setReward(RMStash reward){
 		_reward = reward;
+		_reward.clearChanged();
 	}
-	public void setTools(List<ItemStack> tools){
+	public void setTools(RMStash tools){
 		_tools = tools;
+		_tools.clearChanged();
 	}
 	public void setTeams(List<RMTeam> teams){
 		_teams = teams;
@@ -247,14 +259,20 @@ public class RMGameConfig {
 	public void setLog(RMLog log){
 		_log = log;
 	}
+	public void setPaused(boolean paused){
+		_paused = paused;
+	}
 	public void setState(GameState state){
 		_state = state;
 	}
 	public void setInterface(InterfaceState interfaceState){
 		_interface = interfaceState;
 	}
-	public void setGameStats(RMStats stats){
-		_gameStats = stats;
+	public void setStats(RMStats stats){
+		_stats = stats;
+	}
+	public void setTimer(RMGameTimer timer){
+		_timer = timer;
 	}
 	
 	//Clear
@@ -282,29 +300,21 @@ public class RMGameConfig {
 	}
 	
 	//Toggle
-	public void toggleWarpToSafety(){
-		if(_warpToSafety) _warpToSafety = false;
-		else _warpToSafety = true;
-	}
 	public void toggleAutoRestoreWorld(){
 		if(_autoRestoreWorld) _autoRestoreWorld = false;
 		else _autoRestoreWorld = true;
 	}
-	public void toggleWarnHackedItems(){
-		if(_warnHackedItems) _warnHackedItems = false;
-		else _warnHackedItems = true;
-	}
-	public void toggleAllowHackedItems(){
-		if(_allowHackedItems) _allowHackedItems = false;
-		else _allowHackedItems = true;
-	}
-	public void toggleKeepIngame(){
-		if(_keepIngame) _keepIngame = false;
-		else _keepIngame = true;
+	public void toggleWarpToSafety(){
+		if(_warpToSafety) _warpToSafety = false;
+		else _warpToSafety = true;
 	}
 	public void toggleAllowMidgameJoin(){
 		if(_allowMidgameJoin) _allowMidgameJoin = false;
 		else _allowMidgameJoin = true;
+	}
+	public void toggleHealPlayer(){
+		if(_healPlayer) _healPlayer = false;
+		else _healPlayer = true;
 	}
 	public void toggleClearPlayerInventory(){
 		if(_clearPlayerInventory) _clearPlayerInventory = false;
@@ -318,6 +328,14 @@ public class RMGameConfig {
 		if(_allowUnequal) _allowUnequal = false;
 		else _allowUnequal = true;
 	}
+	public void toggleWarnHackedItems(){
+		if(_warnHackedItems) _warnHackedItems = false;
+		else _warnHackedItems = true;
+	}
+	public void toggleAllowHackedItems(){
+		if(_allowHackedItems) _allowHackedItems = false;
+		else _allowHackedItems = true;
+	}
 	public void toggleInfiniteReward(){
 		if(_infiniteReward) _infiniteReward = false;
 		else _infiniteReward = true;
@@ -326,34 +344,60 @@ public class RMGameConfig {
 		if(_infiniteTools) _infiniteTools = false;
 		else _infiniteTools = true;
 	}
+	public void togglePaused(){
+		if(_paused) _paused = false;
+		else _paused = true;
+	}
 	
 	//getDataFrom
-	public void getDataFrom(RMGameConfig rmGameConfig){
-		setMinPlayers(rmGameConfig.getMinPlayers());
-		setMaxPlayers(rmGameConfig.getMaxPlayers());
-		setMinTeamPlayers(rmGameConfig.getMinTeamPlayers());
-		setMaxTeamPlayers(rmGameConfig.getMaxTeamPlayers());
-		setAutoRandomizeAmount(rmGameConfig.getAutoRandomizeAmount());
-		setWarpToSafety(rmGameConfig.getWarpToSafety());
-		setAutoRestoreWorld(rmGameConfig.getAutoRestoreWorld());
-		setWarnHackedItems(rmGameConfig.getWarnHackedItems());
-		setAllowHackedItems(rmGameConfig.getAllowHackedItems());
-		setKeepIngame(rmGameConfig.getKeepIngame());
-		setAllowMidgameJoin(rmGameConfig.getAllowMidgameJoin());
-		setClearPlayerInventory(rmGameConfig.getClearPlayerInventory());
-		setWarnUnequal(rmGameConfig.getWarnUnequal());
-		setAllowUnequal(rmGameConfig.getAllowUnequal());
-		setInfiniteReward(rmGameConfig.getInfiniteReward());
-		setInfiniteTools(rmGameConfig.getInfiniteTools());
-		setPlayers(rmGameConfig.getPlayers());
-		setFilter(rmGameConfig.getFilter());
-		setItems(rmGameConfig.getItems());
-		setFound(rmGameConfig.getFound());
-		setReward(rmGameConfig.getReward());
-		setTools(rmGameConfig.getTools());
-		setLog(rmGameConfig.getLog());
-		setState(rmGameConfig.getState());
-		setInterface(rmGameConfig.getInterface());
-		setGameStats(rmGameConfig.getGameStats());
+	public void getDataFrom(RMGameConfig config){
+		setMinPlayers(config.getMinPlayers());
+		setMaxPlayers(config.getMaxPlayers());
+		setMinTeamPlayers(config.getMinTeamPlayers());
+		setMaxTeamPlayers(config.getMaxTeamPlayers());
+		setAutoRandomizeAmount(config.getAutoRandomizeAmount());
+		setAutoRestoreWorld(config.getAutoRestoreWorld());
+		setWarpToSafety(config.getWarpToSafety());
+		setAllowMidgameJoin(config.getAllowMidgameJoin());
+		setHealPlayer(config.getHealPlayer());
+		setClearPlayerInventory(config.getClearPlayerInventory());
+		setWarnUnequal(config.getWarnUnequal());
+		setAllowUnequal(config.getAllowUnequal());
+		setWarnHackedItems(config.getWarnHackedItems());
+		setAllowHackedItems(config.getAllowHackedItems());
+		setInfiniteReward(config.getInfiniteReward());
+		setInfiniteTools(config.getInfiniteTools());
+		setPlayers(config.getPlayers());
+		setFilter(config.getFilter());
+		setItems(config.getItems());
+		setFound(config.getFound());
+		setReward(config.getReward());
+		setTools(config.getTools());
+		setLog(config.getLog());
+		setPaused(config.getPaused());
+		setState(config.getState());
+		setInterface(config.getInterface());
+		setStats(config.getStats());
+		setTimer(config.getTimer());
+	}
+	
+	public void getDataFrom(RMConfig config){
+		setMinPlayers(config.getMinPlayersPerGame());
+		setMaxPlayers(config.getMaxPlayersPerGame());
+		setMinTeamPlayers(config.getMinPlayersPerTeam());
+		setMaxTeamPlayers(config.getMaxPlayersPerTeam());
+		_timer.setTimeLimit(config.getTimeLimit());
+		setAutoRandomizeAmount(config.getAutoRandomizeAmount());
+		setAutoRestoreWorld(config.getAutoRestoreWorld());
+		setWarpToSafety(config.getWarpToSafety());
+		setAllowMidgameJoin(config.getAllowMidgameJoin());
+		setHealPlayer(config.getHealPlayer());
+		setClearPlayerInventory(config.getClearPlayerInventory());
+		setWarnUnequal(config.getWarnUnequal());
+		setAllowUnequal(config.getAllowUnequal());
+		setWarnHackedItems(config.getWarnHackedItems());
+		setAllowHackedItems(config.getAllowHackedItems());
+		setInfiniteReward(config.getInfiniteReward());
+		setInfiniteTools(config.getInfiniteTools());
 	}
 }

@@ -30,6 +30,7 @@ public class RMTeam {
 	private RMChest _chest;
 	private Sign _sign;
 	private Location _warpLocation;
+	private boolean _isDisqualified = false;
 	
 	public RMTeam(DyeColor color, Chest chest, RM plugin){
 		this.plugin = plugin;
@@ -64,6 +65,9 @@ public class RMTeam {
 	//TeamColor
 	public DyeColor getTeamColor(){
 		return _teamColor;
+	}
+	public ChatColor getChatColor(){
+		return RMHelper.getChatColorByDye(_teamColor);
 	}
 	public String getTeamColorString(){
 		return RMHelper.getChatColorByDye(getTeamColor()) + _teamColor.name();
@@ -106,7 +110,7 @@ public class RMTeam {
 		}
 	}
 	public void addPlayer(RMPlayer rmp){
-		for(RMGame game : RMGame.getGames()){
+		for(RMGame game : RMGame.getGames().values()){
 			RMTeam rmTeam = game.getPlayerTeam(rmp);
 			if(rmTeam!=null){
 				if(rmTeam!=this){
@@ -135,11 +139,17 @@ public class RMTeam {
 	
 	public void removePlayer(RMPlayer rmp){
 		if(_players.containsKey(rmp.getName())){
-			rmp.clearTeam();
-			_players.remove(rmp.getName());
-			rmp.sendMessage(ChatColor.GRAY+"Quit"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.");
-			_game.broadcastMessage(rmp.getName()+ChatColor.GRAY+" quit"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.", rmp);
-			_game.updateSigns();
+			switch(_game.getConfig().getState()){
+			case SETUP: case GAMEPLAY: case PAUSED:
+				rmp.clearTeam();
+				_players.remove(rmp.getName());
+				rmp.sendMessage(ChatColor.GRAY+"Quit"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.");
+				_game.broadcastMessage(rmp.getName()+ChatColor.GRAY+" quit"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.", rmp);
+				_game.updateSigns();
+				rmp.onPlayerQuit(this);
+				break;
+			default: rmp.sendMessage(ChatColor.GRAY+"You can't quit the game now.");
+			}
 		}
 	}
 	public RMPlayer getPlayer(String name){
@@ -169,7 +179,7 @@ public class RMTeam {
 		RMPlayer[] rmplayers = _players.values().toArray(new RMPlayer[_players.values().size()]);
 		String names = "[";
 		for(RMPlayer rmp : rmplayers){
-			names+=rmp.getName()+",";
+			names+=rmp.getName()+(rmp.getReady()?ChatColor.RED+":R"+getChatColor():"")+",";
 		}
 		if(names.length()>1){
 			names = RMText.stripLast(names, ",");
@@ -235,5 +245,18 @@ public class RMTeam {
 		for(RMPlayer rmp : players){
 			if(rmp!=ignorePlayer) rmp.sendMessage(message);
 		}
+	}
+	
+	public boolean hasMininumPlayers(){
+		RMDebug.warning("getPlayers().length:"+getPlayers().length);
+		RMDebug.warning("getGame().getConfig().getMinTeamPlayers():"+getGame().getConfig().getMinTeamPlayers());
+		if(getPlayers().length<getGame().getConfig().getMinTeamPlayers()) return false;
+		return true;
+	}
+	public boolean isDisqualified(){
+		return _isDisqualified;
+	}
+	public void isDisqualified(boolean isDisqualified){
+		_isDisqualified = isDisqualified;
 	}
 }

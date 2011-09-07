@@ -1,12 +1,18 @@
 package com.mtaye.ResourceMadness;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -18,6 +24,7 @@ import com.mtaye.ResourceMadness.RMGame.ForceState;
 import com.mtaye.ResourceMadness.RMGame.GameState;
 import com.mtaye.ResourceMadness.RMGame.HandleState;
 import com.mtaye.ResourceMadness.RMGame.InterfaceState;
+import com.mtaye.ResourceMadness.Helper.RMInventoryHelper;
 
 /**
  * ResourceMadness for Bukkit
@@ -26,66 +33,83 @@ import com.mtaye.ResourceMadness.RMGame.InterfaceState;
  */
 public class RMPlayer {
 	public enum PlayerAction{
-		ADD, REMOVE, INFO, INFO_SETTINGS, INFO_FOUND, MODE, MODE_CYCLE,
-		JOIN, QUIT, START, START_RANDOM, RESTART, STOP,
-		RESTORE, FILTER, REWARD, TOOLS, CLAIM_FOUND,
-		SET_MIN_PLAYERS, SET_MAX_PLAYERS, SET_MIN_TEAM_PLAYERS, SET_MAX_TEAM_PLAYERS, SET_MAX_ITEMS, SET_RANDOM,
-		SET_WARP, SET_RESTORE, SET_WARN_HACKED, SET_ALLOW_HACKED,
-		SET_KEEP_INGAME, SET_MIDGAME_JOIN, SET_CLEAR_INVENTORY,
-		SET_WARN_UNEQUAL, SET_ALLOW_UNEQUAL, SET_INFINITE_REWARD, SET_INFINITE_TOOLS,
+		ADD, REMOVE, INFO, INFO_FOUND, MODE, MODE_CYCLE, SETTINGS,
+		JOIN, QUIT, START, START_RANDOM, RESTART, STOP, PAUSE, RESUME,
+		RESTORE, FILTER, REWARD, TOOLS, CLAIM_FOUND, CLAIM_FOUND_CHEST, CLAIM_FOUND_CHEST_SELECT, CLAIM_ITEMS_CHEST, CLAIM_REWARD_CHEST, CLAIM_TOOLS_CHEST,
+		SET_MIN_PLAYERS, SET_MAX_PLAYERS, SET_MIN_TEAM_PLAYERS, SET_MAX_TEAM_PLAYERS, SET_MAX_ITEMS, SET_TIME_LIMIT, SET_RANDOM,
+		SET_WARP, SET_RESTORE, SET_WARN_HACKED, SET_ALLOW_HACKED, SET_MIDGAME_JOIN,
+		SET_HEAL_PLAYER, SET_CLEAR_INVENTORY, SET_WARN_UNEQUAL, SET_ALLOW_UNEQUAL,
+		SET_INFINITE_REWARD, SET_INFINITE_TOOLS,
 		NONE;
 	}
 	private String _name;
 	private RMTeam _team;
 	//private List<RMGame> _games;
 	private RMRequestFilter _requestFilter;
+	private ItemStack[] _requestItems;
 	private int _requestInt = 0;
+	private boolean _requestBool = false;
 	private InterfaceState _requestInterface = InterfaceState.FILTER;
 	private RMStats _stats = new RMStats();
-	private List<ItemStack> _items = new ArrayList<ItemStack>();
-	private List<ItemStack> _reward = new ArrayList<ItemStack>();
-	private List<ItemStack> _tools = new ArrayList<ItemStack>();
-	private boolean _isOnline = false;
+	private RMStash _items = new RMStash();
+	private RMStash _reward = new RMStash();
+	private RMStash _tools = new RMStash();
+	private boolean _ready = false;
+	
+	public boolean getReady(){
+		return _ready;
+	}
+	public void setReady(boolean ready){
+		_ready = ready;
+	}
+	public void toggleReady(){
+		if(_ready) _ready = false;
+		else _ready = true;
+	}
+	
 
 	public void getInfoItems(){
-		String items = RMText.getSortedItemsFromItemStackArray(_items.toArray(new ItemStack[_items.size()]));
+		String items = RMText.getStringSortedItems(_items.getItems());
 		if(items.length()>0){
 			sendMessage(ChatColor.YELLOW+"Items: "+items);
 		}
-		else sendMessage(ChatColor.YELLOW+"No items found.");
+		else sendMessage(ChatColor.GRAY+"No items found.");
 	}
 	public void getInfoReward(){
-		String items = RMText.getSortedItemsFromItemStackArray(_reward.toArray(new ItemStack[_reward.size()]));
+		String items = RMText.getStringSortedItems(_reward.getItems());
 		if(items.length()>0){
 			sendMessage(ChatColor.YELLOW+"Reward items: "+items);
 		}
-		else sendMessage(ChatColor.YELLOW+"No reward found.");
+		else sendMessage(ChatColor.GRAY+"No reward found.");
 	}
 	public void getInfoTools(){
-		String items = RMText.getSortedItemsFromItemStackArray(_tools.toArray(new ItemStack[_tools.size()]));
+		String items = RMText.getStringSortedItems(_tools.getItems());
 		if(items.length()>0){
 			sendMessage(ChatColor.YELLOW+"Tools items: "+items);
 		}
-		else sendMessage(ChatColor.YELLOW+"No tools found.");
+		else sendMessage(ChatColor.GRAY+"No tools found.");
 	}
 	
-	public List<ItemStack> getItems(){
+	public RMStash getItems(){
 		return _items;
 	}
-	public List<ItemStack> getReward(){
+	public RMStash getReward(){
 		return _reward;
 	}
-	public List<ItemStack> getTools(){
+	public RMStash getTools(){
 		return _tools;
 	}
-	public void setItems(List<ItemStack> items){
+	public void setItems(RMStash items){
 		_items = items;
+		_items.clearChanged();
 	}
-	public void setReward(List<ItemStack> reward){
+	public void setReward(RMStash reward){
 		_reward = reward;
+		_reward.clearChanged();
 	}
-	public void setTools(List<ItemStack> tools){
+	public void setTools(RMStash tools){
 		_tools = tools;
+		_tools.clearChanged();
 	}
 	public void clearItems(){
 		_items.clear();
@@ -109,208 +133,387 @@ public class RMPlayer {
 		return null;
 	}
 	
-	public void addItems(ClaimType claimType){
+	public void addItemsFromInventory(RMStash rmStash){
 		if(getPlayer()!=null){
 			//_items = getItemsFromInventory();
 			ItemStack[] contents = getPlayer().getInventory().getContents();
 			for(ItemStack item : contents){
-				if((item!=null)&&(item.getType()!=Material.AIR)){
-					addItem(item, claimType);
-				}
+				rmStash.addItem(item);
 			}
 			getPlayer().getInventory().clear();
 		}
 	}
+	/*
+	public HandleState addItem(ItemStack item, RMStash rmStash){
+		return rmStash.addItem(item);
+	}
+	*/
 	
-	public HandleState addItem(ItemStack item, ClaimType claimType){
-		if((item!=null)&&(item.getType()!=Material.AIR)){
-			List<ItemStack> items = new ArrayList<ItemStack>();
-			switch(claimType){
-				case ITEMS: items = _items; break;
-				case REWARD: items = _reward; break;
-				case TOOLS: items = _tools; break;
-			}
-			for(ItemStack isItem : items){
-				if(isItem.getType() == item.getType()){
-					isItem.setAmount(isItem.getAmount()+item.getAmount());
-					return HandleState.MODIFY;
-				}
-			}
-			items.add(item);
-			return HandleState.ADD;
-		}
-		return HandleState.NO_CHANGE;
-	}
-
-	public void addItemsByItemStack(ItemStack[] items){
-		for(ItemStack item : items){
-			if((item!=null)&&(item.getType()!=Material.AIR)){
-				_items.add(item);
-			}
-		}
-	}
-	public void addByListItemStack(List<ItemStack> items, ClaimType claimType){
-		for(ItemStack item : items){
-			if((item!=null)&&(item.getType()!=Material.AIR)){
-				addItem(item, claimType);
-			}
-		}
-	}
-	public void addByItemStack(ItemStack[] items, ClaimType claimType){
-		for(ItemStack item : items){
-			if((item!=null)&&(item.getType()!=Material.AIR)){
-				addItem(item, claimType);
-			}
+	public void announceNoItemsToGive(ClaimType claimType){
+		switch(claimType){
+			case FOUND:	sendMessage(ChatColor.GRAY+"No found items to give."); break;
+			case ITEMS:	sendMessage(ChatColor.GRAY+"No items to return."); break;
+			case REWARD: sendMessage(ChatColor.GRAY+"No reward to give."); break;
+			case TOOLS:	sendMessage(ChatColor.GRAY+"No tools to give."); break;
+			default:
 		}
 	}
 	
-	public void claimTransfer(ClaimType source, ClaimType destination){
-		List<ItemStack> itemsSource = new ArrayList<ItemStack>();
-		if(source==destination) return;
-		switch(source){
-			case ITEMS:	itemsSource = _items; break;
-			case REWARD: itemsSource = _reward; break;
-			case TOOLS:	itemsSource = _tools; break;
+	public void announceInventoryIsFull(int remaining){
+		sendMessage(ChatColor.RED+"Your Inventory is full. "+ChatColor.YELLOW+remaining+ChatColor.WHITE+" item(s) remaining.");
+	}
+	
+	public void announceInventoryIsFull(ClaimType claimType){
+		switch(claimType){
+			case FOUND:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot give found items."); break;
+			case ITEMS:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot return items."); break;
+			case REWARD: sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot give reward."); break;
+			case TOOLS:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot give tools."); break;
+			default:
 		}
-		if(itemsSource==null) return;
-		addByListItemStack(itemsSource, destination);
-		itemsSource.clear();
+	}
+	
+	public void announceAllReturned(ClaimType claimType){
+		switch(claimType){
+		case ITEMS:	sendMessage(ChatColor.YELLOW+"Items were given. "+ChatColor.WHITE+"Check your inventory."); break;
+		case FOUND:	sendMessage(ChatColor.YELLOW+"Found items were given. "+ChatColor.WHITE+"Check your inventory."); break;
+		case REWARD: sendMessage(ChatColor.YELLOW+"Reward was given. "+ChatColor.WHITE+"Check your inventory."); break;
+		case TOOLS:	sendMessage(ChatColor.YELLOW+"Tools were given. "+ChatColor.WHITE+"Check your inventory."); break;
+		default:
+		}
 	}
 
-	public HandleState claim(List<ItemStack> items, ClaimType claimType){
-		if(items.size()==0){
-			switch(claimType){
-				case ITEMS:	sendMessage("No items to return."); break;
-				case FOUND:	sendMessage("No found items to give."); break;
-				case REWARD: sendMessage("No reward to give."); break;
-				case TOOLS:	sendMessage("No tools to give."); break;
-			}
-			return HandleState.NO_CHANGE;
+	public HashMap<Integer, ItemStack> claimToInventory(RMStash rmStash, Inventory inv, boolean usePlayerInv, boolean claimWhole, ClaimType claimType, ItemStack... items){
+		HashMap<Integer, ItemStack> returnedItems = new HashMap<Integer, ItemStack>();
+		if(rmStash.size()==0){
+			announceNoItemsToGive(claimType);
+			return returnedItems;
 		}
-		if(getPlayer()!=null){
-			Inventory inv = getPlayer().getInventory();
-			if(inv.firstEmpty()==-1){
-				switch(claimType){
-					case ITEMS:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot return items."); break;
-					case FOUND:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot give found items."); break;
-					case REWARD: sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot give reward."); break;
-					case TOOLS:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot give tools."); break;
-				}
-				return HandleState.NO_CHANGE;
+		int rmStashAmount = rmStash.getAmount();
+		
+		List<ItemStack> stashItems = new ArrayList<ItemStack>();
+		
+		if((items==null)||(items.length==0)) stashItems = rmStash.getItems(); //Claim All
+		else{
+			for(ItemStack item : items){
+				if((item==null)||(item.getType()==Material.AIR)) continue;
+				if(!claimWhole) stashItems.addAll(rmStash.removeByIdAmount(item.getTypeId(), item.getAmount()));
+				else stashItems.addAll(rmStash.removeItemById(item.getTypeId()));
 			}
-			List<ItemStack> removeItems = new ArrayList<ItemStack>();
-			for(int i=0; i<items.size(); i++){
-				if(inv.firstEmpty()!=-1){
-					ItemStack item = items.get(i);
-					if((item!=null)&&(item.getType()!=Material.AIR)){
-						Material mat = item.getType();
-						while(item.getAmount()>mat.getMaxStackSize()){
-							if(inv.firstEmpty()!=-1){
-								ItemStack itemClone = item.clone();
-								itemClone.setAmount(mat.getMaxStackSize());
-								inv.addItem(itemClone);
-								item.setAmount(item.getAmount()-mat.getMaxStackSize());
+		}
+		if(inv!=null){
+			RMDebug.warning("INVENTORY NOT NULL");
+			returnedItems = inv.addItem(stashItems.toArray(new ItemStack[stashItems.size()]));
+		}
+		else RMDebug.warning("INVENTORY IS NULL");
+		
+		if(usePlayerInv){
+			if(getPlayer()!=null){
+				Inventory rmpInv = getPlayer().getInventory();
+				if((rmpInv!=null)&&(rmpInv!=inv)){
+					if(inv!=null) returnedItems = rmpInv.addItem(returnedItems.values().toArray(new ItemStack[returnedItems.size()]));
+					else returnedItems = rmpInv.addItem(stashItems.toArray(new ItemStack[stashItems.size()]));
+				}
+			}
+		}
+		
+		if((items==null)||(items.length==0)){  //Claim All
+			rmStash.clear();
+			if(returnedItems.size()!=0){
+				rmStash.addItems(returnedItems.values().toArray(new ItemStack[returnedItems.size()]));
+				rmStash.addChangedToChanged(rmStash.getRemoved(), rmStash.getAdded());
+				rmStash.clearAdded();
+			}
+		}
+		else{
+			RMStash stashStashItems = new RMStash(stashItems);
+			stashStashItems.removeItems(returnedItems.values().toArray(new ItemStack[returnedItems.values().size()]));
+			
+			if(returnedItems.size()!=0){
+				rmStash.addItems(returnedItems.values().toArray(new ItemStack[returnedItems.values().size()]));
+				rmStash.clearAdded();
+				//rmStash.addItemsToChanged(rmStash.getRemoved(), stashStashItems.getItems());
+			}
+			stashStashItems.clearChanged();
+			stashStashItems.removeItems(stashStashItems.getItems());
+			rmStash.addChangedToChanged(rmStash.getModified(), stashStashItems.getModified());
+			rmStash.addChangedToChanged(rmStash.getRemoved(), stashStashItems.getRemoved());
+		}
+		
+		if(rmStashAmount==rmStash.getAmount()) announceInventoryIsFull(claimType);
+		else if(returnedItems.size()>0) announceInventoryIsFull(rmStash.getAmount());
+		else announceAllReturned(claimType);
+		return returnedItems;
+	}
+	
+	//Claim
+	public HashMap<Integer, ItemStack> claim(RMStash rmStash, ClaimType claimType, ItemStack... items){
+		if(getPlayer()==null) return null;
+		return claimToInventory(rmStash, getPlayer().getInventory(), false, false, claimType, items);
+	}
+	//Claim
+	public HashMap<Integer, ItemStack> claim(RMStash rmStash, ClaimType claimType, boolean claimWhole, ItemStack... items){
+		if(getPlayer()==null) return null;
+		return claimToInventory(rmStash, getPlayer().getInventory(), false, claimWhole, claimType, items);
+	}
+	
+	public void claimItemsToChest(Block b, boolean usePlayerInv, ItemStack... items){
+		claimToChest(b, ClaimType.ITEMS, usePlayerInv, items);
+	}
+	public void claimRewardToChest(Block b, boolean usePlayerInv, ItemStack... items){
+		claimToChest(b, ClaimType.REWARD, usePlayerInv, items);
+	}
+	public void claimToolsToChest(Block b, boolean usePlayerInv, ItemStack... items){
+		claimToChest(b, ClaimType.TOOLS, usePlayerInv, items);
+	}
+	public void claimToChest(Block b, ClaimType claimType, boolean usePlayerInv, ItemStack... items){
+		if(b.getType()!=Material.CHEST) return;
+		RMInventory rmInventory = new RMInventory((Chest)b.getState());
+		
+		switch(claimType){
+		case FOUND: claimToInventory(RMGame.getGame(getRequestInt()).getConfig().getFound(), rmInventory, usePlayerInv, false, ClaimType.FOUND, items); break;
+		case ITEMS: claimToInventory(_items, rmInventory, usePlayerInv, false, ClaimType.ITEMS, items); break;
+		case REWARD: claimToInventory(_reward, rmInventory, usePlayerInv, false, ClaimType.REWARD, items); break;
+		case TOOLS: claimToInventory(_tools, rmInventory, usePlayerInv, false, ClaimType.TOOLS, items); break;
+		}
+	}
+	public HashMap<Integer, ItemStack> claimStashToChest(RMStash stash, Block b, ClaimType claimType, boolean usePlayerInv, ItemStack... items){
+		HashMap<Integer, ItemStack> returnItems = new HashMap<Integer, ItemStack>();
+		RMInventory rmInventory = null;
+		if((b!=null)&&(b.getType()==Material.CHEST)) rmInventory = new RMInventory((Chest)b.getState());
+		
+		switch(claimType){
+		case FOUND: returnItems = claimToInventory(stash, rmInventory, usePlayerInv, false, ClaimType.FOUND, items); break;
+		case ITEMS: returnItems = claimToInventory(stash, rmInventory, usePlayerInv, false, ClaimType.ITEMS, items); break;
+		case REWARD: returnItems = claimToInventory(stash, rmInventory, usePlayerInv, false, ClaimType.REWARD, items); break;
+		case TOOLS: returnItems = claimToInventory(stash, rmInventory, usePlayerInv, false, ClaimType.TOOLS, items); break;
+		}
+		return returnItems;
+	}
+
+	public void claimItems(ItemStack... items){
+		claim(_items, ClaimType.ITEMS, items);
+	}
+	public void claimReward(ItemStack... items){
+		claim(_reward, ClaimType.REWARD, items);
+	}
+	public void claimTools(ItemStack... items){
+		claim(_tools, ClaimType.TOOLS, items);
+	}
+	
+	/*
+	public RMClaimInfo claimBig(RMStash rmStash, ClaimType claimType){
+		RMClaimInfo claimInfo = new RMClaimInfo(rmStash, HandleState.NO_CHANGE);
+		if(getPlayer()==null) return claimInfo;
+		RMDebug.log(Level.WARNING, "RMSTASH SIZE:"+rmStash.size());
+		if(rmStash.size()==0){
+			announceNoItemsToGive(claimType);
+			return claimInfo;
+		}
+		Inventory inv = getPlayer().getInventory();
+		int rmStashAmount = rmStash.getAmount();
+		
+		List<Integer> removeItems = new ArrayList<Integer>();
+		for(Integer id : rmStash.keySet()){
+			RMStashItem rmStashItem = rmStash.get(id);
+			int amount = rmStashItem.getAmount();
+			
+			List<ItemStack> stashItems = rmStash.getItems();
+			String strItems = "";
+			for(ItemStack strItem : stashItems){
+				strItems+=strItem.getType()+":"+strItem.getAmount()+",";
+			}
+			
+			if(stashItems.size()==0) continue;
+			
+			while(rmStashItem.getAmount()>0){
+				if(RMInventoryHelper.findUsableStack(inv, id)!=-1){
+					HashMap<Integer, ? extends ItemStack> hashSlots = inv.all(id);
+					RMDebug.log(Level.WARNING, "USABLE");
+					for(ItemStack slotItem : hashSlots.values()){
+						RMDebug.log(Level.WARNING, "SLOTITEM:"+slotItem.getAmount());
+						Iterator<ItemStack> iter = stashItems.iterator();
+						while(iter.hasNext()){
+							ItemStack stashItem = iter.next();
+							RMDebug.log(Level.WARNING, "ITER AMOUNT:"+stashItem.getAmount());
+							int itemAmount = stashItem.getAmount();
+							if(itemAmount==0){
+								RMDebug.log(Level.WARNING, "CONTINUE");
+								continue;
 							}
-							else break;
+							RMDebug.log(Level.WARNING, "slotItem.getMaxStackSize():"+slotItem.getMaxStackSize());
+							RMDebug.log(Level.WARNING, "slotItem.getAmount():"+slotItem.getAmount());
+							int freeAmount = slotItem.getMaxStackSize()-slotItem.getAmount();
+							RMDebug.log(Level.WARNING, "freeAmount:"+freeAmount);
+							if(freeAmount!=0){
+								RMDebug.log(Level.WARNING, "freeAmount != 0:"+freeAmount);
+								int overflow = freeAmount - itemAmount;
+								if(overflow>=0){
+									RMDebug.log(Level.WARNING, "overflow >= 0:"+overflow);
+									RMDebug.log(Level.WARNING, "slotItem.getAmount():"+slotItem.getAmount());
+									RMDebug.log(Level.WARNING, "slotItem.getAmount():"+slotItem.getAmount());
+									RMDebug.log(Level.WARNING, "slotItem.getAmount():"+slotItem.getAmount());
+									RMDebug.log(Level.WARNING, "slotItem.getAmount():"+slotItem.getAmount());
+									RMDebug.log(Level.WARNING, "itemAmount:"+itemAmount);
+									RMDebug.log(Level.WARNING, "itemAmount:"+itemAmount);
+									RMDebug.log(Level.WARNING, "itemAmount:"+itemAmount);
+									RMDebug.log(Level.WARNING, "itemAmount:"+itemAmount);
+									RMDebug.log(Level.WARNING, "slotItem.getAmount()+itemAmount:"+slotItem.getAmount()+itemAmount);
+									RMDebug.log(Level.WARNING, "slotItem.getAmount()+itemAmount:"+slotItem.getAmount()+itemAmount);
+									RMDebug.log(Level.WARNING, "slotItem.getAmount()+itemAmount:"+slotItem.getAmount()+itemAmount);
+									RMDebug.log(Level.WARNING, "slotItem.getAmount()+itemAmount:"+slotItem.getAmount()+itemAmount);
+									slotItem.setAmount(slotItem.getAmount()+itemAmount);
+									RMDebug.log(Level.WARNING, "slotItem.getAmount() NEW:"+slotItem.getAmount());
+									RMDebug.log(Level.WARNING, "slotItem.getAmount() NEW:"+slotItem.getAmount());
+									RMDebug.log(Level.WARNING, "slotItem.getAmount() NEW:"+slotItem.getAmount());
+									RMDebug.log(Level.WARNING, "slotItem.getAmount() NEW:"+slotItem.getAmount());
+									
+									RMDebug.log(Level.WARNING, "rmStash.getAmount() BEFORE REMOVE:"+rmStash.getAmount());
+									rmStash.removeByIdAmount(id, itemAmount);
+									RMDebug.log(Level.WARNING, "rmStash.getAmount() AFTER REMOVE:"+rmStash.getAmount());
+									RMDebug.log(Level.WARNING, "slotItem.getAmount() NEW:"+slotItem.getAmount());
+									RMDebug.log(Level.WARNING, "stashItem.getAmount():"+stashItem.getAmount());
+									//stashItem.setAmount(0);
+									RMDebug.log(Level.WARNING, "stashItem.getAmount() NEW:"+stashItem.getAmount());
+									//rmStashItem.removeByAmount(itemAmount);
+								}
+								else{
+									RMDebug.log(Level.WARNING, "overflow < 0:"+overflow);
+									//rmStashItem.removeByAmount(freeAmount);
+									RMDebug.log(Level.WARNING, "stashItem.getAmount():"+stashItem.getAmount());
+									RMDebug.log(Level.WARNING, "freeAmount:"+freeAmount);
+									//stashItem.setAmount(stashItem.getAmount()-freeAmount);
+									RMDebug.log(Level.WARNING, "stashItem.getAmount() NEW:"+stashItem.getAmount());
+									RMDebug.log(Level.WARNING, "rmStash.getAmount() BEFORE REMOVE:"+rmStash.getAmount());
+									RMDebug.log(Level.WARNING, "freeAmount:"+freeAmount);
+									rmStash.removeByIdAmount(id, freeAmount);
+									RMDebug.log(Level.WARNING, "rmStash.getAmount() AFTER REMOVE:"+rmStash.getAmount());
+									RMDebug.log(Level.WARNING, "slotItem.getAmount():"+slotItem.getAmount());
+									slotItem.setAmount(slotItem.getMaxStackSize());
+									RMDebug.log(Level.WARNING, "slotItem.getAmount() NEW:"+slotItem.getAmount());
+								}
+								if(stashItem.getAmount()==0){
+									RMDebug.log(Level.WARNING, "stashItem.getAmount()==0 REMOVE:"+stashItem.getAmount());
+									iter.remove();
+								}
+							}
+							else RMDebug.log(Level.WARNING, "freeAmount = 0:"+freeAmount);
 						}
-						if(item.getAmount()<=mat.getMaxStackSize()){
-							inv.addItem(item);
-							removeItems.add(item);
+						if(rmStashItem.getAmount()==0){
+							RMDebug.log(Level.WARNING, "rmStashItem.getAmount()==0 BREAK:"+rmStashItem.getAmount());
+							break;
 						}
+					}
+				}
+				else if(inv.firstEmpty()!=-1){
+					RMDebug.log(Level.WARNING, "FIRST EMPTY");
+					while((rmStashItem.size()>0)&&(inv.firstEmpty()!=-1)){
+						ItemStack item = rmStashItem.getItem();
+						if((item!=null)&&(item.getType()!=Material.AIR)){
+							Material mat = item.getType();
+							while(item.getAmount()>mat.getMaxStackSize()){
+								if(inv.firstEmpty()!=-1){
+									ItemStack itemClone = item.clone();
+									itemClone.setAmount(mat.getMaxStackSize());
+									inv.addItem(itemClone);
+									item.setAmount(item.getAmount()-mat.getMaxStackSize());
+								}
+								else break;
+							}
+							if(item.getAmount()<=mat.getMaxStackSize()){
+								inv.addItem(item);
+								HashMap<Integer, ItemStack> hashItems = inv.addItem(item);
+								rmStashItem.removeItemByItemStack(item);
+							}
+						}
+					}
+					if(rmStashItem.size()==0){
+						removeItems.add(id);
 					}
 				}
 				else break;
 			}
-			for(ItemStack item : removeItems){
-				items.remove(item);
-			}
-			//inv.clear();
-			//clearInventoryContents();
-			if(items.size()>0){
-				sendMessage(ChatColor.RED+"Your Inventory is full. "+ChatColor.YELLOW+plugin.getListItemStackTotalStack(items)+ChatColor.WHITE+" item(s) remaining.");
-				return HandleState.CLAIM_RETURNED_SOME;
-			}
-			else{
-				switch(claimType){
-					case ITEMS:	sendMessage(ChatColor.YELLOW+"All items were returned. "+ChatColor.WHITE+"Check your inventory."); break;
-					case FOUND:	sendMessage(ChatColor.YELLOW+"Found items were given. "+ChatColor.WHITE+"Check your inventory."); break;
-					case REWARD: sendMessage(ChatColor.YELLOW+"Reward was given. "+ChatColor.WHITE+"Check your inventory."); break;
-					case TOOLS:	sendMessage(ChatColor.YELLOW+"Tools were given. "+ChatColor.WHITE+"Check your inventory."); break;
-				}
-				return HandleState.CLAIM_RETURNED_ALL;
-			}
 		}
-		return HandleState.NO_CHANGE;
+		rmStash.removeItemsByIdSilent(removeItems);
+
+		if(rmStashAmount==rmStash.getAmount()){
+			announceInventoryIsFull(claimType);
+		}
+		else if(rmStash.size()>0){
+			announceInventoryIsFull(rmStash.getAmount());
+			claimInfo.setHandleState(HandleState.CLAIM_RETURNED_SOME);
+		}
+		else{
+			announceAllReturned(claimType);
+			claimInfo.setHandleState(HandleState.CLAIM_RETURNED_ALL);
+		}
+		return claimInfo;
 	}
+	*/
 	
-	public HandleState claimItem(List<ItemStack> items, ItemStack isItem, ClaimType claimType){
-		if(items.size()==0){
-			switch(claimType){
-				case ITEMS:	sendMessage("No item to return."); break;
-				case REWARD: sendMessage("No reward to give."); break;
-				case TOOLS:	sendMessage("No tools to give."); break;
+	/*
+	public RMStash claimToSlots(RMStash rmStash){
+		if(getPlayer()==null) return rmStash;
+		Inventory inv = getPlayer().getInventory();
+		
+		for(RMStashItem rmStashItem : rmStash.values()){
+			int id = rmStashItem.getId();
+			int amount = rmStashItem.getAmount();
+			int usableStack = RMInventoryHelper.findUsableStack(inv, id);
+			if(usableStack==-1) continue;
+			
+			List<ItemStack> stashItems = rmStash.getItems();
+			String strItems = "";
+			for(ItemStack strItem : stashItems){
+				strItems+=strItem.getType()+":"+strItem.getAmount()+",";
 			}
-			return HandleState.NO_CHANGE;
-		}
-		if(getPlayer()!=null){
-			Inventory inv = getPlayer().getInventory();
-			if(inv.firstEmpty()==-1){
-				switch(claimType){
-					case ITEMS:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot return item."); break;
-					case REWARD: sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot give reward."); break;
-					case TOOLS:	sendMessage(ChatColor.RED+"Your inventory is full. "+ChatColor.WHITE+"Cannot give tools."); break;
-				}
-				return HandleState.NO_CHANGE;
-			}
-			ItemStack removeItem = null;
-			for(int i=0; i<items.size(); i++){
-				if(inv.firstEmpty()!=-1){
-					ItemStack item = items.get(i);
-					if((item!=null)&&(item.getType()!=Material.AIR)){
-						Material mat = item.getType();
-						while(item.getAmount()>mat.getMaxStackSize()){
-							if(inv.firstEmpty()!=-1){
-								ItemStack itemClone = item.clone();
-								itemClone.setAmount(mat.getMaxStackSize());
-								inv.addItem(itemClone);
-								item.setAmount(item.getAmount()-mat.getMaxStackSize());
-							}
-							else break;
+			HashMap<Integer, ? extends ItemStack> hashSlots = inv.all(id);
+			if(stashItems.size()==0) continue;
+
+			if(hashSlots.size()!=0){
+				for(ItemStack slotItem : hashSlots.values()){
+					Iterator<ItemStack> iter = stashItems.iterator();
+					while(iter.hasNext()){
+						ItemStack stashItem = iter.next();
+						int itemAmount = stashItem.getAmount();
+						if(itemAmount==0){
+							continue;
 						}
-						if(item.getAmount()<=mat.getMaxStackSize()){
-							inv.addItem(item);
-							removeItem = item;
+						int freeAmount = slotItem.getMaxStackSize()-slotItem.getAmount();
+						if(freeAmount!=0){
+							int overflow = freeAmount - itemAmount;
+							if(overflow>=0){
+								slotItem.setAmount(slotItem.getAmount()+itemAmount);
+								rmStash.removeByIdAmount(id, itemAmount);
+								stashItem.setAmount(stashItem.getAmount()-itemAmount);
+								amount -= itemAmount;
+							}
+							else{
+								amount -= freeAmount;
+								stashItem.setAmount(stashItem.getAmount()-freeAmount);
+								rmStash.removeByIdAmount(id, freeAmount);
+								slotItem.setAmount(slotItem.getMaxStackSize());
+							}
+							if(stashItem.getAmount()==0){
+								iter.remove();
+							}
 						}
 					}
+					if(amount==0){
+						break;
+					}
 				}
-				else break;
-			}
-			if(removeItem!=null){
-				items.remove(removeItem);
-				switch(claimType){
-					case ITEMS:	sendMessage("Item was returned. Check your inventory."); break;
-					case REWARD: sendMessage("Reward was given. Check your inventory."); break;
-					case TOOLS:	sendMessage("Tools were given. Check your inventory."); break;
-				}
-				return HandleState.REMOVE;
-			}
-			else{
-				sendMessage("Inventory is full. "+ChatColor.YELLOW+plugin.getListItemStackTotalStack(items)+ChatColor.WHITE+" item(s) remaining.");
-				return HandleState.MODIFY;
 			}
 		}
-		return HandleState.NO_CHANGE;
+		if(rmStash.size()>0){
+			sendMessage(ChatColor.RED+"Not all items could be returned. "+ChatColor.YELLOW+rmStash.getAmount()+ChatColor.WHITE+" item(s) remaining.");
+		}
+		else{
+			sendMessage(ChatColor.YELLOW+"All items were returned.");
+		}
+		return rmStash;
 	}
-	
-	public void claimItems(){
-		claim(_items, ClaimType.ITEMS);
-	}
-	public void claimReward(){
-		claim(_reward, ClaimType.REWARD);
-	}
-	public void claimTools(){
-		claim(_tools, ClaimType.TOOLS);
-	}
+	*/
 	
 	public RMStats getStats(){
 		return _stats;
@@ -333,6 +536,12 @@ public class RMPlayer {
 	}
 	public void clearRequestInt(){
 		_requestInt = 0;
+	}
+	public void setRequestBool(boolean value){
+		_requestBool = value;
+	}
+	public boolean getRequestBool(){
+		return _requestBool;
 	}
 	
 	public static RM plugin;
@@ -360,6 +569,15 @@ public class RMPlayer {
 	}
 	public void clearRequestFilter(){
 		_requestFilter = null;
+	}
+	public ItemStack[] getRequestItems(){
+		return _requestItems;
+	}
+	public void setRequestItems(ItemStack[] requestItems){
+		_requestItems = requestItems;
+	}
+	public void clearRequestItems(){
+		_requestItems = null;
 	}
 	
 	//Player GET/SET
@@ -427,7 +645,7 @@ public class RMPlayer {
 	//Game
 	public List<RMGame> getGames(){
 		List<RMGame> rmGames = new ArrayList<RMGame>();
-		for(RMGame rmGame : RMGame.getGames()){
+		for(RMGame rmGame : RMGame.getGames().values()){
 			if(rmGame.getConfig().getOwnerName().equalsIgnoreCase(getPlayer().getName())){
 				rmGames.add(rmGame);
 			}
@@ -473,11 +691,11 @@ public class RMPlayer {
 	}
 	
 	public boolean isIngame(){
-		if(getGame()!=null) return true;
+		if(getGameInProgress()!=null) return true;
 		return false;
 	}
 	
-	public RMGame getGame(){
+	public RMGame getGameInProgress(){
 		RMTeam rmTeam = getTeam();
 		if(rmTeam!=null){
 			RMGame rmGame = rmTeam.getGame();
@@ -493,48 +711,52 @@ public class RMPlayer {
 	public void onPlayerJoin(){
 	}
 	
-	public void onPlayerQuit(){
-		RMTeam rmTeam = getTeam();
+	public void onPlayerQuit(RMTeam rmTeam){
+		setReady(false);
+		
 		if(rmTeam!=null){
+			RMDebug.warning("rmTeam is NOT NULL");
 			RMGame rmGame = rmTeam.getGame();
 			if(rmGame!=null){
-				if(rmGame.getConfig().getState()==GameState.GAMEPLAY){
-					if(!rmGame.getConfig().getKeepIngame()){
-						rmGame.quitTeam(rmTeam, this);
-						if(!rmGame.hasMinimumPlayers()){
-							
-							RMTeam winningTeam = null;
-							for(RMTeam rmt : rmGame.getTeams()){
-								if(rmt!=rmTeam){
-									winningTeam = rmt;
-								}
-							}
-							rmGame.setWinningTeam(winningTeam);
-							rmGame.gameOver();
-						}
-					}
+				RMDebug.warning("rmGame is NOT NULL");
+				switch(rmGame.getConfig().getState()){
+				case GAMEPLAY: case PAUSED:
+					RMDebug.warning("CHECK PLAYER QUIT");
+					rmGame.checkPlayerQuit(this, rmTeam);
+					break;
 				}
 			}
+			else RMDebug.warning("rmTeam is NULL");
 		}
+		else RMDebug.warning("rmTeam is NULL");
 	}
 	
 	public boolean isOnline(){
-		return _isOnline;
-	}
-	
-	public void isOnline(boolean isOnline){
-		_isOnline = isOnline;
-	}
-	
-	public boolean hasOwnerPermission(String node){
 		Player p = getPlayer();
-		if(p!=null) return (plugin.hasPermission(p, node, false));
+		if(p==null) return false;
+		return p.isOnline();
+	}
+	
+	public boolean hasOwnerPermission(String ownerName){
+		Player p = getPlayer();
+		if(p!=null){
+			if(plugin.isPermissionEnabled()){
+				if(ownerName.equalsIgnoreCase(p.getName())) return true;
+				else if(plugin.hasPermission(p, "resourcemadness.admin.reggie")) return true;
+			}
+			if(ownerName.equalsIgnoreCase(p.getName())) return true;
+		}
 		return false;
 	}
 	
 	public boolean hasPermission(String node){
 		Player p = getPlayer();
-		if(p!=null) return (plugin.hasPermission(p, node, true));
+		if(p!=null) return (plugin.hasPermission(p, node));
 		return false;
+	}
+	
+	public void restoreHealth(){
+		Player p = getPlayer();
+		if(p!=null)	p.setHealth(20);
 	}
 }

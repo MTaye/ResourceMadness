@@ -4,21 +4,43 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
+import com.mtaye.ResourceMadness.RMGame.HandleState;
+
 public class RMStashItem {
+	public static RM plugin;
+	
 	HashMap<String, ItemStack> _items = new HashMap<String, ItemStack>();
-	public RMStashItem(){
+	public int _id = -1; 
+	
+	public RMStashItem(int id){
+		_id = id;
 	}
 	public RMStashItem(ItemStack item){
+		_id = item.getTypeId();
 		addItem(item);
 	}
 	
+	public RMStashItem clone(){
+		RMStashItem clone = new RMStashItem(_id);
+		List<ItemStack> items = getItems();
+		for(ItemStack item : items){
+			clone.addItem(item.clone());
+		}
+		return clone;
+	}
+	
 	//Get Size
-	public int getSize(){
+	public int size(){
 		return _items.size();
+	}
+	
+	public Material getType(){
+		return Material.getMaterial(_id);
 	}
 	
 	//Get Items
@@ -28,6 +50,10 @@ public class RMStashItem {
 	//Set Items
 	public void setHashItems(HashMap<String, ItemStack> items){
 		_items = items;
+	}
+	
+	public int getId(){
+		return _id;
 	}
 	
 	//Get Amount
@@ -50,15 +76,58 @@ public class RMStashItem {
 	}
 	
 	//Add Item
-	public void addItem(ItemStack item){
+	public HandleState addItem(ItemStack item){
+		if(_id!=item.getTypeId()) return HandleState.NO_CHANGE;
 		String idData = getIdDataByItemStack(item);
 		if(_items.containsKey(idData)){
-			int amount = _items.get(idData).getAmount()+item.getAmount();
-			ItemStack itemClone = item.clone();
-			itemClone.setAmount(amount);
-			_items.put(idData, itemClone);
+			RMDebug.log(Level.WARNING, "STASH ITEM CONTAINS IDDATA");
+			ItemStack hashItem = _items.get(idData);
+			RMDebug.log(Level.WARNING, "hashItemAmount:"+hashItem.getAmount());
+			RMDebug.log(Level.WARNING, "itemAmount:"+item.getAmount());
+			hashItem.setAmount(hashItem.getAmount()+item.getAmount());
+			RMDebug.log(Level.WARNING, "hashItemAmount NEW:"+hashItem.getAmount());
+			RMDebug.log(Level.WARNING, "STASH ITEM END");
+			return HandleState.MODIFY;
 		}
-		else _items.put(idData, item);
+		else{
+			RMDebug.log(Level.WARNING, "STASH ITEM DOES NOT CONTAIN IDDATA");
+			RMDebug.log(Level.WARNING, "itemAmount:"+item.getAmount());
+			_items.put(idData, item.clone());
+			RMDebug.log(Level.WARNING, "STASH ITEM END");
+			return HandleState.ADD;
+		}
+	}
+	
+	//Add Items
+	public void addItems(List<ItemStack> items){
+		for(ItemStack item : items){
+			addItem(item);
+		}
+	}
+	
+	//Get by Amount
+	public List<ItemStack> getItemByAmount(int amount){
+		List<ItemStack> returnItems = new ArrayList<ItemStack>();
+		Iterator<ItemStack> i = _items.values().iterator();
+		while (i.hasNext()) {
+			ItemStack item = i.next().clone();
+			if(amount>0){
+				int overflow = item.getAmount()-amount;
+				if(overflow>=0){
+					ItemStack itemClone = item.clone();
+					itemClone.setAmount(amount);
+					returnItems.add(itemClone);
+					item.setAmount(item.getAmount()-amount);
+					break;
+				}
+				else{
+					amount = -overflow;
+					returnItems.add(item.clone());
+				};
+			}
+			else break;
+		}
+		return returnItems;
 	}
 	
 	//Get Items
@@ -85,37 +154,77 @@ public class RMStashItem {
 		return null;
 	}
 	
-	//Remove All - Obsolete
-	public List<ItemStack> removeAll(ItemStack item, boolean byAmount){
+	public void setItem(ItemStack item){
+		clear();
+		addItem(item);
+	}
+	
+	public List<ItemStack> removeByItemStack(ItemStack item){
 		List<ItemStack> returnItems = new ArrayList<ItemStack>();
 		Iterator<ItemStack> i = _items.values().iterator();
 		ItemStack itemClone = item.clone();
-		while (i.hasNext()) {
+		String idData = getIdDataByItemStack(item);
+		if(_items.containsKey(idData)){
 			ItemStack hashItem = i.next();
-			if(hashItem.getTypeId()==itemClone.getTypeId()){
-				if(byAmount){
-					int amount = itemClone.getAmount();
-					if(amount!=0){
-						int overflow = hashItem.getAmount()-amount;
-						if(overflow>=0){
-							ItemStack hashItemClone = hashItem.clone();
-							hashItemClone.setAmount(amount);
-							returnItems.add(hashItemClone);
-							hashItem.setAmount(hashItem.getAmount()-amount);
-							if(hashItem.getAmount()==0) i.remove();
-						}
-						else{
-							itemClone.setAmount(-overflow);
-							returnItems.add(hashItem.clone());
-							i.remove();
-						}
-					}
+			int amount = itemClone.getAmount();
+			if(amount>0){
+				int overflow = hashItem.getAmount()-amount;
+				if(overflow>=0){
+					ItemStack hashItemClone = hashItem.clone();
+					hashItemClone.setAmount(amount);
+					returnItems.add(hashItemClone);
+					hashItem.setAmount(hashItem.getAmount()-amount);
+					if(hashItem.getAmount()==0) i.remove();
 				}
 				else{
-					returnItems.add(hashItem);
+					returnItems.add(hashItem.clone());
 					i.remove();
-				}
+				};
 			}
+		}
+		return returnItems;
+	}
+	
+	public List<ItemStack> removeByItemStackAll(ItemStack item){
+		List<ItemStack> returnItems = new ArrayList<ItemStack>();
+		Iterator<ItemStack> i = _items.values().iterator();
+		ItemStack itemClone = item.clone();
+		String idData = getIdDataByItemStack(item);
+		if(_items.containsKey(idData)){
+			ItemStack hashItem = i.next();
+			int amount = itemClone.getAmount();
+			if(amount>0){
+				returnItems.add(hashItem.clone());
+				i.remove();
+			}
+		}
+		return returnItems;
+	}
+	
+	public List<ItemStack> removeByAmount(int amount){
+		List<ItemStack> returnItems = new ArrayList<ItemStack>();
+		Iterator<ItemStack> i = _items.values().iterator();
+		while (i.hasNext()) {
+			ItemStack item = i.next();
+			if(amount>0){
+				int overflow = item.getAmount()-amount;
+				if(overflow>=0){
+					ItemStack itemClone = item.clone();
+					itemClone.setAmount(amount);
+					returnItems.add(itemClone);
+					item.setAmount(item.getAmount()-amount);
+					if(item.getAmount()==0){
+						i.remove();
+					}
+					break;
+				}
+				else{
+					amount = -overflow;
+					returnItems.add(item.clone());
+					i.remove();
+				};
+			}
+			else break;
 		}
 		return returnItems;
 	}
@@ -128,7 +237,7 @@ public class RMStashItem {
 		}
 	}
 	
-	//Remove Item by ItemStack By Amount
+	//Remove Item by ItemStack by Amount
 	public void removeItemByItemStackByAmount(ItemStack item){
 		String idData = getIdDataByItemStack(item);
 		if(_items.containsKey(idData)){

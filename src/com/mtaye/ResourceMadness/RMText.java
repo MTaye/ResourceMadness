@@ -3,6 +3,8 @@ package com.mtaye.ResourceMadness;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -20,11 +22,11 @@ public final class RMText {
 	public static RM plugin;
 	
 	public static String preLog = "ResourceMadness: ";
-	public static String noPermissionCommand = "You don't have permission to use this command.";
-	public static String noPermissionAction = "You don't have permission to use this action.";
-	public static String noChangeLocked = "This setting is locked. It cannot be changed.";
-	public static String noOwnerCommand = "Only the owner can use this command.";
-	public static String noOwnerAction = "Only the owner can use this action.";
+	public static String noPermissionCommand =  ChatColor.RED+"You don't have permission to use this command.";
+	public static String noPermissionAction =  ChatColor.RED+"You don't have permission to use this action.";
+	public static String noChangeLocked = ChatColor.RED+"This setting is locked. "+ChatColor.GRAY+"It cannot be changed.";
+	public static String noOwnerCommand =  ChatColor.RED+"Only the owner can use this command.";
+	public static String noOwnerAction =  ChatColor.RED+"Only the owner can use this action.";
 	
 	public static String maxGames = "Max games";
 	public static String maxGamesPerPlayer = "Max games per player";
@@ -33,16 +35,17 @@ public final class RMText {
 	public static String minTeamPlayers = "Min team players";
 	public static String maxTeamPlayers = "Max team players";
 	public static String maxItems = "Max items";
+	public static String timeLimit = "Match time limit";
 	public static String autoRandomizeAmount = "Randomly pick amount of items every match";
-	public static String warpToSafety = "Teleport players before and after match";
 	public static String autoRestoreWorld = "Auto restore world changes after match";
-	public static String warnHackedItems = "Warn when hacked items are added";
-	public static String allowHackedItems = "Allow the use of hacked items";
-	public static String keepIngame = "Keep offline players in-game";
+	public static String warpToSafety = "Teleport players before and after match";
 	public static String allowMidgameJoin = "Allow players to join mid-game";
+	public static String healPlayer = "Heal players at game start";
 	public static String clearPlayerInventory = "Clear/return player's items at game start/finish";
 	public static String warnUnequal = "Warn when reward/tools can't be distributed equally";
 	public static String allowUnequal = "Allow reward/tools to be distributed unequally";
+	public static String warnHackedItems = "Warn when hacked items are added";
+	public static String allowHackedItems = "Allow the use of hacked items";
 	public static String infiniteReward = "Use infinite reward";
 	public static String infiniteTools = "Use infinite tools";
 	
@@ -53,25 +56,31 @@ public final class RMText {
 	public static String cServerWide = "#These are server wide settings.";
 	public static String cMaxGames = "#The maximum number of games allowed on server (0 = unlimited)";
 	public static String cMaxGamesPerPlayer = "#The maximum number of games allowed per player. (0 = unlimited)";
+	public static String cDefaultSettings1 = "#All settings from here on out are the game defaults.";
+	public static String cDefaultSettings2 = "#Using :lock after a setting locks it for all games, e.g. cMinPlayersPerTeam=2:lock";
 	public static String cMinPlayersPerGame = "#The minimum number of players allowed per game. The Lowest number is 1 player. Only numbers higher than the amount of teams in a game will be evaluated.";
 	public static String cMaxPlayersPerGame = "#The maximum number of players allowed per game. (0 = unlimited)";
 	public static String cMinPlayersPerTeam = "#The minimum number of players allowed per team. The lowest number is 1 player";
 	public static String cMaxPlayersPerTeam = "#The maximum number of players allowed per team. (0 = unlimited)";
-	public static String cDefaultSettings1 = "#The following settings are the game defaults. Possible options are true or false.";
-	public static String cDefaultSettings2 = "#Using :lock after true/false locks the setting for all games, e.g. allowHacked=false:lock";
-	public static String cRestore = "#Auto restore world changes after match.";
+	public static String cTimeLimit = "#Match time limit (0 = no time limit)";
+	public static String cDefaultSettings3 = "#The following settings can be true or false.";
+	public static String cDefaultSettings4 = "#Using :lock after true/false locks the setting for all games, e.g. allowHacked=false:lock";
+	public static String cAutoRestoreWorld = "#Auto restore world changes after match.";
 	public static String cWarpToSafety = "#Teleport players before and after match.";
-	public static String cWarnHackedItems = "#Warn when hacked items are added. Only the game's owner gets a warning.";
-	public static String cAllowHackedItems = "#Allow the use of hacked items.";
-	public static String cKeepIngame = "#Keep offline players in-game. Use this for persistent matches.";
 	public static String cAllowMidgameJoin = "#Allow players to join mid-game.";
+	public static String cHealPlayer = "#Heal players at game start";
 	public static String cClearPlayerInventory = "#Clear/return player's items at game start/finish.";
 	public static String cWarnUnequal = "#Warn when reward/tools can't be distributed equally.";
 	public static String cAllowUnequal = "#Allow reward/tools to be distributed unequally.";
+	public static String cWarnHackedItems = "#Warn when hacked items are added. Only the game's owner gets a warning.";
+	public static String cAllowHackedItems = "#Allow the use of hacked items.";
 	public static String cInfiniteReward = "#Use infinite reward";
 	public static String cInfiniteTools = "#Use infinite tools";
 	
-	public static String gStartMatch = "ResourceMadness!";
+	public static String gPrepare = ChatColor.GOLD+"Prepare yourselves...";
+	public static String gStartMatch = ChatColor.GOLD+"ResourceMadness!";
+	
+	HashMap<Integer, String> gTimeLeft = new HashMap<Integer, String>();
 	
 	private RMText(){
 	}
@@ -84,6 +93,17 @@ public final class RMText {
 			return part1+part2;
 		}
 		return str;
+	}
+	
+	public static String getFormattedItemStringByHashMap(HashMap<Integer, Material> hashMap){
+		String line = "";
+		Integer[] array = hashMap.keySet().toArray(new Integer[hashMap.size()]);
+		Arrays.sort(array);
+		for(Integer id : array){
+			line+=""+ChatColor.YELLOW+id+ChatColor.GRAY+":"+ChatColor.WHITE+hashMap.get(id).name()+", ";
+		}
+		line = RMText.stripLast(line, ",");
+		return line;
 	}
 	
 	//Get Formatted String By List
@@ -99,8 +119,15 @@ public final class RMText {
 	//Get Formatted String By List Material
 	public static String getFormattedStringByListMaterial(List<Material> materials){
 		String line = "";
-		for(Material mat : materials){
-			line+=mat.name()+", ";
+		if(materials.size()!=1){
+			for(Material mat : materials){
+				line+=mat.getId()+", ";
+			}
+		}
+		else{
+			for(Material mat : materials){
+				line+=mat.name()+", ";
+			}
 		}
 		line = RMText.stripLast(line, ",");
 		return line;
@@ -171,16 +198,17 @@ public final class RMText {
 	}
 	
 	//Get Sorted Items from ItemStack Array
-	public static String getSortedItemsFromItemStackArray(ItemStack[] items){
+	public static String getStringSortedItems(List<ItemStack> items){
 		String strItems = "";
-		
+		RMDebug.log(Level.WARNING, "test");
+		RMDebug.log(Level.WARNING, "size:"+items.size());
 		HashMap<Integer, ItemStack> hashItems = RMInventoryHelper.combineItemsByItemStack(items);
 		
 		Integer[] array = hashItems.keySet().toArray(new Integer[hashItems.size()]);
 		Arrays.sort(array);
 		if(array.length>plugin.config.getTypeLimit()){
 			for(Integer id : array){
-				strItems += ChatColor.WHITE+""+id+":"+RMText.includeItem(new RMItem(hashItems.get(id)))+ChatColor.WHITE+", ";
+				strItems += ChatColor.WHITE+""+id+RMText.includeItem(new RMItem(hashItems.get(id)))+ChatColor.WHITE+", ";
 			}
 		}
 		else{
@@ -190,5 +218,21 @@ public final class RMText {
 		}
 		strItems = RMText.stripLast(strItems, ", ");
 		return strItems;
-	}	
+	}
+	
+	public static String getStringTotal(String str){
+		int length = str.length();
+		if(length<9) str = "Total: "+str;
+		else if(length<11) str = "Ttl: "+str;
+		else if(length<13) str = "T: "+str;
+		return str;
+	}
+	
+	public static String firstLetterToUpperCase(String str){
+		if(str.length()>0){
+			String character = str.substring(0, 1);
+			str = str.replaceFirst(character,character.toUpperCase());
+		}
+		return str;
+	}
 }

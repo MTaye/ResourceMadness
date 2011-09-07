@@ -7,8 +7,10 @@ import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import com.mtaye.ResourceMadness.RMDebug;
 import com.mtaye.ResourceMadness.RMItem;
 import com.mtaye.ResourceMadness.RMText;
 import com.mtaye.ResourceMadness.RM.ClaimType;
@@ -95,7 +97,7 @@ public final class RMInventoryHelper {
 		return items;
 	}
 	
-	public static HashMap<Integer, ItemStack> combineItemsByItemStack(ItemStack[] items){
+	public static HashMap<Integer, ItemStack> combineItemsByItemStack(List<ItemStack> items){
 		HashMap<Integer, ItemStack> hashItems = new HashMap<Integer, ItemStack>();
 		for(ItemStack rewardItem : items){
 			ItemStack item = rewardItem.clone();
@@ -111,5 +113,43 @@ public final class RMInventoryHelper {
 			}
 		}
 		return hashItems;
+	}
+	
+	public static int findUsableStack(Inventory inv){
+		ItemStack[] contents = inv.getContents();
+		for(int i = 0; i<contents.length; i++){
+			ItemStack invItem = contents[i];
+			if((invItem==null)||(invItem.getType()==Material.AIR)) continue;
+			if(invItem.getAmount()<invItem.getMaxStackSize()) return i;
+		}
+		return -1;
+	}
+	
+	public static int findUsableStack(Inventory inv, int id){
+		ItemStack[] contents = inv.getContents();
+		for(int i = 0; i<contents.length; i++){
+			ItemStack invItem = contents[i];
+			if((invItem==null)||(invItem.getType()==Material.AIR)) continue;
+			if(invItem.getAmount()<invItem.getMaxStackSize()){
+				if(invItem.getTypeId() == id) return i;
+			}
+		}
+		return -1;
+	}
+	
+	public static void clearInventoryItem(Inventory inv, ItemStack item){
+		ItemStack[] contents = inv.getContents();
+		for(int i=0; i<contents.length; i++){
+			ItemStack invItem = contents[i];
+			if(invItem==null) continue;
+			RMDebug.warning("FOUND invItem:"+invItem.getType()+",item:"+item.getType());
+			if(invItem.getType() == item.getType()){
+				RMDebug.warning("FOUND invItemAmount:"+invItem.getAmount()+",itemAmount:"+item.getAmount());
+				if(invItem.getAmount() == item.getAmount()){
+					RMDebug.warning("YUP");
+					inv.clear(i);
+				}
+			}
+		}
 	}
 }

@@ -26,7 +26,7 @@ public class RMWatcher implements Runnable {
 			}
 		}
 		try{
-			for(RMGame rmGame : RMGame.getGames()){
+			for(RMGame rmGame : RMGame.getGames().values()){
 				rmGame.update();
 			}
 		}
