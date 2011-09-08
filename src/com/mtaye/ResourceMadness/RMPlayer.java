@@ -17,6 +17,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import com.iConomy.iConomy;
+import com.iConomy.system.Account;
+import com.iConomy.system.Holdings;
 import com.mtaye.ResourceMadness.RM.ClaimType;
 import com.mtaye.ResourceMadness.RMGame.FilterState;
 import com.mtaye.ResourceMadness.RMGame.FilterType;
@@ -37,9 +40,8 @@ public class RMPlayer {
 		JOIN, QUIT, START, START_RANDOM, RESTART, STOP, PAUSE, RESUME,
 		RESTORE, FILTER, REWARD, TOOLS, CLAIM_FOUND, CLAIM_FOUND_CHEST, CLAIM_FOUND_CHEST_SELECT, CLAIM_ITEMS_CHEST, CLAIM_REWARD_CHEST, CLAIM_TOOLS_CHEST,
 		SET_MIN_PLAYERS, SET_MAX_PLAYERS, SET_MIN_TEAM_PLAYERS, SET_MAX_TEAM_PLAYERS, SET_MAX_ITEMS, SET_TIME_LIMIT, SET_RANDOM,
-		SET_WARP, SET_RESTORE, SET_WARN_HACKED, SET_ALLOW_HACKED, SET_MIDGAME_JOIN,
-		SET_HEAL_PLAYER, SET_CLEAR_INVENTORY, SET_WARN_UNEQUAL, SET_ALLOW_UNEQUAL,
-		SET_INFINITE_REWARD, SET_INFINITE_TOOLS,
+		SET_ADVERTISE, SET_RESTORE, SET_WARP, SET_MIDGAME_JOIN, SET_HEAL_PLAYER, SET_CLEAR_INVENTORY, SET_WARN_UNEQUAL, SET_ALLOW_UNEQUAL,
+		SET_WARN_HACKED, SET_ALLOW_HACKED, SET_INFINITE_REWARD, SET_INFINITE_TOOLS,
 		NONE;
 	}
 	private String _name;
@@ -201,11 +203,7 @@ public class RMPlayer {
 				else stashItems.addAll(rmStash.removeItemById(item.getTypeId()));
 			}
 		}
-		if(inv!=null){
-			RMDebug.warning("INVENTORY NOT NULL");
-			returnedItems = inv.addItem(stashItems.toArray(new ItemStack[stashItems.size()]));
-		}
-		else RMDebug.warning("INVENTORY IS NULL");
+		if(inv!=null) returnedItems = inv.addItem(stashItems.toArray(new ItemStack[stashItems.size()]));
 		
 		if(usePlayerInv){
 			if(getPlayer()!=null){
@@ -715,20 +713,15 @@ public class RMPlayer {
 		setReady(false);
 		
 		if(rmTeam!=null){
-			RMDebug.warning("rmTeam is NOT NULL");
 			RMGame rmGame = rmTeam.getGame();
 			if(rmGame!=null){
-				RMDebug.warning("rmGame is NOT NULL");
 				switch(rmGame.getConfig().getState()){
 				case GAMEPLAY: case PAUSED:
-					RMDebug.warning("CHECK PLAYER QUIT");
 					rmGame.checkPlayerQuit(this, rmTeam);
 					break;
 				}
 			}
-			else RMDebug.warning("rmTeam is NULL");
 		}
-		else RMDebug.warning("rmTeam is NULL");
 	}
 	
 	public boolean isOnline(){
@@ -742,7 +735,7 @@ public class RMPlayer {
 		if(p!=null){
 			if(plugin.isPermissionEnabled()){
 				if(ownerName.equalsIgnoreCase(p.getName())) return true;
-				else if(plugin.hasPermission(p, "resourcemadness.admin.reggie")) return true;
+				else return (plugin.hasPermission(p, "resourcemadness.admin.overlord"));
 			}
 			if(ownerName.equalsIgnoreCase(p.getName())) return true;
 		}

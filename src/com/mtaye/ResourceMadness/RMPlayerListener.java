@@ -44,20 +44,20 @@ public class RMPlayerListener extends PlayerListener{
 								case SETUP:
 									if(rmp.hasOwnerPermission(rmGame.getConfig().getOwnerName())){
 										if(rmp.getPlayer().isSneaking()){
-											e.setCancelled(true);
+											 if(b.getType()==Material.CHEST) e.setCancelled(true);
 											rmGame.handleRightClick(b, rmp);
 										}
 									}
 									else if(b.getType()==Material.CHEST) e.setCancelled(true);
 									break;
 								case COUNTDOWN: case PAUSED:
-									e.setCancelled(true);
+									 if(b.getType()==Material.CHEST) e.setCancelled(true);
 									break;
 								case GAMEPLAY: case GAMEOVER:
 									RMTeam rmTeam = rmGame.getPlayerTeam(rmp);
 									if(rmTeam!=null){
 										if(b!=rmTeam.getChest().getChest().getBlock()){
-											e.setCancelled(true);
+											if(b.getType()==Material.CHEST) e.setCancelled(true);
 										}
 									}
 									else if(b.getType()==Material.CHEST) e.setCancelled(true);
@@ -237,13 +237,17 @@ public class RMPlayerListener extends PlayerListener{
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.setAutoRandomizeAmount(rmp, rmp.getRequestInt());
 								break;
-							case SET_WARP:
+							case SET_ADVERTISE:
 								rmGame = RMGame.getGameByBlock(b);
-								if(rmGame!=null) rmGame.setWarpToSafety(rmp, rmp.getRequestInt());
+								if(rmGame!=null) rmGame.setAdvertise(rmp, rmp.getRequestInt());
 								break;
 							case SET_RESTORE:
 								rmGame = RMGame.getGameByBlock(b);
 								if(rmGame!=null) rmGame.setAutoRestoreWorld(rmp, rmp.getRequestInt());
+								break;
+							case SET_WARP:
+								rmGame = RMGame.getGameByBlock(b);
+								if(rmGame!=null) rmGame.setWarpToSafety(rmp, rmp.getRequestInt());
 								break;
 							case SET_WARN_HACKED:
 								rmGame = RMGame.getGameByBlock(b);

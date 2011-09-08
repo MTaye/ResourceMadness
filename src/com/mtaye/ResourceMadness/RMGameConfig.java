@@ -10,6 +10,7 @@ import org.bukkit.inventory.ItemStack;
 
 import com.mtaye.ResourceMadness.RMGame.GameState;
 import com.mtaye.ResourceMadness.RMGame.InterfaceState;
+import com.mtaye.ResourceMadness.RMGame.MinMaxType;
 
 /**
  * ResourceMadness for Bukkit
@@ -29,6 +30,7 @@ public class RMGameConfig {
 	private int _minTeamPlayers = 0;
 	private int _maxTeamPlayers = 0;
 	private int _autoRandomizeAmount = 0;
+	private boolean _advertise = true;
 	private boolean _autoRestoreWorld = true;
 	private boolean _warpToSafety = true;
 	private boolean _allowMidgameJoin = true;
@@ -60,6 +62,9 @@ public class RMGameConfig {
 	
 	private RMStats _stats = new RMStats();
 	private RMGameTimer _timer = new RMGameTimer();
+	private int _moneyReward = 0;
+	private int _moneyJoin = 0;
+	private int _moneyQuit = 0;
 	
 	public RMGameConfig(RM plugin){
 		this.plugin = plugin;
@@ -77,6 +82,7 @@ public class RMGameConfig {
 		this._maxTeamPlayers = config._maxTeamPlayers;
 		this._minTeamPlayers = config._minTeamPlayers;
 		this._autoRandomizeAmount = config._autoRandomizeAmount;
+		this._advertise = config._advertise;
 		this._autoRestoreWorld = config._autoRestoreWorld;
 		this._warpToSafety = config._warpToSafety;
 		this._allowMidgameJoin = config._allowMidgameJoin;
@@ -114,6 +120,7 @@ public class RMGameConfig {
 	public int getMinTeamPlayers() { return _minTeamPlayers; }
 	public int getMaxTeamPlayers() { return _maxTeamPlayers; }
 	public int getAutoRandomizeAmount() { return _autoRandomizeAmount; }
+	public boolean getAdvertise() { return _advertise; }
 	public boolean getAutoRestoreWorld() { return _autoRestoreWorld; }
 	public boolean getWarpToSafety() { return _warpToSafety; }
 	public boolean getAllowMidgameJoin() { return _allowMidgameJoin; }
@@ -172,7 +179,7 @@ public class RMGameConfig {
 	}
 	public void setMinPlayers(int minPlayers){
 		_minPlayers = minPlayers;
-		if(_minPlayers<0) _minPlayers = 0;
+		if(_minPlayers<1) _minPlayers = 1;
 	}
 	public void setMaxPlayers(int maxPlayers){
 		_maxPlayers = maxPlayers;
@@ -197,6 +204,9 @@ public class RMGameConfig {
 	public void setAutoRandomizeAmount(int amount){
 		_autoRandomizeAmount = amount;
 		if(_autoRandomizeAmount<0) _autoRandomizeAmount = 0;
+	}
+	public void setAdvertise(boolean advertise){
+		_advertise = advertise;
 	}
 	public void setAutoRestoreWorld(boolean restore){
 		_autoRestoreWorld = restore;
@@ -300,6 +310,10 @@ public class RMGameConfig {
 	}
 	
 	//Toggle
+	public void toggleAdvertise(){
+		if(_advertise) _advertise = false;
+		else _advertise = true;
+	}
 	public void toggleAutoRestoreWorld(){
 		if(_autoRestoreWorld) _autoRestoreWorld = false;
 		else _autoRestoreWorld = true;
@@ -351,6 +365,7 @@ public class RMGameConfig {
 	
 	//getDataFrom
 	public void getDataFrom(RMGameConfig config){
+		setOwnerName(config.getOwnerName());
 		setMinPlayers(config.getMinPlayers());
 		setMaxPlayers(config.getMaxPlayers());
 		setMinTeamPlayers(config.getMinTeamPlayers());
@@ -382,10 +397,10 @@ public class RMGameConfig {
 	}
 	
 	public void getDataFrom(RMConfig config){
-		setMinPlayers(config.getMinPlayersPerGame());
-		setMaxPlayers(config.getMaxPlayersPerGame());
-		setMinTeamPlayers(config.getMinPlayersPerTeam());
-		setMaxTeamPlayers(config.getMaxPlayersPerTeam());
+		setMinPlayers(config.getMinPlayers());
+		setMaxPlayers(config.getMaxPlayers());
+		setMinTeamPlayers(config.getMinTeamPlayers());
+		setMaxTeamPlayers(config.getMaxTeamPlayers());
 		_timer.setTimeLimit(config.getTimeLimit());
 		setAutoRandomizeAmount(config.getAutoRandomizeAmount());
 		setAutoRestoreWorld(config.getAutoRestoreWorld());
@@ -399,5 +414,45 @@ public class RMGameConfig {
 		setAllowHackedItems(config.getAllowHackedItems());
 		setInfiniteReward(config.getInfiniteReward());
 		setInfiniteTools(config.getInfiniteTools());
+	}
+	
+	public void correctMinMaxNumbers(MinMaxType correct){
+		int size = getTeams().size();
+		int min = getMinPlayers();
+		int max = getMaxPlayers();
+		int minTeam = getMinTeamPlayers();
+		int maxTeam = getMaxTeamPlayers();
+		switch(correct){
+		case MIN_PLAYERS:
+			if(min<size) min = size;
+			if(max!=0) if(min>max) max = min;
+			if(min<minTeam*size) minTeam = (int)((double)min/(double)size);
+			break;
+		case MAX_PLAYERS:
+			if(max!=0){
+				if(max<size) max = size;
+				if(max<min) min = max;
+				if(min<minTeam*size) minTeam = (int)((double)min/(double)size);
+			}
+			break;
+		case MIN_TEAM_PLAYERS:
+			if(minTeam<1){
+				minTeam = 1;
+			}
+			if(maxTeam!=0) if(minTeam>maxTeam) maxTeam = minTeam;
+			if(minTeam*size>min) min = minTeam*size;
+			if(max!=0) if(max<min) max = min;
+			break;
+		case MAX_TEAM_PLAYERS:
+			if(maxTeam!=0){
+				if(maxTeam<1) maxTeam = 1;
+				if(maxTeam<minTeam) minTeam = maxTeam;
+			}
+			break;
+		}
+		setMinPlayers(min);
+		setMaxPlayers(max);
+		setMinTeamPlayers(minTeam);
+		setMaxTeamPlayers(maxTeam);
 	}
 }

@@ -80,20 +80,12 @@ public class RMStashItem {
 		if(_id!=item.getTypeId()) return HandleState.NO_CHANGE;
 		String idData = getIdDataByItemStack(item);
 		if(_items.containsKey(idData)){
-			RMDebug.log(Level.WARNING, "STASH ITEM CONTAINS IDDATA");
 			ItemStack hashItem = _items.get(idData);
-			RMDebug.log(Level.WARNING, "hashItemAmount:"+hashItem.getAmount());
-			RMDebug.log(Level.WARNING, "itemAmount:"+item.getAmount());
 			hashItem.setAmount(hashItem.getAmount()+item.getAmount());
-			RMDebug.log(Level.WARNING, "hashItemAmount NEW:"+hashItem.getAmount());
-			RMDebug.log(Level.WARNING, "STASH ITEM END");
 			return HandleState.MODIFY;
 		}
 		else{
-			RMDebug.log(Level.WARNING, "STASH ITEM DOES NOT CONTAIN IDDATA");
-			RMDebug.log(Level.WARNING, "itemAmount:"+item.getAmount());
 			_items.put(idData, item.clone());
-			RMDebug.log(Level.WARNING, "STASH ITEM END");
 			return HandleState.ADD;
 		}
 	}

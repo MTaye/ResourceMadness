@@ -14,8 +14,8 @@ public class RMConfig {
 	private int _typeLimit = 50;
 	
 	public enum PermissionType { P3, PEX, BUKKIT, FALSE };
-	public enum Lock { minPlayersPerGame, maxPlayersPerGame, minPlayersPerTeam, maxPlayersPerTeam, timeLimit,
-		autoRandomizeAmount, autoRestoreWorld, warpToSafety, keepIngame, allowMidgameJoin, healPlayer, clearPlayerInventory,
+	public enum Lock { minPlayers, maxPlayers, minTeamPlayers, maxTeamPlayers, timeLimit, autoRandomizeAmount,
+		advertise, autoRestoreWorld, warpToSafety, keepIngame, allowMidgameJoin, healPlayer, clearPlayerInventory,
 		warnUnequal, allowUnequal, warnHackedItems, allowHackedItems, infiniteReward, infiniteTools };
 	
 	private List<Lock> _lock = new ArrayList<Lock>();
@@ -24,12 +24,13 @@ public class RMConfig {
 	private boolean _useRestore = true;
 	private int _maxGames = 0;
 	private int _maxGamesPerPlayer = 0;
-	private int _minPlayersPerGame = 1;
-	private int _maxPlayersPerGame = 0;
-	private int _minPlayersPerTeam = 1;
-	private int _maxPlayersPerTeam = 0;
+	private int _minPlayers = 1;
+	private int _maxPlayers = 0;
+	private int _minTeamPlayers = 1;
+	private int _maxTeamPlayers = 0;
 	private int _timeLimit = 0;
 	private int _autoRandomizeAmount = 0;
+	private boolean _advertise = false;
 	private boolean _autoRestoreWorld = true;
 	private boolean _warpToSafety = true;
 	private boolean _allowMidgameJoin = true;
@@ -56,12 +57,13 @@ public class RMConfig {
 		setUseRestore(config.getUseRestore());
 		setMaxGames(config.getMaxGames());
 		setMaxGamesPerPlayer(config.getMaxGamesPerPlayer());
-		setMinPlayersPerGame(config.getMinPlayersPerGame(), config.getLock().contains(Lock.minPlayersPerGame));
-		setMaxPlayersPerGame(config.getMaxPlayersPerGame(), config.getLock().contains(Lock.maxPlayersPerGame));
-		setMinPlayersPerTeam(config.getMinPlayersPerTeam(), config.getLock().contains(Lock.minPlayersPerTeam));
-		setMaxPlayersPerTeam(config.getMaxPlayersPerTeam(), config.getLock().contains(Lock.maxPlayersPerTeam));
+		setMinPlayers(config.getMinPlayers(), config.getLock().contains(Lock.minPlayers));
+		setMaxPlayers(config.getMaxPlayers(), config.getLock().contains(Lock.maxPlayers));
+		setMinTeamPlayers(config.getMinTeamPlayers(), config.getLock().contains(Lock.minTeamPlayers));
+		setMaxTeamPlayers(config.getMaxTeamPlayers(), config.getLock().contains(Lock.maxTeamPlayers));
 		setTimeLimit(config.getTimeLimit(), config.getLock().contains(Lock.timeLimit));
 		setAutoRandomizeAmount(config.getAutoRandomizeAmount(), config.getLock().contains(Lock.autoRandomizeAmount));
+		setAdvertise(config.getAdvertise(), config.getLock().contains(Lock.advertise));
 		setAutoRestoreWorld(config.getAutoRestoreWorld(), config.getLock().contains(Lock.autoRestoreWorld));
 		setWarpToSafety(config.getWarpToSafety(), config.getLock().contains(Lock.warpToSafety));
 		setAllowMidgameJoin(config.getAllowMidgameJoin(), config.getLock().contains(Lock.allowMidgameJoin));
@@ -83,12 +85,13 @@ public class RMConfig {
 	public boolean getUseRestore() { return _useRestore; }
 	public int getMaxGames() { return _maxGames; }
 	public int getMaxGamesPerPlayer() { return _maxGamesPerPlayer; }
-	public int getMinPlayersPerGame() { return _minPlayersPerGame; }
-	public int getMaxPlayersPerGame() { return _maxPlayersPerGame; }
-	public int getMinPlayersPerTeam() { return _minPlayersPerTeam; }
-	public int getMaxPlayersPerTeam() { return _maxPlayersPerTeam; }
+	public int getMinPlayers() { return _minPlayers; }
+	public int getMaxPlayers() { return _maxPlayers; }
+	public int getMinTeamPlayers() { return _minTeamPlayers; }
+	public int getMaxTeamPlayers() { return _maxTeamPlayers; }
 	public int getTimeLimit() { return _timeLimit; }
 	public int getAutoRandomizeAmount() { return _autoRandomizeAmount; }
+	public boolean getAdvertise() { return _advertise; }
 	public boolean getAutoRestoreWorld() { return _autoRestoreWorld; }
 	public boolean getWarpToSafety() { return _warpToSafety; }
 	public boolean getAllowMidgameJoin() { return _allowMidgameJoin; }
@@ -125,29 +128,29 @@ public class RMConfig {
 		_maxGamesPerPlayer = maxGamesPerPlayer;
 		if(_maxGamesPerPlayer<0) _maxGamesPerPlayer = 0;
 	}
-	public void setMinPlayersPerGame(int minPlayersPerGame, boolean lock){
-		if(lock) addLock(Lock.minPlayersPerGame);
-		else removeLock(Lock.minPlayersPerGame);
-		_minPlayersPerGame = minPlayersPerGame;
-		if(_minPlayersPerGame<0) _minPlayersPerGame = 1;
+	public void setMinPlayers(int minPlayers, boolean lock){
+		if(lock) addLock(Lock.minPlayers);
+		else removeLock(Lock.minPlayers);
+		_minPlayers = minPlayers;
+		if(_minPlayers<0) _minPlayers = 1;
 	}
-	public void setMaxPlayersPerGame(int maxPlayersPerGame, boolean lock){
-		if(lock) addLock(Lock.maxPlayersPerGame);
-		else removeLock(Lock.maxPlayersPerGame);
-		_maxPlayersPerGame = maxPlayersPerGame;
-		if(_maxPlayersPerGame<0) _maxPlayersPerGame = 0;
+	public void setMaxPlayers(int maxPlayers, boolean lock){
+		if(lock) addLock(Lock.maxPlayers);
+		else removeLock(Lock.maxPlayers);
+		_maxPlayers = maxPlayers;
+		if(_maxPlayers<0) _maxPlayers = 0;
 	}
-	public void setMinPlayersPerTeam(int minTeamPlayersPerTeam, boolean lock){
-		if(lock) addLock(Lock.minPlayersPerTeam);
-		else removeLock(Lock.minPlayersPerTeam);
-		_minPlayersPerTeam = minTeamPlayersPerTeam;
-		if(_minPlayersPerTeam<0) _minPlayersPerTeam = 1;
+	public void setMinTeamPlayers(int minTeamPlayers, boolean lock){
+		if(lock) addLock(Lock.minTeamPlayers);
+		else removeLock(Lock.minTeamPlayers);
+		_minTeamPlayers = minTeamPlayers;
+		if(_minTeamPlayers<0) _minTeamPlayers = 1;
 	}
-	public void setMaxPlayersPerTeam(int maxTeamPlayersPerTeam, boolean lock){
-		if(lock) addLock(Lock.maxPlayersPerTeam);
-		else removeLock(Lock.maxPlayersPerTeam);
-		_maxPlayersPerTeam = maxTeamPlayersPerTeam;
-		if(_maxPlayersPerTeam<0) _maxPlayersPerTeam = 0;
+	public void setMaxTeamPlayers(int maxTeamPlayers, boolean lock){
+		if(lock) addLock(Lock.maxTeamPlayers);
+		else removeLock(Lock.maxTeamPlayers);
+		_maxTeamPlayers = maxTeamPlayers;
+		if(_maxTeamPlayers<0) _maxTeamPlayers = 0;
 	}
 	public void setTimeLimit(int timeLimit, boolean lock){
 		if(lock) addLock(Lock.timeLimit);
@@ -160,6 +163,11 @@ public class RMConfig {
 		else removeLock(Lock.autoRandomizeAmount);
 		_autoRandomizeAmount = autoRandomizeAmount;
 		if(_autoRandomizeAmount<0) _autoRandomizeAmount = 0;
+	}
+	public void setAdvertise(boolean advertise, boolean lock){
+		if(lock) addLock(Lock.advertise);
+		else removeLock(Lock.advertise);
+		_advertise = advertise;
 	}
 	public void setAutoRestoreWorld(boolean autoRestoreWorld, boolean lock){
 		if(lock) addLock(Lock.autoRestoreWorld);

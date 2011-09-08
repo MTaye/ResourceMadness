@@ -37,6 +37,7 @@ public final class RMText {
 	public static String maxItems = "Max items";
 	public static String timeLimit = "Match time limit";
 	public static String autoRandomizeAmount = "Randomly pick amount of items every match";
+	public static String advertise = "Advertise game in search";
 	public static String autoRestoreWorld = "Auto restore world changes after match";
 	public static String warpToSafety = "Teleport players before and after match";
 	public static String allowMidgameJoin = "Allow players to join mid-game";
@@ -57,14 +58,15 @@ public final class RMText {
 	public static String cMaxGames = "#The maximum number of games allowed on server (0 = unlimited)";
 	public static String cMaxGamesPerPlayer = "#The maximum number of games allowed per player. (0 = unlimited)";
 	public static String cDefaultSettings1 = "#All settings from here on out are the game defaults.";
-	public static String cDefaultSettings2 = "#Using :lock after a setting locks it for all games, e.g. cMinPlayersPerTeam=2:lock";
-	public static String cMinPlayersPerGame = "#The minimum number of players allowed per game. The Lowest number is 1 player. Only numbers higher than the amount of teams in a game will be evaluated.";
-	public static String cMaxPlayersPerGame = "#The maximum number of players allowed per game. (0 = unlimited)";
-	public static String cMinPlayersPerTeam = "#The minimum number of players allowed per team. The lowest number is 1 player";
-	public static String cMaxPlayersPerTeam = "#The maximum number of players allowed per team. (0 = unlimited)";
+	public static String cDefaultSettings2 = "#Using :lock after a setting locks it for all games, e.g. minPlayersPerTeam=2:lock";
+	public static String cMinPlayers = "#The minimum number of players allowed per game. The Lowest number is 1 player. Only numbers higher than the amount of teams in a game will be evaluated.";
+	public static String cMaxPlayers = "#The maximum number of players allowed per game. (0 = unlimited)";
+	public static String cMinTeamPlayers = "#The minimum number of players allowed per team. The lowest number is 1 player";
+	public static String cMaxTeamPlayers = "#The maximum number of players allowed per team. (0 = unlimited)";
 	public static String cTimeLimit = "#Match time limit (0 = no time limit)";
 	public static String cDefaultSettings3 = "#The following settings can be true or false.";
 	public static String cDefaultSettings4 = "#Using :lock after true/false locks the setting for all games, e.g. allowHacked=false:lock";
+	public static String cAdvertise = "#Advertise game in search.";
 	public static String cAutoRestoreWorld = "#Auto restore world changes after match.";
 	public static String cWarpToSafety = "#Teleport players before and after match.";
 	public static String cAllowMidgameJoin = "#Allow players to join mid-game.";
@@ -79,10 +81,26 @@ public final class RMText {
 	
 	public static String gPrepare = ChatColor.GOLD+"Prepare yourselves...";
 	public static String gStartMatch = ChatColor.GOLD+"ResourceMadness!";
+	public static String gSuddenDeath = paintString("Sudden Death!", ChatColor.DARK_PURPLE, ChatColor.LIGHT_PURPLE);
 	
 	HashMap<Integer, String> gTimeLeft = new HashMap<Integer, String>();
 	
 	private RMText(){
+	}
+	
+	public static String paintString(String str, ChatColor... colors){
+		if((str==null)||(str.length() == 0)) return str;
+		if((colors == null)||(colors.length == 0)) return str;
+		String line = "";
+		int pos = 0;
+		int colorPos = 0;
+		while(pos<str.length()){
+			line+=colors[colorPos]+str.substring(pos, pos+1);
+			colorPos++;
+			pos++;
+			if(colorPos==colors.length) colorPos = 0;
+		}
+		return line;
 	}
 	
 	public static String stripLast(String str, String s){
@@ -200,8 +218,6 @@ public final class RMText {
 	//Get Sorted Items from ItemStack Array
 	public static String getStringSortedItems(List<ItemStack> items){
 		String strItems = "";
-		RMDebug.log(Level.WARNING, "test");
-		RMDebug.log(Level.WARNING, "size:"+items.size());
 		HashMap<Integer, ItemStack> hashItems = RMInventoryHelper.combineItemsByItemStack(items);
 		
 		Integer[] array = hashItems.keySet().toArray(new Integer[hashItems.size()]);

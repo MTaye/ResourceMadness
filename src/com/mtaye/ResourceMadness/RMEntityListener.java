@@ -38,7 +38,6 @@ public class RMEntityListener extends EntityListener{
 	@Override
 	public void onEntityExplode(EntityExplodeEvent e){
 		List<Block> blockList = e.blockList();
-		RMDebug.warning("ENTITY EXPLODE");
 		if(RMGame.getGames().size()!=0){
 			List<RMGame> affected = new ArrayList<RMGame>();
 			for(RMGame game : RMGame.getGames().values()){

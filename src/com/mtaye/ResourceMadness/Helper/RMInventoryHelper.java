@@ -142,14 +142,7 @@ public final class RMInventoryHelper {
 		for(int i=0; i<contents.length; i++){
 			ItemStack invItem = contents[i];
 			if(invItem==null) continue;
-			RMDebug.warning("FOUND invItem:"+invItem.getType()+",item:"+item.getType());
-			if(invItem.getType() == item.getType()){
-				RMDebug.warning("FOUND invItemAmount:"+invItem.getAmount()+",itemAmount:"+item.getAmount());
-				if(invItem.getAmount() == item.getAmount()){
-					RMDebug.warning("YUP");
-					inv.clear(i);
-				}
-			}
+			if(invItem.getType() == item.getType()) if(invItem.getAmount() == item.getAmount()) inv.clear(i);
 		}
 	}
 }

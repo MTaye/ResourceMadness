@@ -248,8 +248,6 @@ public class RMTeam {
 	}
 	
 	public boolean hasMininumPlayers(){
-		RMDebug.warning("getPlayers().length:"+getPlayers().length);
-		RMDebug.warning("getGame().getConfig().getMinTeamPlayers():"+getGame().getConfig().getMinTeamPlayers());
 		if(getPlayers().length<getGame().getConfig().getMinTeamPlayers()) return false;
 		return true;
 	}

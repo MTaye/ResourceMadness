@@ -90,12 +90,10 @@ public class RMStash {
 			int id = map.getKey();
 			int amount = getAmountById(id);
 			if(amount!=0){
-				RMDebug.warning("AMOUNT!=0::::::"+amount);
 				if(!modified.containsKey(id)) modified.put(id, amount);
 				else modified.put(id, modified.get(id)+amount);
 			}
 			else{
-				RMDebug.warning("AMOUNT==0::::::"+amount);
 				if(!removed.containsKey(id)) if(_removed.containsKey(id)) removed.put(id, _removed.get(id));
 				else if(_removed.containsKey(id)) removed.put(id, removed.get(id)+_removed.get(id));
 			}
@@ -419,7 +417,6 @@ public class RMStash {
 			items = rmStashItem.removeByAmount(item.getAmount());
 			if(rmStashItem.getAmount()==0){
 				addItemsToChanged(_removed, items);
-				RMDebug.log(Level.SEVERE, "I HAVE REMOVED RMSTASH ITEM");
 				_items.remove(id);
 			}
 			else addItemsToChanged(_modified, items);
@@ -433,7 +430,6 @@ public class RMStash {
 		if(_items.containsKey(id)){
 			items = _items.get(id).getItems();
 			addItemsToChanged(_removed,items);
-			RMDebug.warning("I HAVE REMOVED THE ID FUCK!");
 			_items.remove(id);
 		}
 		return items;
@@ -548,8 +544,6 @@ public class RMStash {
 		List<ItemStack> addItems = new ArrayList<ItemStack>();
 		RMStash stashClone = this.clone();
 		for(int i=0; i<contents.length; i++){
-			RMDebug.warning("-- -- BEGIN -- --");
-			RMDebug.warning("CONTENTS["+i+"]");
 			ItemStack invItem = contents[i];
 			if((invItem!=null)&&(invItem.getType()!=Material.AIR)){
 				int id = invItem.getTypeId();
@@ -559,38 +553,17 @@ public class RMStash {
 					int hashAmount = hashItem.getAmount();
 					int stashAmount = stashClone.getAmountById(id);
 					int overflow = hashAmount - stashAmount;
-					RMDebug.warning("hashAmount:"+hashAmount);
-					RMDebug.warning("stashAmount:"+stashAmount);
-					RMDebug.warning("overflow:"+overflow);
-					
-					if(overflow==0){
-						RMDebug.warning("CONTINUE "+i);
-						continue;
-					}
-					if(overflow<0){
-						RMDebug.warning("OVERFLOW<0:"+overflow);
-						claimItems.addAll(stashClone.removeByIdAmount(id, -overflow));
-					}
+					if(overflow==0) continue;
+					if(overflow<0) claimItems.addAll(stashClone.removeByIdAmount(id, -overflow));
 					else{
-						RMDebug.warning("OVERFLOW>=0:"+overflow);
 						int overflowAmount = overflow;
 						overflow = overflowAmount - invItem.getAmount(); //STASH
-						RMDebug.warning("overflowItem:"+overflow);
 						ItemStack itemClone = invItem.clone();
 						itemClone.setAmount(invItem.getAmount()+(overflow<0?overflow:0));
 						stashClone.addItem(itemClone);
 						addItems.add(itemClone);
-						if(overflow>=0){
-							RMDebug.warning("OVERFLOW>=0 inv.clear("+i+")");
-							inv.clear(i);
-						}
-						else{
-							RMDebug.warning("OVERFLOW<0");
-							RMDebug.warning("rmItem.getAmount():"+invItem.getAmount());
-							invItem.setAmount(-overflow);
-							RMDebug.warning("rmItem.getAmount() NEW:"+invItem.getAmount());
-						}
-						RMDebug.warning("-- -- END -- --");
+						if(overflow>=0) inv.clear(i);
+						else invItem.setAmount(-overflow);
 					}
 				}
 			}
