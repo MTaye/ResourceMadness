@@ -3,7 +3,6 @@ package com.mtaye.ResourceMadness;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.logging.Level;
 
 import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
@@ -18,7 +17,7 @@ import com.mtaye.ResourceMadness.RMGame.MinMaxType;
  * @author M-Taye
  */
 public class RMGameConfig {
-	public RM plugin;
+	private RM plugin;
 
 	private RMPartList _partList = new RMPartList();
 	private String _worldName;

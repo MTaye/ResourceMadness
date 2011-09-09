@@ -13,7 +13,6 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
-import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -36,7 +35,8 @@ import ru.tehkode.permissions.bukkit.PermissionsEx;
 
 import java.io.*;
 
-import org.bukkit.permissions.Permission;
+import org.bukkit.util.config.Configuration;
+
 import com.iConomy.*;
 import com.iConomy.system.Account;
 import com.iConomy.system.Holdings;
@@ -80,7 +80,8 @@ public class RM extends JavaPlugin {
 	//private RMLogListener logListener = new RMLogListener(this);
 	
 	public static enum ClaimType { ITEMS, FOUND, REWARD, TOOLS, CHEST, NONE };
-	public static enum DataType { CONFIG, STATS, PLAYER, GAME, LOG, TEMPLATE };
+	public static enum DataType { CONFIG, STATS, PLAYER, GAME, LOG, TEMPLATE, YAML_CONFIG, YAML_STATS, YAML_PLAYER, YAML_GAME };
+	public static enum SaveType { MINI, YAML }; 
 	
 	private RMWatcher watcher;
 	private int watcherid;
@@ -103,8 +104,8 @@ public class RM extends JavaPlugin {
 	public void onEnable(){
 		log = getServer().getLogger();
         RMDebug.enable();
-	
-		//setupPermissions();
+
+        //setupPermissions();
 		PluginManager pm = getServer().getPluginManager();
 		pm.registerEvent(Type.PLUGIN_ENABLE, new iConomyServer(this), Priority.Monitor, this);
 		pm.registerEvent(Type.PLUGIN_DISABLE, new iConomyServer(this), Priority.Monitor, this);
@@ -1045,7 +1046,7 @@ public class RM extends JavaPlugin {
 	}
 	public void saveTemplate(RMFilterTemplate template){
 		if(template==null) return;
-		File folder = new File(getDataFolder()+"/template");
+		File folder = new File(getDataFolder()+File.separator+"template");
 		if(!folder.exists()){
 			log.log(Level.INFO, RMText.preLog+"Creating templates directory...");
 			folder.mkdir();
@@ -1054,17 +1055,19 @@ public class RM extends JavaPlugin {
 	public void saveAllBackup(){
 		log.log(Level.INFO, RMText.preLog+"Autosaving...");
 		if(RMGame.getGames().size()==0) return;
-		File folder = new File(getDataFolder()+"/backup");
+		File folder = new File(getDataFolder()+File.separator+"backup");
 		if(!folder.exists()){
 			log.log(Level.INFO, RMText.preLog+"Creating backup directory...");
 			folder.mkdir();
 		}
-		File file = new File(folder.getAbsolutePath()+"/config.txt");
+		File file = new File(folder.getAbsolutePath()+File.separator+"config.txt");
 		if(!file.exists()) save(DataType.CONFIG, false, file);
-		save(DataType.STATS, false, new File(folder.getAbsolutePath()+"/stats.txt"));
-		save(DataType.PLAYER, false, new File(folder.getAbsolutePath()+"/playerdata.txt"));
-		save(DataType.GAME, false, new File(folder.getAbsolutePath()+"/gamedata.txt"));
-		save(DataType.LOG, true, new File(folder.getAbsolutePath()+"/gamelogdata.txt"));
+		save(DataType.STATS, false, new File(folder.getAbsolutePath()+File.separator+"stats.txt"));
+		//save(DataType.PLAYER, false, new File(folder.getAbsolutePath()+File.separator+"playerdata.txt"));
+		saveYaml(DataType.PLAYER, new File(folder.getAbsolutePath()+File.separator+"playerdata.yml"));
+		//save(DataType.GAME, false, new File(folder.getAbsolutePath()+File.separator+"gamedata.txt"));
+		saveYaml(DataType.GAME, new File(folder.getAbsolutePath()+File.separator+"gamedata.yml"));
+		save(DataType.LOG, true, new File(folder.getAbsolutePath()+File.separator+"gamelogdata.txt"));
 	}
 	public void saveConfig(){
 		File folder = getDataFolder();
@@ -1072,7 +1075,7 @@ public class RM extends JavaPlugin {
 			log.log(Level.INFO, RMText.preLog+"Creating config directory...");
 			folder.mkdir();
 		}
-		File file = new File(folder.getAbsolutePath()+"/config.txt");
+		File file = new File(folder.getAbsolutePath()+File.separator+"config.txt");
 		if(!file.exists()) save(DataType.CONFIG, false, file);
 	}
 	public void saveAll(){
@@ -1082,12 +1085,161 @@ public class RM extends JavaPlugin {
 			log.log(Level.INFO, RMText.preLog+"Creating config directory...");
 			folder.mkdir();
 		}
-		File file = new File(folder.getAbsolutePath()+"/config.txt");
+		File file = new File(folder.getAbsolutePath()+File.separator+"config.txt");
 		if(!file.exists()) save(DataType.CONFIG, false, file);
-		save(DataType.STATS, false, new File(folder.getAbsolutePath()+"/stats.txt"));
-		save(DataType.PLAYER, false, new File(folder.getAbsolutePath()+"/playerdata.txt"));
-		save(DataType.GAME, false, new File(folder.getAbsolutePath()+"/gamedata.txt"));
-		save(DataType.LOG, true, new File(folder.getAbsolutePath()+"/gamelogdata.txt"));
+		save(DataType.STATS, false, new File(folder.getAbsolutePath()+File.separator+"stats.txt"));
+		//save(DataType.PLAYER, false, new File(folder.getAbsolutePath()+File.separator+"playerdata.txt"));
+		saveYaml(DataType.PLAYER, new File(folder.getAbsolutePath()+File.separator+"playerdata.yml"));
+		//save(DataType.GAME, false, new File(folder.getAbsolutePath()+File.separator+"gamedata.txt"));
+		saveYaml(DataType.GAME, new File(folder.getAbsolutePath()+File.separator+"gamedata.yml"));
+		save(DataType.LOG, true, new File(folder.getAbsolutePath()+File.separator+"gamelogdata.txt"));
+	}
+	
+	public boolean saveYaml(DataType dataType, File file){
+		if(file==null){
+			log.log(Level.WARNING, "Cannot load data. Data type unknown!");
+			return false;
+		}
+		if(!file.exists()){
+			switch(dataType){
+				case CONFIG: log.log(Level.INFO, RMText.preLog+"Data file not found! Creating one..."); break;
+				case STATS: log.log(Level.INFO, RMText.preLog+"Stats file not found! Creating one..."); break;
+				case PLAYER: log.log(Level.INFO, RMText.preLog+"Player Data file not found! Creating one..."); break;
+				case GAME: log.log(Level.INFO, RMText.preLog+"Game Data file not found! Creating one..."); break;
+				case LOG: log.log(Level.INFO, RMText.preLog+"Game Data file not found! Creating one..."); break;
+			}
+			try{
+				file.createNewFile();
+			}
+			catch(Exception e){
+				e.printStackTrace();
+				return false;
+			}
+		}
+		try{
+			Configuration yml = new Configuration(file);
+			yml.load();
+			switch(dataType){
+				case CONFIG:
+					break;
+				case STATS:
+					break;
+				case PLAYER:
+					for(RMPlayer rmp : RMPlayer.getPlayers().values()){
+						String root = rmp.getName()+".";
+						setProperty(yml, root+"ready", rmp.getReady());
+						//Stats
+						root = rmp.getName()+".stats.";
+						RMStats stats = rmp.getStats();
+						setProperty(yml, root+"wins", stats.getWins());
+						setProperty(yml, root+"losses", stats.getLosses());
+						setProperty(yml, root+"timesplayed", stats.getTimesPlayed());
+						setProperty(yml, root+"itemsfoundtotal", stats.getItemsFoundTotal());
+						//Data
+						root = rmp.getName()+".data.";
+						setProperty(yml, root+"items", RMInventoryHelper.encodeInventoryToString(rmp.getItems().getItemsArray(), ClaimType.ITEMS));
+						setProperty(yml, root+"reward", RMInventoryHelper.encodeInventoryToString(rmp.getReward().getItemsArray(), ClaimType.REWARD)); 
+						setProperty(yml, root+"tools", RMInventoryHelper.encodeInventoryToString(rmp.getTools().getItemsArray(), ClaimType.TOOLS));
+					}
+					break;
+				case GAME:
+					HashMap<Integer, RMGame> games = RMGame.getGames();
+					for(Integer id : games.keySet()){
+						RMGameConfig config = games.get(id).getConfig();
+						Block b = config.getPartList().getMainBlock();
+						String location = b.getX()+","+b.getY()+","+b.getZ();
+						String root = id+".";
+						setProperty(yml, root+"location", location);
+						setProperty(yml, root+"world",config.getWorldName());
+						setProperty(yml, root+"owner",config.getOwnerName());
+						setProperty(yml, root+"state",config.getState().ordinal());
+						setProperty(yml, root+"interface",config.getInterface().ordinal());
+						setProperty(yml, root+"timeelapsed",config.getTimer().getTimeElapsed());
+						//Settings
+						root = id+".settings.";
+						setProperty(yml, root+"minplayers", config.getMinPlayers());
+						setProperty(yml, root+"maxplayers", config.getMaxPlayers());
+						setProperty(yml, root+"minteamplayers", config.getMinTeamPlayers());
+						setProperty(yml, root+"maxteamplayers", config.getMaxTeamPlayers());
+						setProperty(yml, root+"timelimit", config.getTimer().getTimeLimit());
+						setProperty(yml, root+"autorandomizeamount", config.getAutoRandomizeAmount());
+						setProperty(yml, root+"advertise", config.getAdvertise());
+						setProperty(yml, root+"autorestoreworld", config.getAutoRestoreWorld());
+						setProperty(yml, root+"warptosafety", config.getWarpToSafety());
+						setProperty(yml, root+"allowmidgamejoin", config.getAllowMidgameJoin());
+						setProperty(yml, root+"healplayer", config.getHealPlayer());
+						setProperty(yml, root+"clearplayerinventory", config.getClearPlayerInventory());
+						setProperty(yml, root+"warnunequal", config.getWarnUnequal());
+						setProperty(yml, root+"allowunequal", config.getAllowUnequal());
+						setProperty(yml, root+"warnhackeditems", config.getWarnHackedItems());
+						setProperty(yml, root+"allowhackeditems", config.getAllowHackedItems());
+						setProperty(yml, root+"infinitereward", config.getInfiniteReward());
+						setProperty(yml, root+"infinitetools", config.getInfiniteTools());
+						//Stats
+						root = id+".stats.";
+						RMStats stats = config.getStats();
+						setProperty(yml, root+"wins", stats.getWins());
+						setProperty(yml, root+"losses", stats.getLosses());
+						setProperty(yml, root+"timesplayed", stats.getTimesPlayed());
+						setProperty(yml, root+"itemsfoundtotal",stats.getItemsFoundTotal());
+						
+						////Teams
+						for(int i=0; i<config.getTeams().size(); i++){
+							root = id+".data.teams."+i+".";
+							RMTeam team = config.getTeams().get(i);
+							setProperty(yml, root+"isdisqualified", team.isDisqualified());
+							setProperty(yml, root+"color", team.getTeamColor().name());
+							List<String> players = new ArrayList<String>();
+							for(RMPlayer rmp : team.getPlayers()){
+								players.add(rmp.getName());
+							}
+							setProperty(yml, root+"players", players);
+							setProperty(yml, root+"chest", RMInventoryHelper.encodeInventoryToString(team.getChest().getStash().getItemsArray(), ClaimType.CHEST));
+							setProperty(yml, root+"items", RMFilter.encodeFilterToString(team.getChest().getRMItems(), FilterState.ITEMS));
+						}
+						//Items
+						root = id+".data.";
+						setProperty(yml, root+"filter", RMFilter.encodeFilterToString(config.getFilter().getItems(), FilterState.FILTER));
+						setProperty(yml, root+"items", RMFilter.encodeFilterToString(config.getItems().getItems(), FilterState.ITEMS));
+						setProperty(yml, root+"found", RMInventoryHelper.encodeInventoryToString(config.getFoundArray(), ClaimType.FOUND));
+						setProperty(yml, root+"reward", RMInventoryHelper.encodeInventoryToString(config.getRewardArray(), ClaimType.REWARD));
+						setProperty(yml, root+"tools", RMInventoryHelper.encodeInventoryToString(config.getToolsArray(), ClaimType.TOOLS));
+					}
+					break;
+				case LOG:
+					break;
+			}
+			yml.save();
+		}
+		catch(Exception e){
+			e.printStackTrace();
+			return false;
+		}
+		if((file.exists())&&(file.length()>0)){
+			File folderBackup = new File(getDataFolder()+File.separator+"backup");
+			if(!folderBackup.exists()){
+				try{
+					folderBackup.mkdir();
+				}
+				catch (Exception e){
+					e.printStackTrace();
+				}
+			}
+			if(!RMHelper.copyFile(file, new File(folderBackup.getAbsolutePath()+File.separator+file.getName()))){
+				switch(dataType){
+					case CONFIG: log.log(Level.INFO, RMText.preLog+"Could not create config backup file."); break;
+					case STATS: log.log(Level.INFO, RMText.preLog+"Could not create stats backup file."); break;
+					case PLAYER: log.log(Level.INFO, RMText.preLog+"Could not create player data backup file."); break;
+					case GAME: log.log(Level.INFO, RMText.preLog+"Could not create game data backup file."); break;
+					case LOG: log.log(Level.INFO, RMText.preLog+"Could not create game log data backup file."); break;
+				}
+			}
+		}
+		return true;
+	}
+	
+	public void setProperty(Configuration yml, String root, Object x){
+		yml.setProperty(root, x);
 	}
 	
 	//Save Data
@@ -1114,7 +1266,7 @@ public class RM extends JavaPlugin {
 		}
 		if((file.exists())&&(file.length()>0)){
 			
-			File folderBackup = new File(getDataFolder()+"/backup");
+			File folderBackup = new File(getDataFolder()+File.separator+"backup");
 			if(!folderBackup.exists()){
 				try{
 					folderBackup.mkdir();
@@ -1123,7 +1275,7 @@ public class RM extends JavaPlugin {
 					e.printStackTrace();
 				}
 			}
-			if(!RMHelper.copyFile(file, new File(folderBackup.getAbsolutePath()+"/"+file.getName()))){
+			if(!RMHelper.copyFile(file, new File(folderBackup.getAbsolutePath()+File.separator+file.getName()))){
 				switch(dataType){
 					case CONFIG: log.log(Level.INFO, RMText.preLog+"Could not create config backup file."); break;
 					case STATS: log.log(Level.INFO, RMText.preLog+"Could not create stats backup file."); break;
@@ -1278,7 +1430,7 @@ public class RM extends JavaPlugin {
 						line += ";";
 						//Stats
 						RMStats stats = config.getStats();
-						line += stats.getWins()+","+stats.getLosses()+","+stats.getTimesPlayed()+","+/*stats.getItemsFound()+","+*/stats.getItemsFoundTotal()+";";
+						line += stats.getWins()+","+stats.getLosses()+","+stats.getTimesPlayed()+","+stats.getItemsFoundTotal()+";";
 						//Players
 						for(RMTeam rmt : config.getTeams()){
 							line+=rmt.getTeamColor().name()+":"+rmt.isDisqualified()+":";
@@ -1326,6 +1478,8 @@ public class RM extends JavaPlugin {
 						bw.write("\n");
 					}
 					break;
+				case YAML_GAME:
+					break;
 			}
 			bw.flush();
 			output.close();
@@ -1347,9 +1501,220 @@ public class RM extends JavaPlugin {
 		saveConfig();
 		load(DataType.CONFIG, false, true);
 		load(DataType.STATS, false, true);
-		load(DataType.PLAYER, false, true);
-		load(DataType.GAME, false, true);
+		//load(DataType.PLAYER, false, true);
+		loadYaml(DataType.PLAYER, true);
+		//load(DataType.GAME, false, true);
+		loadYaml(DataType.GAME, true);
 		load(DataType.LOG, true, true);
+	}
+	
+	public void loadYaml(DataType dataType, boolean loadBackup){
+		File folder = getDataFolder();
+		File file = null;
+		switch(dataType){
+			case CONFIG: file = new File(folder.getAbsolutePath()+File.separator+"config.yml"); break;
+			case STATS: file = new File(folder.getAbsolutePath()+File.separator+"stats.yml"); break;
+			case PLAYER: file = new File(folder.getAbsolutePath()+File.separator+"playerdata.yml"); break;
+			case GAME: file = new File(folder.getAbsolutePath()+File.separator+"gamedata.yml"); break;
+			case LOG: file = new File(folder.getAbsolutePath()+File.separator+"gamelogdata.yml"); break;
+		}
+		if(file==null){
+			log.log(Level.WARNING, RMText.preLog+"Cannot load data. Data type unknown!");
+			return;
+		}
+		if((file.exists())&&(file.length()>0)){
+			try {
+				Configuration yml = new Configuration(file);
+				yml.load();
+				switch(dataType){
+				case CONFIG:
+					break;
+				case STATS:
+					break;
+				case PLAYER:
+					List<String> players = yml.getKeys();
+					for(String player : players){
+						//name
+						RMPlayer rmp = new RMPlayer(player);
+						String root = player+".";
+						rmp.setReady(yml.getBoolean(root+"ready", false));
+						
+						//wins,losses,timesPlayed,itemsFound,itemsFoundTotal
+						root = player+".stats.";
+						RMStats stats = rmp.getStats();
+						stats.setWins(yml.getInt(root+"wins", -1));
+						stats.setLosses(yml.getInt(root+"losses", -1));
+						stats.setTimesPlayed(yml.getInt(root+"timesplayed", -1));
+						stats.setItemsFoundTotal(yml.getInt(root+"itemsfoundtotal", -1));
+						
+						//inventory items
+						root = player+".data.";
+						String data = yml.getString(root+"items");
+						if((data.length()>0)&&(!data.equalsIgnoreCase("ITEMS"))){
+							rmp.setItems(new RMStash(RMInventoryHelper.getItemStackByStringArray(data)));
+						}
+						//reward items
+						data = yml.getString(root+"reward");
+						if((data.length()>0)&&(!data.equalsIgnoreCase("REWARD"))){
+							rmp.setReward(new RMStash(RMInventoryHelper.getItemStackByStringArray(data)));
+						}
+						//tools items
+						data = yml.getString(root+"tools");
+						if((data.length()>0)&&(!data.equalsIgnoreCase("TOOLS"))){
+							rmp.setTools(new RMStash(RMInventoryHelper.getItemStackByStringArray(data)));
+						}
+					}
+					break;
+				case GAME:
+					//x,y,z,world,id,owner
+					List<String> ids = yml.getKeys();
+					for(String id : ids){
+						String root = id+".";
+						String[] location = yml.getString(root+"location").split(",");
+						int xLoc = RMHelper.getIntByString(location[0]);
+						int yLoc = RMHelper.getIntByString(location[1]);
+						int zLoc = RMHelper.getIntByString(location[2]);
+						World world = getServer().getWorld(yml.getString(root+"world"));
+						Block b = world.getBlockAt(xLoc, yLoc, zLoc);
+
+						RMGameConfig config = new RMGameConfig(this);
+						RMPartList partList = new RMPartList(b, this);
+						if(partList.getMainBlock()==null) return;
+						config.setPartList(partList);
+						config.setId(RMHelper.getIntByString(id));
+						config.setOwnerName(yml.getString(root+"owner"));
+						config.setState(RMHelper.getStateByInt(yml.getInt(root+"state", -1)));
+						config.setInterface(RMHelper.getInterfaceByInt(yml.getInt(root+"interface", -1)));
+						config.setTimer(new RMGameTimer(yml.getInt(root+"timeelapsed", -1)));
+						
+						//minPlayers,maxPlayers,minTeamPlayers,maxTeamPlayers,timeLimit,autoRandomizeAmount
+						//warpToSafety,autoRestoreWorld,warnHackedItems,allowHackedItems,allowPlayerLeave
+						root = id+".settings.";
+						config.setMinPlayers(yml.getInt(root+"minplayers", -1));
+						config.setMaxPlayers(yml.getInt(root+"maxplayers", -1));
+						config.setMinTeamPlayers(yml.getInt(root+"minteamplayers", -1));
+						config.setMaxTeamPlayers(yml.getInt(root+"maxteamplayers", -1));
+						config.getTimer().setTimeLimit(yml.getInt(root+"timelimit", -1));
+						config.setAutoRandomizeAmount(yml.getInt(root+"autorandomizeamount", -1));
+						config.setAdvertise(yml.getBoolean(root+"advertise", this.config.getAdvertise()));
+						config.setAutoRestoreWorld(yml.getBoolean(root+"autorestoreworld", this.config.getAutoRestoreWorld()));
+						config.setWarpToSafety(yml.getBoolean(root+"warptosafety", this.config.getWarpToSafety()));
+						config.setAllowMidgameJoin(yml.getBoolean(root+"allowmidgamejoin", this.config.getAllowMidgameJoin()));
+						config.setHealPlayer(yml.getBoolean(root+"healplayer", this.config.getHealPlayer()));
+						config.setClearPlayerInventory(yml.getBoolean(root+"clearplayerinventory", this.config.getClearPlayerInventory()));
+						config.setWarnUnequal(yml.getBoolean(root+"warnunequal", this.config.getWarnUnequal()));
+						config.setAllowUnequal(yml.getBoolean(root+"allowunequal", this.config.getAllowUnequal()));
+						config.setWarnHackedItems(yml.getBoolean(root+"warnhackeditems", this.config.getWarnHackedItems()));
+						config.setAllowHackedItems(yml.getBoolean(root+"allowhackeditems", this.config.getAllowHackedItems()));
+						config.setInfiniteReward(yml.getBoolean(root+"infinitereward", this.config.getInfiniteReward()));
+						config.setInfiniteTools(yml.getBoolean(root+"infinitetools", this.config.getInfiniteTools()));
+
+						//wins,losses,timesPlayed,itemsFound,itemsFoundTotal
+						root = id+".stats.";
+						RMStats gameStats = config.getStats();
+						gameStats.setWins(yml.getInt(root+"wins", -1));
+						gameStats.setLosses(yml.getInt(root+"losses", -1));
+						gameStats.setTimesPlayed(yml.getInt(root+"timesplayed", -1));
+						gameStats.setItemsFoundTotal(yml.getInt(root+"itemsfoundtotal", -1));
+						
+						//teams
+						List<RMTeam> rmTeams = config.getPartList().fetchTeams();
+						for(RMTeam rmt : rmTeams){
+							config.getTeams().add(rmt);
+						}
+						List<String> teamIds = yml.getKeys(id+".data.teams");
+						String data;
+						for(String teamId : teamIds){
+							root = id+".data.teams."+teamId+".";
+							RMTeam rmTeam = config.getTeams().get(Integer.parseInt(teamId));
+							if(rmTeam!=null){
+								rmTeam.isDisqualified(yml.getBoolean(root+"isdisqualified", false));
+								List<String> teamPlayers = yml.getStringList(root+"players", new ArrayList<String>());
+								if(teamPlayers!=null){
+									for(String player : teamPlayers){
+										RMPlayer rmp = RMPlayer.getPlayerByName(player);
+										if(rmp!=null) rmTeam.addPlayerSilent(rmp);
+									}
+								}
+								//team chest
+								data = yml.getString(root+"chest");
+								if((data.length()>0)&&(!data.equalsIgnoreCase("CHEST"))){
+									rmTeam.getChest().setStash(new RMStash(RMInventoryHelper.getItemStackByStringArray(data)));
+								}
+								//team items
+								data = yml.getString(root+"items");
+								if((data.length()>0)&&(!data.equalsIgnoreCase("ITEMS"))){
+									HashMap<Integer, RMItem> rmItems = RMFilter.getRMItemsByStringArray(Arrays.asList(data), true);
+									rmTeam.getChest().setRMItems(rmItems);
+								}
+							}
+						}
+							
+						//filter items
+						root = id+".data.";
+						data = yml.getString(root+"filter");
+						if((data.length()>0)&&(!data.equalsIgnoreCase("FILTER"))){
+							HashMap<Integer, RMItem> rmItems = RMFilter.getRMItemsByStringArray(Arrays.asList(data), true);
+							config.setFilter(new RMFilter(rmItems));
+						}
+						//game items
+						data = yml.getString(root+"items");
+						if((data.length()>0)&&(!data.equalsIgnoreCase("ITEMS"))){
+							HashMap<Integer, RMItem> rmItems = RMFilter.getRMItemsByStringArray(Arrays.asList(data), true);
+							config.setItems(new RMFilter(rmItems));
+						}
+						//found items
+						data = yml.getString(root+"found");
+						if((data.length()>0)&&(!data.equalsIgnoreCase("FOUND"))){
+							config.setFound(new RMStash(RMInventoryHelper.getItemStackByStringArray(data)));
+						}
+						//reward items
+						data = yml.getString(root+"reward");
+						if((data.length()>0)&&(!data.equalsIgnoreCase("REWARD"))){
+							config.setReward(new RMStash(RMInventoryHelper.getItemStackByStringArray(data)));
+						}
+						//tools items
+						data = yml.getString(root+"tools");
+						if((data.length()>0)&&(!data.equalsIgnoreCase("TOOLS"))){
+							config.setTools(new RMStash(RMInventoryHelper.getItemStackByStringArray(data)));
+						}
+						RMGame.tryAddGameFromConfig(config);
+					}
+					break;
+				case LOG:
+					break;
+				}
+				//saveConfig();
+			}
+			catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
+		else{
+			if(loadBackup){
+				if(RMHelper.copyFile(new File(getDataFolder().getAbsolutePath()+File.separator+"backup"+File.separator+file.getName()), file)){
+					loadYaml(dataType, false);
+				}
+				else{
+					switch(dataType){
+						case CONFIG: System.out.println("Could not find config backup file"); break;
+						case STATS: System.out.println("Could not find stats backup file"); break;
+						case PLAYER: System.out.println("Could not find player data backup file"); break;
+						case GAME: System.out.println("Could not find game data backup file"); break;
+						case LOG: System.out.println("Could not find game log data backup file"); break;
+					}
+				}
+			}
+			else{
+				switch(dataType){
+				case CONFIG: System.out.println("Could not find config file"); break;
+				case STATS: System.out.println("Could not find stats file"); break;
+				case PLAYER: System.out.println("Could not find player data file"); break;
+				case GAME: System.out.println("Could not find game data file"); break;
+				case LOG: System.out.println("Could not find game log data file"); break;
+				}
+			}
+		}
 	}
 	
 	public void load(DataType dataType, boolean useLZF, boolean loadBackup){
@@ -1357,11 +1722,11 @@ public class RM extends JavaPlugin {
 		File folder = getDataFolder();
 		File file = null;
 		switch(dataType){
-			case CONFIG: file = new File(folder.getAbsolutePath()+"/config.txt"); break;
-			case STATS: file = new File(folder.getAbsolutePath()+"/stats.txt"); break;
-			case PLAYER: file = new File(folder.getAbsolutePath()+"/playerdata.txt"); break;
-			case GAME: file = new File(folder.getAbsolutePath()+"/gamedata.txt"); break;
-			case LOG: file = new File(folder.getAbsolutePath()+"/gamelogdata.txt"); break;
+			case CONFIG: file = new File(folder.getAbsolutePath()+File.separator+"config.txt"); break;
+			case STATS: file = new File(folder.getAbsolutePath()+File.separator+"stats.txt"); break;
+			case PLAYER: file = new File(folder.getAbsolutePath()+File.separator+"playerdata.txt"); break;
+			case GAME: file = new File(folder.getAbsolutePath()+File.separator+"gamedata.txt"); break;
+			case LOG: file = new File(folder.getAbsolutePath()+File.separator+"gamelogdata.txt"); break;
 		}
 		if(file==null){
 			log.log(Level.WARNING, RMText.preLog+"Cannot load data. Data type unknown!");
@@ -1444,7 +1809,7 @@ public class RM extends JavaPlugin {
 		}
 		else{
 			if(loadBackup){
-				if(RMHelper.copyFile(new File(getDataFolder().getAbsolutePath()+"/backup/"+file.getName()), file)){
+				if(RMHelper.copyFile(new File(getDataFolder().getAbsolutePath()+File.separator+"backup"+File.separator+file.getName()), file)){
 					load(dataType, useLZF, false);
 				}
 				else{
@@ -1517,7 +1882,7 @@ public class RM extends JavaPlugin {
 		RMPartList partList = new RMPartList(b, this);
 		if(partList.getMainBlock()==null) return;
 		config.setPartList(partList);
-		
+		config.setId(RMHelper.getIntByString(args[4]));
 		config.setOwnerName(args[5]);
 		config.setState(RMHelper.getStateByInt(RMHelper.getIntByString(args[6])));
 		config.setInterface(RMHelper.getInterfaceByInt(RMHelper.getIntByString(args[7])));

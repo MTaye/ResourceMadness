@@ -3,8 +3,6 @@ package com.mtaye.ResourceMadness;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;

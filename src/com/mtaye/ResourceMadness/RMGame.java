@@ -2,11 +2,9 @@ package com.mtaye.ResourceMadness;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
 
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
@@ -15,7 +13,6 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.ChatColor;
@@ -23,7 +20,6 @@ import org.bukkit.ChatColor;
 import com.mtaye.ResourceMadness.RM.ClaimType;
 import com.mtaye.ResourceMadness.RMConfig.Lock;
 import com.mtaye.ResourceMadness.Helper.RMHelper;
-import com.mtaye.ResourceMadness.Helper.RMInventoryHelper;
 
 /**
  * ResourceMadness for Bukkit
@@ -54,7 +50,7 @@ public class RMGame {
 	private static RMPlayer _requestPlayer;
 	
 	public static enum Part { GLASS, STONE, CHEST, WALL_SIGN, WOOL; }
-	public static enum GameState { SETUP, COUNTDOWN, GAMEPLAY, SUDDEN_DEATH, GAMEOVER, PAUSED; }
+	public static enum GameState { SETUP, COUNTDOWN, GAMEPLAY, GAMEOVER, PAUSED; }
 	public static enum InterfaceState { FILTER, REWARD, TOOLS, FILTER_CLEAR, REWARD_CLEAR, TOOLS_CLEAR };
 	public static enum FilterType { ALL, CLEAR, BLOCK, ITEM, RAW, CRAFTED};
 	public static enum ClickState { LEFT, RIGHT, NONE };
@@ -81,7 +77,7 @@ public class RMGame {
 	public RMGame(RMGameConfig config, RM plugin){
 		RMGame.plugin = plugin;
 		_config = config;
-		_config.setId(getFreeId());
+		//_config.setId(getFreeId());
 	}
 	
 	//Config
@@ -402,53 +398,6 @@ public class RMGame {
 			}
 			rmStash.showChanged(rmp);
 		}
-	}
-	
-	/*
-	public HandleState addItem(ItemStack item, ClaimType claimType){
-		if((item!=null)&&(item.getType()!=Material.AIR)){
-			RMStash items = new RMStash();
-			switch(claimType){
-				case FOUND: items = _config.getFound(); break;
-				case REWARD: items = _config.getReward(); break;
-				case TOOLS: items = _config.getTools(); break;
-			}
-			return items.addItem(item);
-		}
-		return HandleState.NO_CHANGE;
-	}
-	
-	public HandleState addItem(ItemStack item, List<ItemStack> items){
-		for(ItemStack isItem : items){
-			if(isItem.getType() == item.getType()){
-				isItem.setAmount(isItem.getAmount()+item.getAmount());
-				return HandleState.MODIFY;
-			}
-		}
-		items.add(item);
-		return HandleState.ADD;
-	}
-	*/
-	
-	public HandleState removeItem(ItemStack item, ClaimType claimType){
-		if((item!=null)&&(item.getType()!=Material.AIR)){
-			RMStash items = new RMStash();
-			switch(claimType){
-				case REWARD: items = _config.getReward(); break;
-				case TOOLS: items = _config.getTools(); break;
-			}
-			/*
-			for(ItemStack isItem : items){
-				if(isItem.getType() == item.getType()){
-					if(item.getAmount()>isItem.getAmount()){
-						return HandleState.REMOVE;
-					}
-					else return HandleState.MODIFY;
-				}
-			}
-			*/
-		}
-		return HandleState.NO_CHANGE;
 	}
 	
 	//Claim
@@ -1573,10 +1522,10 @@ public class RMGame {
 			// Countdown State
 			case COUNTDOWN:
 				switch(mat){
-				case CHEST: case WALL_SIGN: case WOOL:
-					if(rmp.hasOwnerPermission(_config.getOwnerName())){
-						//stopGame(rmp);
-					}
+				case CHEST: case WALL_SIGN:
+					break;
+				case WOOL:
+					sendTeamInfo(rmp);
 					break;
 				}
 				break;
@@ -2470,79 +2419,95 @@ public class RMGame {
 	
 	//Set Min Players
 	public void setMinPlayers(RMPlayer rmp, int minPlayers){
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			_config.setMinPlayers(minPlayers);
-			_config.correctMinMaxNumbers(MinMaxType.MIN_PLAYERS);
-			rmp.sendMessage(RMText.minPlayers+": "+getTextMinPlayers());
-			sendMinMax(rmp);
-			updateSigns();
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		_config.setMinPlayers(minPlayers);
+		_config.correctMinMaxNumbers(MinMaxType.MIN_PLAYERS);
+		rmp.sendMessage(RMText.minPlayers+": "+getTextMinPlayers());
+		sendMinMax(rmp);
+		updateSigns();
 	}
 	
 	//Set Max Players
 	public void setMaxPlayers(RMPlayer rmp, int maxPlayers){
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			_config.setMaxPlayers(maxPlayers);
-			_config.correctMinMaxNumbers(MinMaxType.MAX_PLAYERS);
-			rmp.sendMessage(RMText.maxPlayers+": "+getTextMaxPlayers());
-			sendMinMax(rmp);
-			updateSigns();
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		_config.setMaxPlayers(maxPlayers);
+		_config.correctMinMaxNumbers(MinMaxType.MAX_PLAYERS);
+		rmp.sendMessage(RMText.maxPlayers+": "+getTextMaxPlayers());
+		sendMinMax(rmp);
+		updateSigns();
 	}
 	
 	//Set Min Team Players
 	public void setMinTeamPlayers(RMPlayer rmp, int minTeamPlayers){
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			_config.setMinTeamPlayers(minTeamPlayers);
-			_config.correctMinMaxNumbers(MinMaxType.MIN_TEAM_PLAYERS);
-			rmp.sendMessage(RMText.minTeamPlayers+": "+getTextMinTeamPlayers());
-			sendMinMax(rmp);
-			updateSigns();
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		_config.setMinTeamPlayers(minTeamPlayers);
+		_config.correctMinMaxNumbers(MinMaxType.MIN_TEAM_PLAYERS);
+		rmp.sendMessage(RMText.minTeamPlayers+": "+getTextMinTeamPlayers());
+		sendMinMax(rmp);
+		updateSigns();
 	}
 	
 	//Set Max Team Players
 	public void setMaxTeamPlayers(RMPlayer rmp, int maxTeamPlayers){
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			_config.setMaxTeamPlayers(maxTeamPlayers);
-			_config.correctMinMaxNumbers(MinMaxType.MAX_TEAM_PLAYERS);
-			rmp.sendMessage(RMText.maxTeamPlayers+": "+getTextMaxTeamPlayers());
-			sendMinMax(rmp);
-			updateSigns();
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		_config.setMaxTeamPlayers(maxTeamPlayers);
+		_config.correctMinMaxNumbers(MinMaxType.MAX_TEAM_PLAYERS);
+		rmp.sendMessage(RMText.maxTeamPlayers+": "+getTextMaxTeamPlayers());
+		sendMinMax(rmp);
+		updateSigns();
 	}
 	
 	//Set Max Items
 	public void setMaxItems(RMPlayer rmp, int maxItems){
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			_config.setMaxItems(maxItems);
-			updateSigns();
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		_config.setMaxItems(maxItems);
+		updateSigns();
 	}
 	
 	//Set Time Limit
 	public void setTimeLimit(RMPlayer rmp, int limit){
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			_config.getTimer().setTimeLimit(limit*60);
-			_config.getTimer().reset();
-			_config.getTimer().addTimeMessage(_config.getTimer().getTimeLimit());
-			rmp.sendMessage(RMText.timeLimit+": "+getTextTimeLimit());
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		_config.getTimer().setTimeLimit(limit*60);
+		_config.getTimer().reset();
+		_config.getTimer().addTimeMessage(_config.getTimer().getTimeLimit());
+		rmp.sendMessage(RMText.timeLimit+": "+getTextTimeLimit());
 	}
 	
 	//Set Randomize Amount
 	public void setRandomizeAmount(RMPlayer rmp, int amount){
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			_config.setRandomizeAmount(amount);
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		_config.setRandomizeAmount(amount);
 	}
 	
 	//Set Auto Randomize Amount
 	public void setAutoRandomizeAmount(RMPlayer rmp, int amount){
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			_config.setAutoRandomizeAmount(amount);
-			rmp.sendMessage("Auto randomize amount every match: "+getTextAutoRandomizeAmount());
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		_config.setAutoRandomizeAmount(amount);
+		rmp.sendMessage("Auto randomize amount every match: "+getTextAutoRandomizeAmount());
 	}
 	
 	//SET & TOGGLE
@@ -2552,11 +2517,13 @@ public class RMGame {
 			rmp.sendMessage(RMText.noChangeLocked);
 			return;
 		}
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			if(i==-1) _config.toggleAdvertise();
-			else _config.setAdvertise(i>0?true:false);
-			rmp.sendMessage(RMText.advertise+": "+isTrueFalse(_config.getAdvertise()));
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		if(i==-1) _config.toggleAdvertise();
+		else _config.setAdvertise(i>0?true:false);
+		rmp.sendMessage(RMText.advertise+": "+isTrueFalse(_config.getAdvertise()));
 	}
 	
 	//Set Toggle Auto Restore World
@@ -2565,11 +2532,13 @@ public class RMGame {
 			rmp.sendMessage(RMText.noChangeLocked);
 			return;
 		}
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			if(i==-1) _config.toggleAutoRestoreWorld();
-			else _config.setAutoRestoreWorld(i>0?true:false);
-			rmp.sendMessage(RMText.autoRestoreWorld+": "+isTrueFalse(_config.getAutoRestoreWorld()));
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		if(i==-1) _config.toggleAutoRestoreWorld();
+		else _config.setAutoRestoreWorld(i>0?true:false);
+		rmp.sendMessage(RMText.autoRestoreWorld+": "+isTrueFalse(_config.getAutoRestoreWorld()));
 	}
 	
 	//Set Toggle Warp to Safety
@@ -2578,11 +2547,13 @@ public class RMGame {
 			rmp.sendMessage(RMText.noChangeLocked);
 			return;
 		}
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			if(i==-1) _config.toggleWarpToSafety();
-			else _config.setWarpToSafety(i>0?true:false);
-			rmp.sendMessage(RMText.warpToSafety+": "+isTrueFalse(_config.getWarpToSafety()));
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		if(i==-1) _config.toggleWarpToSafety();
+		else _config.setWarpToSafety(i>0?true:false);
+		rmp.sendMessage(RMText.warpToSafety+": "+isTrueFalse(_config.getWarpToSafety()));
 	}
 	
 	//Set Toggle Midgame Join
@@ -2591,11 +2562,13 @@ public class RMGame {
 			rmp.sendMessage(RMText.noChangeLocked);
 			return;
 		}
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			if(i==-1) _config.toggleAllowMidgameJoin();
-			else _config.setAllowMidgameJoin(i>0?true:false);
-			rmp.sendMessage(RMText.allowMidgameJoin+": "+isTrueFalse(_config.getAllowMidgameJoin()));
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		if(i==-1) _config.toggleAllowMidgameJoin();
+		else _config.setAllowMidgameJoin(i>0?true:false);
+		rmp.sendMessage(RMText.allowMidgameJoin+": "+isTrueFalse(_config.getAllowMidgameJoin()));
 	}
 	
 	//Set Toggle Heal Player
@@ -2604,11 +2577,13 @@ public class RMGame {
 			rmp.sendMessage(RMText.noChangeLocked);
 			return;
 		}
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			if(i==-1) _config.toggleHealPlayer();
-			else _config.setHealPlayer(i>0?true:false);
-			rmp.sendMessage(RMText.healPlayer+": "+isTrueFalse(_config.getHealPlayer()));
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		if(i==-1) _config.toggleHealPlayer();
+		else _config.setHealPlayer(i>0?true:false);
+		rmp.sendMessage(RMText.healPlayer+": "+isTrueFalse(_config.getHealPlayer()));
 	}
 	
 	//Set Toggle Clear Player Inventory
@@ -2617,11 +2592,13 @@ public class RMGame {
 			rmp.sendMessage(RMText.noChangeLocked);
 			return;
 		}
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			if(i==-1) _config.toggleClearPlayerInventory();
-			else _config.setClearPlayerInventory(i>0?true:false);
-			rmp.sendMessage(RMText.clearPlayerInventory+": "+isTrueFalse(_config.getClearPlayerInventory()));
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		if(i==-1) _config.toggleClearPlayerInventory();
+		else _config.setClearPlayerInventory(i>0?true:false);
+		rmp.sendMessage(RMText.clearPlayerInventory+": "+isTrueFalse(_config.getClearPlayerInventory()));
 	}
 	
 	//Set Warn Unequal
@@ -2630,11 +2607,13 @@ public class RMGame {
 			rmp.sendMessage(RMText.noChangeLocked);
 			return;
 		}
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			if(i==-1) _config.toggleWarnUnequal();
-			else _config.setWarnUnequal(i>0?true:false);
-			rmp.sendMessage(RMText.warnUnequal+": "+isTrueFalse(_config.getWarnUnequal()));
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		if(i==-1) _config.toggleWarnUnequal();
+		else _config.setWarnUnequal(i>0?true:false);
+		rmp.sendMessage(RMText.warnUnequal+": "+isTrueFalse(_config.getWarnUnequal()));
 	}
 	
 	//Set Allow Unequal
@@ -2643,11 +2622,13 @@ public class RMGame {
 			rmp.sendMessage(RMText.noChangeLocked);
 			return;
 		}
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			if(i==-1) _config.toggleAllowUnequal();
-			else _config.setAllowUnequal(i>0?true:false);
-			rmp.sendMessage(RMText.allowUnequal+": "+isTrueFalse(_config.getAllowUnequal()));
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		if(i==-1) _config.toggleAllowUnequal();
+		else _config.setAllowUnequal(i>0?true:false);
+		rmp.sendMessage(RMText.allowUnequal+": "+isTrueFalse(_config.getAllowUnequal()));
 	}
 	
 	//Set Toggle Warn Hacked Items
@@ -2656,11 +2637,13 @@ public class RMGame {
 			rmp.sendMessage(RMText.noChangeLocked);
 			return;
 		}
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			if(i==-1) _config.toggleWarnHackedItems();
-			else _config.setWarnHackedItems(i>0?true:false);
-			rmp.sendMessage(RMText.warnHackedItems+": "+isTrueFalse(_config.getWarnHackedItems()));
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		if(i==-1) _config.toggleWarnHackedItems();
+		else _config.setWarnHackedItems(i>0?true:false);
+		rmp.sendMessage(RMText.warnHackedItems+": "+isTrueFalse(_config.getWarnHackedItems()));
 	}
 	
 	//Set Toggle Allow Hacked Items
@@ -2669,11 +2652,13 @@ public class RMGame {
 			rmp.sendMessage(RMText.noChangeLocked);
 			return;
 		}
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			if(i==-1) _config.toggleAllowHackedItems();
-			else _config.setAllowHackedItems(i>0?true:false);
-			rmp.sendMessage(RMText.allowHackedItems+": "+isTrueFalse(_config.getAllowHackedItems()));
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		if(i==-1) _config.toggleAllowHackedItems();
+		else _config.setAllowHackedItems(i>0?true:false);
+		rmp.sendMessage(RMText.allowHackedItems+": "+isTrueFalse(_config.getAllowHackedItems()));
 	}
 	
 	//Set Infinite Reward
@@ -2682,11 +2667,13 @@ public class RMGame {
 			rmp.sendMessage(RMText.noChangeLocked);
 			return;
 		}
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			if(i==-1) _config.toggleInfiniteReward();
-			else _config.setInfiniteReward(i>0?true:false);
-			rmp.sendMessage(RMText.infiniteReward+": "+isTrueFalse(_config.getInfiniteReward()));
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		if(i==-1) _config.toggleInfiniteReward();
+		else _config.setInfiniteReward(i>0?true:false);
+		rmp.sendMessage(RMText.infiniteReward+": "+isTrueFalse(_config.getInfiniteReward()));
 	}
 	
 	//Set Infinite Tools
@@ -2695,11 +2682,13 @@ public class RMGame {
 			rmp.sendMessage(RMText.noChangeLocked);
 			return;
 		}
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			if(i==-1) _config.toggleInfiniteTools();
-			else _config.setInfiniteTools(i>0?true:false);
-			rmp.sendMessage(RMText.infiniteTools+": "+isTrueFalse(_config.getInfiniteTools()));
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		if(i==-1) _config.toggleInfiniteTools();
+		else _config.setInfiniteTools(i>0?true:false);
+		rmp.sendMessage(RMText.infiniteTools+": "+isTrueFalse(_config.getInfiniteTools()));
 	}
 	
 	//Is True / False
@@ -2734,7 +2723,7 @@ public class RMGame {
 	
 	//Get Text Time Limit
 	public String getTextTimeLimit(){
-		return (_config.getTimer().getTimeLimit()>0?(ChatColor.GREEN+""+_config.getTimer().getTextTime()):(ChatColor.GRAY+"No limit"));
+		return (_config.getTimer().getTimeLimit()>0?(ChatColor.GREEN+""+_config.getTimer().getTextTimeLimit()):(ChatColor.GRAY+"No limit"));
 	}
 	
 	//Get Text Players of Max
@@ -2775,13 +2764,15 @@ public class RMGame {
 			rmp.sendMessage(RMText.noPermissionAction);
 			return;
 		}
-		if(rmp.hasOwnerPermission(_config.getOwnerName())){
-			String items = RMText.getStringSortedItems(_config.getFound().getItems());
-			if(items.length()>0){
-				rmp.sendMessage(ChatColor.YELLOW+"Found items: "+items);
-			}
-			else rmp.sendMessage(ChatColor.YELLOW+"No found items.");
+		if(!rmp.hasOwnerPermission(_config.getOwnerName())){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
 		}
+		String items = RMText.getStringSortedItems(_config.getFound().getItems());
+		if(items.length()>0){
+			rmp.sendMessage(ChatColor.YELLOW+"Found items: "+items);
+		}
+		else rmp.sendMessage(ChatColor.YELLOW+"No found items.");
 	}
 	
 	public void sendSettings(RMPlayer rmp, int page){

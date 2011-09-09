@@ -6,16 +6,13 @@ package com.mtaye.ResourceMadness;
 
 //import com.mtaye.ResourceMadness.RMBlock;
 import java.util.List;
-import java.util.logging.Level;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockBurnEvent;
-import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.block.BlockListener;
-import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.BlockPlaceEvent;

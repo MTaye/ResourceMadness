@@ -2,7 +2,6 @@ package com.mtaye.ResourceMadness;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 
 /**
  * ResourceMadness for Bukkit
@@ -18,7 +17,7 @@ public class RMConfig {
 		advertise, autoRestoreWorld, warpToSafety, keepIngame, allowMidgameJoin, healPlayer, clearPlayerInventory,
 		warnUnequal, allowUnequal, warnHackedItems, allowHackedItems, infiniteReward, infiniteTools };
 	
-	private List<Lock> _lock = new ArrayList<Lock>();
+	public List<Lock> _lock = new ArrayList<Lock>();
 	private int _autoSave = 10;
 	private PermissionType _permissionType = PermissionType.FALSE;
 	private boolean _useRestore = true;

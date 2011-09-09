@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -16,7 +15,6 @@ import org.bukkit.inventory.ItemStack;
 
 import com.mtaye.ResourceMadness.RM.ClaimType;
 import com.mtaye.ResourceMadness.RMGame.HandleState;
-import com.mtaye.ResourceMadness.Helper.RMInventoryHelper;
 
 public class RMStash {
 	public static RM plugin;

@@ -5,13 +5,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-import com.mtaye.ResourceMadness.RMDebug;
-import com.mtaye.ResourceMadness.RMItem;
 import com.mtaye.ResourceMadness.RMText;
 import com.mtaye.ResourceMadness.RM.ClaimType;
 

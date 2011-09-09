@@ -21,7 +21,6 @@ public class RMChest{
 	private Chest _chest;
 	private HashMap<Integer, RMItem> _items = new HashMap<Integer, RMItem>();
 	private RMTeam _team;
-	private List<ItemStack> _inventory = new ArrayList<ItemStack>();
 	private RMStash _stash = new RMStash();
 	
 	//Constructor

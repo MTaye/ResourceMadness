@@ -1,12 +1,8 @@
 package com.mtaye.ResourceMadness;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -24,10 +20,7 @@ import com.mtaye.ResourceMadness.RM.ClaimType;
 import com.mtaye.ResourceMadness.RMGame.FilterState;
 import com.mtaye.ResourceMadness.RMGame.FilterType;
 import com.mtaye.ResourceMadness.RMGame.ForceState;
-import com.mtaye.ResourceMadness.RMGame.GameState;
-import com.mtaye.ResourceMadness.RMGame.HandleState;
 import com.mtaye.ResourceMadness.RMGame.InterfaceState;
-import com.mtaye.ResourceMadness.Helper.RMInventoryHelper;
 
 /**
  * ResourceMadness for Bukkit
@@ -698,7 +691,8 @@ public class RMPlayer {
 		if(rmTeam!=null){
 			RMGame rmGame = rmTeam.getGame();
 			if(rmGame!=null){
-				if(rmGame.getConfig().getState()==GameState.GAMEPLAY){
+				switch(rmGame.getConfig().getState()){
+					case GAMEPLAY: case PAUSED:
 					return rmGame;
 				}
 			}
@@ -707,11 +701,17 @@ public class RMPlayer {
 	}
 	
 	public void onPlayerJoin(){
+		if(isIngame()){
+			RMGameTimer timer = getGameInProgress().getConfig().getTimer();
+			if(timer.getTimeLimit()!=0){
+				if(timer.getTimeElapsed()>timer.getTimeLimit()) sendMessage(RMText.gSuddenDeath);
+				else sendMessage(ChatColor.AQUA+timer.getTextTimeRemaining()+" remaining"); 
+			}
+		}
 	}
 	
 	public void onPlayerQuit(RMTeam rmTeam){
 		setReady(false);
-		
 		if(rmTeam!=null){
 			RMGame rmGame = rmTeam.getGame();
 			if(rmGame!=null){

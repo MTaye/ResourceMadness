@@ -113,6 +113,12 @@ public class RMGameTimer {
 	
 	//Special
 	public String getTextTime(){
+		return getTextTime(_timeElapsed);
+	}
+	public String getTextTimeRemaining(){
+		return getTextTime(getTimeRemaining());
+	}
+	public String getTextTimeLimit(){
 		return getTextTime(_timeLimit);
 	}
 	

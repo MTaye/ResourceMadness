@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
 import org.bukkit.ChatColor;
@@ -14,10 +12,6 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import com.mtaye.ResourceMadness.RM;
-import com.mtaye.ResourceMadness.RMGame;
-import com.mtaye.ResourceMadness.RMItem;
-import com.mtaye.ResourceMadness.RMTeam;
-import com.mtaye.ResourceMadness.RMText;
 import com.mtaye.ResourceMadness.RMGame.GameState;
 import com.mtaye.ResourceMadness.RMGame.InterfaceState;
 
