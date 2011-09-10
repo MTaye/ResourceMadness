@@ -35,7 +35,7 @@ public final class RMText {
 	public static String maxItems = "Max items";
 	public static String timeLimit = "Match time limit";
 	public static String autoRandomizeAmount = "Randomly pick amount of items every match";
-	public static String advertise = "Advertise game in search";
+	public static String advertise = "Advertise game in list";
 	public static String autoRestoreWorld = "Auto restore world changes after match";
 	public static String warpToSafety = "Teleport players before and after match";
 	public static String allowMidgameJoin = "Allow players to join mid-game";
@@ -64,7 +64,7 @@ public final class RMText {
 	public static String cTimeLimit = "#Match time limit (0 = no time limit)";
 	public static String cDefaultSettings3 = "#The following settings can be true or false.";
 	public static String cDefaultSettings4 = "#Using :lock after true/false locks the setting for all games, e.g. allowHacked=false:lock";
-	public static String cAdvertise = "#Advertise game in search.";
+	public static String cAdvertise = "#Advertise game in list.";
 	public static String cAutoRestoreWorld = "#Auto restore world changes after match.";
 	public static String cWarpToSafety = "#Teleport players before and after match.";
 	public static String cAllowMidgameJoin = "#Allow players to join mid-game.";

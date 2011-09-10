@@ -40,7 +40,7 @@ public class RMPlayerListener extends PlayerListener{
 								case SETUP:
 									if(rmp.hasOwnerPermission(rmGame.getConfig().getOwnerName())){
 										if(rmp.getPlayer().isSneaking()){
-											 if(b.getType()==Material.CHEST) e.setCancelled(true);
+											if(b.getType()==Material.CHEST) e.setCancelled(true);
 											rmGame.handleRightClick(b, rmp);
 										}
 									}
@@ -137,6 +137,14 @@ public class RMPlayerListener extends PlayerListener{
 										break;
 									case TOOLS:
 										rmGame.tryParseFilter(b, rmp);
+										break;
+									case TEMPLATE_SAVE:
+										RMDebug.warning("TEMPLATE SAVE:"+rmp.getRequestString());
+										rmGame.saveTemplate(rmp.getRequestString(), rmp);
+										rmp.clearRequestString();
+										break;
+									case TEMPLATE_LOAD:
+										rmGame.loadTemplate(rmp.loadTemplate(rmp.getRequestString()), rmp);
 										break;
 									case RESTORE:
 										rmGame.restoreWorld(rmp);

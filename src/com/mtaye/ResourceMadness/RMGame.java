@@ -20,6 +20,7 @@ import org.bukkit.ChatColor;
 import com.mtaye.ResourceMadness.RM.ClaimType;
 import com.mtaye.ResourceMadness.RMConfig.Lock;
 import com.mtaye.ResourceMadness.Helper.RMHelper;
+import com.mtaye.ResourceMadness.Helper.RMInventoryHelper;
 
 /**
  * ResourceMadness for Bukkit
@@ -193,7 +194,32 @@ public class RMGame {
 			return true;
 		}
 		return false;
-	}	
+	}
+	
+	//Template
+	public void saveTemplate(String template, RMPlayer rmp){
+		if(!rmp.hasPermission("resourcemadness.template.save")){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
+		}
+		RMTemplate rmTemplate = new RMTemplate(template, _config);
+		rmp.saveTemplate(rmTemplate);
+	}
+	public void loadTemplate(RMTemplate rmTemplate, RMPlayer rmp){
+		if(!rmp.hasPermission("resourcemadness.template.load")){
+			rmp.sendMessage(RMText.noPermissionAction);
+			return;
+		}
+		if(rmTemplate!=null){
+			_config.setFilter(rmTemplate.getParseFilter());
+			if(_config.getInfiniteReward()) _config.setReward(rmTemplate.getStashReward());
+			else _config.getReward().setItemsMatchInventory(rmp.getPlayer().getInventory(), rmp, ClaimType.REWARD, RMInventoryHelper.convertToHashMap(rmTemplate.getParseReward()));
+			if(_config.getInfiniteTools()) _config.setTools(rmTemplate.getStashTools());
+			else _config.getTools().setItemsMatchInventory(rmp.getPlayer().getInventory(), rmp, ClaimType.TOOLS, RMInventoryHelper.convertToHashMap(rmTemplate.getParseTools()));
+			rmp.sendMessage("Successfully "+ChatColor.YELLOW+"loaded "+ChatColor.WHITE+"template "+ChatColor.GREEN+rmTemplate.getName()+ChatColor.WHITE+".");
+			updateSigns();
+		}
+	}
 
 	//Filter
 	public void clearFilter(RMPlayer rmp){
@@ -938,8 +964,6 @@ public class RMGame {
 		case GAMEPLAY:
 			RMGameTimer timer = _config.getTimer();
 			if((getOnlineTeamPlayers().length==0)||(timer.getTimeLimit()==0)) return;
-			RMDebug.warning("time elapsed:"+timer.getTimeElapsed());
-			RMDebug.warning("time remaining:"+timer.getTimeRemaining());
 			if(timer.getTimeElapsed()<timer.getTimeLimit()){
 				timer.announceTimeLeft(this);
 				timer.addTimeElapsed();
@@ -1061,14 +1085,11 @@ public class RMGame {
 		}
 	}
 	
-	public void trySignSetupInfo(RMPlayer rmp){
+	public void sendFilterInfo(RMPlayer rmp){
 		updateSigns();
 		String items = "";
-		
-		//Sort
 		Integer[] array = _config.getFilter().keySet().toArray(new Integer[_config.getFilter().keySet().size()]);
 		Arrays.sort(array);
-		
 		if(array.length>plugin.config.getTypeLimit()){
 			for(Integer id : array){
 				items += ChatColor.WHITE+""+id+RMText.includeItem(_config.getFilter().getItem(id))+ChatColor.WHITE+", ";
@@ -1086,6 +1107,24 @@ public class RMGame {
 		else rmp.sendMessage(ChatColor.YELLOW+"No items in filter.");
 	}
 	
+	public void sendRewardInfo(RMPlayer rmp){
+		updateSigns();
+		String items = RMText.getStringSortedItems(_config.getReward().getItems());
+		if(items.length()>0){
+			rmp.sendMessage(ChatColor.YELLOW+"Reward: "+items);
+		}
+		else rmp.sendMessage(ChatColor.YELLOW+"No Reward added.");
+	}
+	
+	public void sendToolsInfo(RMPlayer rmp){
+		updateSigns();
+		String items = RMText.getStringSortedItems(_config.getTools().getItems());
+		if(items.length()>0){
+			rmp.sendMessage(ChatColor.YELLOW+"Tools: "+items);
+		}
+		else rmp.sendMessage(ChatColor.YELLOW+"No tools added.");
+	}
+	
 	public void trySignGameplayInfo(Block b, RMPlayer rmp){
 		RMTeam rmTeam = getTeamByBlock(b);
 		RMPlayer rmPlayer = rmTeam.getPlayer(rmp.getName());
@@ -1097,24 +1136,6 @@ public class RMGame {
 			updateGameplayInfo(rmp, rmTeam);
 			updateSigns();
 		}
-	}
-	
-	public void trySignSetupRewardInfo(RMPlayer rmp){
-		updateSigns();
-		String items = RMText.getStringSortedItems(_config.getReward().getItems());
-		if(items.length()>0){
-			rmp.sendMessage(ChatColor.YELLOW+"Reward: "+items);
-		}
-		else rmp.sendMessage(ChatColor.YELLOW+"No Reward added.");
-	}
-	
-	public void trySignSetupToolsInfo(RMPlayer rmp){
-		updateSigns();
-		String items = RMText.getStringSortedItems(_config.getTools().getItems());
-		if(items.length()>0){
-			rmp.sendMessage(ChatColor.YELLOW+"Tools: "+items);
-		}
-		else rmp.sendMessage(ChatColor.YELLOW+"No tools added.");
 	}
 	
 	public void updateGameplayInfo(RMPlayer rmp, RMTeam rmTeam){
@@ -1178,7 +1199,7 @@ public class RMGame {
 				force = true;
 			}
 			else{
-				items = getFilterItemsFromChests(getChests());
+				items = getFilterItemsFromChests(getChestByBlock(b));
 				force = false;
 			}
 			String addedItems = "";
@@ -1425,7 +1446,7 @@ public class RMGame {
 						break;
 					case WALL_SIGN:
 						if(rmp.getPlayer().isSneaking()) cycleMode(rmp);
-						else trySignSetupInfo(rmp);
+						else sendFilterInfo(rmp);
 						break;
 					case WOOL:
 						if(rmp.getPlayer().isSneaking()) joinQuitTeamByBlock(b, rmp, false);
@@ -1447,7 +1468,7 @@ public class RMGame {
 						break;
 					case WALL_SIGN:
 						if(rmp.getPlayer().isSneaking()) cycleMode(rmp);
-						else trySignSetupRewardInfo(rmp);
+						else sendRewardInfo(rmp);
 						break;
 					case WOOL:
 						if(rmp.getPlayer().isSneaking()) joinQuitTeamByBlock(b, rmp, false);
@@ -1469,7 +1490,7 @@ public class RMGame {
 						break;
 					case WALL_SIGN:
 						if(rmp.getPlayer().isSneaking()) cycleMode(rmp);
-						else trySignSetupToolsInfo(rmp);
+						else sendToolsInfo(rmp);
 						break;
 					case WOOL:
 						if(rmp.getPlayer().isSneaking()) joinQuitTeamByBlock(b, rmp, false);
@@ -3036,6 +3057,16 @@ public class RMGame {
 	}
 	public static HashMap<Integer, RMGame> getGames(){
 		return _games;
+	}
+	public static Integer[] getAdvertisedGames(){
+		List<Integer> advertised = new ArrayList<Integer>();
+		for(RMGame game : _games.values()){
+			RMDebug.warning("id_advertise:"+game.getConfig().getAdvertise());
+			if(game.getConfig().getAdvertise()){
+				advertised.add(game.getConfig().getId());
+			}
+		}
+		return advertised.toArray(new Integer[advertised.size()]);
 	}
 	public static RMGame getGameByBlock(Block b){
 		for(RMGame game : _games.values()){

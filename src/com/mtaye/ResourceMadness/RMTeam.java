@@ -127,6 +127,7 @@ public class RMTeam {
 			if((_game.getConfig().getMaxPlayers()==0)||(RMTeam.getAllPlayers().length<_game.getConfig().getMaxPlayers())){
 				rmp.setTeam(this);
 				_players.put(rmp.getName(), rmp);
+				rmp.setReady(false);
 				rmp.sendMessage(ChatColor.YELLOW+"Joined"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.");
 				_game.broadcastMessage(rmp.getName()+ChatColor.YELLOW+" joined"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.", rmp);
 				_game.updateSigns();
@@ -142,6 +143,7 @@ public class RMTeam {
 			switch(_game.getConfig().getState()){
 			case SETUP: case GAMEPLAY: case PAUSED:
 				rmp.clearTeam();
+				rmp.setReady(false);
 				_players.remove(rmp.getName());
 				rmp.sendMessage(ChatColor.GRAY+"Quit"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.");
 				_game.broadcastMessage(rmp.getName()+ChatColor.GRAY+" quit"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.", rmp);

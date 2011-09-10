@@ -12,6 +12,7 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import com.mtaye.ResourceMadness.Helper.RMHelper;
+import com.mtaye.ResourceMadness.RM.ClaimType;
 import com.mtaye.ResourceMadness.RMGame.FilterState;
 import com.mtaye.ResourceMadness.RMGame.ItemHandleState;
 
@@ -220,12 +221,9 @@ public class RMFilter {
 	////////////////////
 	
 	//Encode Filter to String
-	public static String encodeFilterToString(HashMap<Integer, RMItem> filter, FilterState filterState){
+	public static String encodeFilterToString(HashMap<Integer, RMItem> filter, boolean invert){
 		if(filter.size()==0){
-			switch(filterState){
-				case FILTER: return "FILTER";
-				case ITEMS: return "ITEMS";
-			}
+			return "";
 		}
 		HashMap<Integer, String> rmItems = new HashMap<Integer, String>();
 		for(RMItem rmItem : filter.values()){
@@ -255,7 +253,7 @@ public class RMFilter {
 				line = RMText.stripLast(line, ",");
 				line+=" ";
 			}
-			line += amount+":";
+			if(invert) line += amount+":";
 			List<Integer> listAmount = foundItems.get(amount);
 			Integer[] array = listAmount.toArray(new Integer[listAmount.size()]);
 			Arrays.sort(array);
@@ -287,11 +285,14 @@ public class RMFilter {
 				if(firstItem!=lastItem) line += firstItem+","+lastItem+",";
 				else line += firstItem+",";
 			}
+			if(!invert){
+				if(amount!="1") line += ":"+amount;
+			}
 		}
 		line = RMText.stripLast(line,",");
 		return line;
 	}
-	
+		
 	//Get RMItems By String Array
 	public static HashMap<Integer, RMItem> getRMItemsByStringArray(List<String> args, boolean invert){
 		HashMap<Integer, RMItem> rmItems = new HashMap<Integer, RMItem>();

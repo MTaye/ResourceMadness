@@ -214,6 +214,7 @@ public class RMConfig {
 		_allowHackedItems = allowHackedItems;
 	}
 	public void setInfiniteReward(boolean infiniteReward, boolean lock){
+		RMDebug.warning("LOCK:"+lock);
 		if(lock) addLock(Lock.infiniteReward);
 		else removeLock(Lock.infiniteReward);
 		_infiniteReward = infiniteReward;

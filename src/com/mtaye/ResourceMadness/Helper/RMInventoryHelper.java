@@ -16,7 +16,7 @@ public final class RMInventoryHelper {
 	public RMInventoryHelper(){
 	}
 	
-	public static String encodeInventoryToString(ItemStack[] items, ClaimType claimType){
+	public static String encodeInventoryToString(ItemStack[] items){
 		String line = "";
 		if((items!=null)&&(items.length>0)){
 			HashMap<String, ItemStack> hashItems = new HashMap<String, ItemStack>();
@@ -45,18 +45,7 @@ public final class RMInventoryHelper {
 			}
 		}
 		if(line.length()==0){
-			switch(claimType){
-				case ITEMS:
-					return "ITEMS";
-				case FOUND:
-					return "FOUND";
-				case REWARD:
-					return "REWARD";
-				case TOOLS:
-					return "TOOLS";
-				case CHEST:
-					return "CHEST";
-			}
+			return "";
 		}
 		line = RMText.stripLast(line,",");
 		return line;
@@ -64,6 +53,7 @@ public final class RMInventoryHelper {
 	
 	public static List<ItemStack> getItemStackByStringArray(String strArgs){
 		List<ItemStack> items = new ArrayList<ItemStack>();
+		if((strArgs==null)||(strArgs.length()==0)) return items;
 		String[] splitArgs = strArgs.split(",");
 		for(String splitArg : splitArgs){
 			String[] args = splitArg.split(":");
@@ -141,5 +131,19 @@ public final class RMInventoryHelper {
 			if(invItem==null) continue;
 			if(invItem.getType() == item.getType()) if(invItem.getAmount() == item.getAmount()) inv.clear(i);
 		}
+	}
+	
+	public static HashMap<Integer, ItemStack> convertToHashMap(List<ItemStack> items){
+		HashMap<Integer, ItemStack> hashItems = new HashMap<Integer, ItemStack>();
+		for(ItemStack item : items){
+			if(item==null) continue;
+			int id = item.getTypeId();
+			if(hashItems.containsKey(id)){
+				ItemStack hashItem = hashItems.get(id);
+				hashItem.setAmount(hashItem.getAmount()+item.getAmount());
+			}
+			else hashItems.put(id, item.clone());
+		}
+		return hashItems;
 	}
 }

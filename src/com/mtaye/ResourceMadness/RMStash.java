@@ -14,6 +14,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import com.mtaye.ResourceMadness.RM.ClaimType;
+import com.mtaye.ResourceMadness.RMGame.FilterState;
 import com.mtaye.ResourceMadness.RMGame.HandleState;
 
 public class RMStash {
@@ -568,5 +569,71 @@ public class RMStash {
 		}
 		if(addItems.size()!=0) addItems(addItems);
 		if(claimItems.size()!=0) rmp.claimToInventory(this, inv, false, false, claimType, claimItems.toArray(new ItemStack[claimItems.size()]));
+	}
+	
+	
+	public String encodeToString(boolean invert){
+		if(_items.size()==0){
+			return "";
+		}
+		HashMap<Integer, List<Integer>> foundItems = new HashMap<Integer, List<Integer>>();
+		for(Integer i : _items.keySet()){
+			int amount = _items.get(i).getAmount();
+			if(foundItems.containsKey(amount)){
+				List<Integer> list = foundItems.get(amount);
+				if(!list.contains(i)) list.add(i);
+				foundItems.put(amount, list);
+			}
+			else{
+				List<Integer> list = new ArrayList<Integer>();
+				list.add(i);
+				foundItems.put(amount, list);
+			}
+		}
+	
+		String line = "";
+		for(Integer amount : foundItems.keySet()){
+			if(line!=""){
+				line = RMText.stripLast(line, ",");
+				line+=" ";
+			}
+			if(invert) line += amount+":";
+			List<Integer> listAmount = foundItems.get(amount);
+			Integer[] array = listAmount.toArray(new Integer[listAmount.size()]);
+			Arrays.sort(array);
+			
+			int firstItem = -1;
+			int lastItem = -1;
+			for(Integer item : array){
+				if(firstItem==-1){
+					firstItem = item;
+					lastItem = item;
+				}
+				else{
+					if(item-lastItem!=1){
+						if(lastItem-firstItem>1){
+							line += firstItem+"-"+lastItem+",";
+						}
+						else{
+							if(firstItem!=lastItem) line += firstItem+","+lastItem+",";
+							else line += firstItem+",";
+						}
+						firstItem = item;
+						lastItem = item;
+					}
+					else lastItem = item;
+				}
+			}
+			if(lastItem-firstItem>1) line += firstItem+"-"+lastItem+",";
+			else{
+				if(firstItem!=lastItem) line += firstItem+","+lastItem+",";
+				else line += firstItem+",";
+			}
+			if(!invert){
+				if(amount!=1) line += ":"+amount;
+			}
+		}
+		line = RMText.stripLast(line,",");
+		return line;
 	}
 }

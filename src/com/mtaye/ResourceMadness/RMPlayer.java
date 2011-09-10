@@ -31,7 +31,8 @@ public class RMPlayer {
 	public enum PlayerAction{
 		ADD, REMOVE, INFO, INFO_FOUND, MODE, MODE_CYCLE, SETTINGS,
 		JOIN, QUIT, START, START_RANDOM, RESTART, STOP, PAUSE, RESUME,
-		RESTORE, FILTER, REWARD, TOOLS, CLAIM_FOUND, CLAIM_FOUND_CHEST, CLAIM_FOUND_CHEST_SELECT, CLAIM_ITEMS_CHEST, CLAIM_REWARD_CHEST, CLAIM_TOOLS_CHEST,
+		TEMPLATE_LIST, TEMPLATE_SAVE, TEMPLATE_LOAD, TEMPLATE_REMOVE, RESTORE, FILTER, REWARD, TOOLS,
+		CLAIM_FOUND, CLAIM_FOUND_CHEST, CLAIM_FOUND_CHEST_SELECT, CLAIM_ITEMS_CHEST, CLAIM_REWARD_CHEST, CLAIM_TOOLS_CHEST,
 		SET_MIN_PLAYERS, SET_MAX_PLAYERS, SET_MIN_TEAM_PLAYERS, SET_MAX_TEAM_PLAYERS, SET_MAX_ITEMS, SET_TIME_LIMIT, SET_RANDOM,
 		SET_ADVERTISE, SET_RESTORE, SET_WARP, SET_MIDGAME_JOIN, SET_HEAL_PLAYER, SET_CLEAR_INVENTORY, SET_WARN_UNEQUAL, SET_ALLOW_UNEQUAL,
 		SET_WARN_HACKED, SET_ALLOW_HACKED, SET_INFINITE_REWARD, SET_INFINITE_TOOLS,
@@ -44,11 +45,13 @@ public class RMPlayer {
 	private ItemStack[] _requestItems;
 	private int _requestInt = 0;
 	private boolean _requestBool = false;
+	private String _requestString = "";
 	private InterfaceState _requestInterface = InterfaceState.FILTER;
 	private RMStats _stats = new RMStats();
 	private RMStash _items = new RMStash();
 	private RMStash _reward = new RMStash();
 	private RMStash _tools = new RMStash();
+	private HashMap<String, RMTemplate> _templates = new HashMap<String, RMTemplate>();
 	private boolean _ready = false;
 	
 	public boolean getReady(){
@@ -60,6 +63,61 @@ public class RMPlayer {
 	public void toggleReady(){
 		if(_ready) _ready = false;
 		else _ready = true;
+	}
+	
+	public RMTemplate getTemplate(String name){
+		return _templates.get(name);
+	}
+	
+	public void setTemplate(RMTemplate template){
+		_templates.put(template.getName(), template);
+	}
+	
+	public boolean saveTemplate(RMTemplate template){
+		RMDebug.warning("TEMPLATES:"+_templates);
+		RMDebug.warning("TEMPLATES size:"+_templates.size());
+		if(template.isEmpty()){
+			sendMessage("Cannot save an empty template!");
+			return false;
+		}
+		String name = template.getName();
+		if(!_templates.containsKey(name)){
+			_templates.put(name, template);
+			sendMessage("Successfully "+ChatColor.YELLOW+"saved "+ChatColor.WHITE+"template "+ChatColor.GREEN+name+ChatColor.WHITE+".");
+			return true;
+		}
+		sendMessage("Template "+ChatColor.GREEN+name+ChatColor.WHITE+" already exists.");
+		return false;
+	}
+	
+	public RMTemplate loadTemplate(String name){
+		if(_templates.containsKey(name)){
+			return _templates.get(name);
+		}
+		sendMessage("Template "+ChatColor.GREEN+name+ChatColor.WHITE+" does not exist.");
+		return null;
+	}
+	
+	public boolean removeTemplate(String name){
+		if(_templates.containsKey(name)){
+			_templates.remove(name);
+			sendMessage("Successfully "+ChatColor.GRAY+"removed "+ChatColor.WHITE+"template "+ChatColor.GREEN+name+ChatColor.WHITE+".");
+			return true;
+		}
+		sendMessage("Template "+ChatColor.GREEN+name+ChatColor.WHITE+" does not exist.");
+		return false;
+	}
+	
+	public HashMap<String, RMTemplate> getTemplates(){
+		return _templates;
+	}
+	
+	public void setTemplates(HashMap<String, RMTemplate> templates){
+		_templates = templates;
+	}
+	
+	public void clearTemplates(){
+		_templates.clear();
 	}
 	
 
@@ -534,6 +592,15 @@ public class RMPlayer {
 	public boolean getRequestBool(){
 		return _requestBool;
 	}
+	public void setRequestString(String str){
+		_requestString = str;
+	}
+	public String getRequestString(){
+		return _requestString;
+	}
+	public void clearRequestString(){
+		_requestString = "";
+	}
 	
 	public static RM plugin;
 	private static HashMap<String, RMPlayer> _players = new HashMap<String, RMPlayer>();
@@ -735,7 +802,7 @@ public class RMPlayer {
 		if(p!=null){
 			if(plugin.isPermissionEnabled()){
 				if(ownerName.equalsIgnoreCase(p.getName())) return true;
-				else return (plugin.hasPermission(p, "resourcemadness.admin.overlord"));
+				else return (plugin.hasPermission(p, "resourcemadness.admin"));
 			}
 			if(ownerName.equalsIgnoreCase(p.getName())) return true;
 		}
