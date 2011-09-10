@@ -128,6 +128,12 @@ public class RMTeam {
 				rmp.setTeam(this);
 				_players.put(rmp.getName(), rmp);
 				rmp.setReady(false);
+				if(rmp.getPlayer()!=null){
+					if(rmp.getRequestBool()){
+						rmp.setReturnLocation(rmp.getPlayer().getLocation());
+						rmp.setRequestBool(false);
+					}
+				}
 				rmp.sendMessage(ChatColor.YELLOW+"Joined"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.");
 				_game.broadcastMessage(rmp.getName()+ChatColor.YELLOW+" joined"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.", rmp);
 				_game.updateSigns();

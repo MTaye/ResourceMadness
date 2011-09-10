@@ -28,71 +28,58 @@ public class RMTemplate {
 	
 	public RMTemplate(String name, RMGameConfig config){
 		_name = name;
-		setEncodeFromFilter(config.getFilter());
-		setEncodeFromReward(config.getReward());
-		setEncodeFromTools(config.getTools());
+		setFromConfig(config);
 	}
 	
 	public RMTemplate(RMTemplate rmTemplate){
 		this._name = rmTemplate._name;
-		this._filter = rmTemplate._filter;
-		this._reward = rmTemplate._reward;
-		this._tools = rmTemplate._tools;
+		this._filter = rmTemplate._filter.clone();
+		this._reward = rmTemplate._reward.clone();
+		this._tools = rmTemplate._tools.clone();
 	}
 	
 	//Get
 	public String getName() { return _name; }
 
-	public String getFilter() { return _filter; }
-	public String getReward() { return _reward; }
-	public String getTools() { return _tools; }
-	public RMFilter getParseFilter() { return new RMFilter(RMFilter.getRMItemsByStringArray(Arrays.asList(_filter), false)); }
-	public List<ItemStack> getParseReward() { return RMInventoryHelper.getItemStackByStringArray(_reward); }
-	public List<ItemStack> getParseTools() { return RMInventoryHelper.getItemStackByStringArray(_tools); }
-	public RMStash getStashReward() { return new RMStash(getParseReward()); }
-	public RMStash getStashTools() { return new RMStash(getParseTools()); }
+	public RMFilter getFilter() { return _filter; }
+	public RMStash getReward() { return _reward; }
+	public RMStash getTools() { return _tools; }
+	public String getEncodeToStringFilter() { return RMFilter.encodeFilterToString(_filter.getItems(), true); }
+	public String getEncodeToStringReward() { return RMInventoryHelper.encodeInventoryToString(_reward.getItemsArray()); }
+	public String getEncodeToStringTools() { return RMInventoryHelper.encodeInventoryToString(_tools.getItemsArray()); }
 	
 	//Set
 	public void setName(String name){
 		_name = name;
 	}
-	public void setFilter(String filter){
+	public void setFilter(RMFilter filter){
 		_filter = filter;
 	}
-	public void setReward(String reward){
+	public void setReward(RMStash reward){
 		_reward = reward;
 	}
-	public void setTools(String tools){
+	public void setTools(RMStash tools){
 		_tools = tools;
 	}
 	
-	public void setEncodeFromFilter(RMFilter filter){
-		_filter = RMFilter.encodeFilterToString(filter.getItems(), false);
+	public void setFilterParseString(String str){
+		_filter = new RMFilter(RMFilter.getRMItemsByStringArray(Arrays.asList(str), true));
+	}
+	public void setRewardParseString(String str){
+		_reward = new RMStash(RMInventoryHelper.getItemStackByStringArray(str));
+	}
+	public void setToolsParseString(String str){
+		_tools = new RMStash(RMInventoryHelper.getItemStackByStringArray(str));
 	}
 	
-	public void setEncodeFromReward(RMStash reward){
-		_reward = RMInventoryHelper.encodeInventoryToString(reward.getItemsArray());
-	}
-	
-	public void setEncodeFromTools(RMStash tools){
-		_tools = RMInventoryHelper.encodeInventoryToString(tools.getItemsArray());
-	}
-	
-	public void setEncodeFromConfig(RMGameConfig config){
-		setEncodeFromFilter(config.getFilter());
-		setEncodeFromReward(config.getReward());
-		setEncodeFromTools(config.getTools());
+	public void setFromConfig(RMGameConfig config){
+		_filter = config.getFilter().clone();
+		_reward = config.getReward().clone();
+		_tools = config.getTools().clone();
 	}
 	
 	public boolean isEmpty(){
-		RMDebug.warning("Length:"+_filter.length()+_reward.length()+_tools.length());
-		RMDebug.warning("Filter:"+_filter);
-		RMDebug.warning("FilterLength:"+_filter.length());
-		RMDebug.warning("Reward:"+_reward);
-		RMDebug.warning("RewardLength:"+_reward.length());
-		RMDebug.warning("Tools:"+_tools);
-		RMDebug.warning("ToolsLength:"+_tools.length());
-		if(_filter.length()+_reward.length()+_tools.length()==0) return true;
+		if(_filter.size()+_reward.size()+_tools.size()==0) return true;
 		return false;
 	}
 }

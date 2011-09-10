@@ -70,6 +70,12 @@ public class RMGameConfig {
 		_log = new RMLog(plugin);
 	}
 	
+	public RMGameConfig(RMConfig config, RM plugin){
+		this.plugin = plugin;
+		_log = new RMLog(plugin);
+		getDataFrom(config);
+	}
+	
 	public RMGameConfig(RMGameConfig config, RM plugin){
 		this.plugin = plugin;
 		this._partList = config._partList;

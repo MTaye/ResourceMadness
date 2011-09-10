@@ -8,6 +8,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -29,7 +30,7 @@ import com.mtaye.ResourceMadness.RMGame.InterfaceState;
  */
 public class RMPlayer {
 	public enum PlayerAction{
-		ADD, REMOVE, INFO, INFO_FOUND, MODE, MODE_CYCLE, SETTINGS,
+		ADD, REMOVE, INFO, INFO_FOUND, MODE, MODE_CYCLE, SETTINGS, SETTINGS_RESET,
 		JOIN, QUIT, START, START_RANDOM, RESTART, STOP, PAUSE, RESUME,
 		TEMPLATE_LIST, TEMPLATE_SAVE, TEMPLATE_LOAD, TEMPLATE_REMOVE, RESTORE, FILTER, REWARD, TOOLS,
 		CLAIM_FOUND, CLAIM_FOUND_CHEST, CLAIM_FOUND_CHEST_SELECT, CLAIM_ITEMS_CHEST, CLAIM_REWARD_CHEST, CLAIM_TOOLS_CHEST,
@@ -53,6 +54,7 @@ public class RMPlayer {
 	private RMStash _tools = new RMStash();
 	private HashMap<String, RMTemplate> _templates = new HashMap<String, RMTemplate>();
 	private boolean _ready = false;
+	private Location _returnLocation;
 	
 	public boolean getReady(){
 		return _ready;
@@ -106,6 +108,12 @@ public class RMPlayer {
 		}
 		sendMessage("Template "+ChatColor.GREEN+name+ChatColor.WHITE+" does not exist.");
 		return false;
+	}
+	
+	public void removeTemplates(List<String> templates){
+		for(String template : templates){
+			removeTemplate(template.toLowerCase());
+		}
 	}
 	
 	public HashMap<String, RMTemplate> getTemplates(){
@@ -721,12 +729,16 @@ public class RMPlayer {
 	}
 	
 	public void warpToSafety(){
+		warpToSafety(_team.getWarpLocation().clone());
+	}
+	
+	public void warpToSafety(Location loc){
 		if(getPlayer()!=null){
 			Player p = getPlayer();
+			loc = findSafeWarpLocation(loc);
 			//double pLocX = p.getLocation().getBlockX();
 			//double pLocY = p.getLocation().getBlockY();
 			//double pLocZ = p.getLocation().getBlockZ();
-			Location loc = _team.getWarpLocation().clone();
 			//if((Math.abs(pLocX-loc.getX())>4)||(Math.abs(pLocY-loc.getY())>4)||(Math.abs(pLocZ-loc.getZ())>4)){
 				loc.setPitch(p.getLocation().getPitch());
 				loc.setYaw(p.getLocation().getYaw());
@@ -735,14 +747,30 @@ public class RMPlayer {
 		}
 	}
 	
-	public static void warpToSafety(Player p){
-		RMPlayer rmp = getPlayerByName(p.getName());
-		if(rmp!=null){
-			Location loc = rmp.getTeam().getWarpLocation().clone();
-			loc.setPitch(p.getLocation().getPitch());
-			loc.setYaw(p.getLocation().getYaw());
-		}
+	public Location getReturnLocation(){
+		return _returnLocation;
 	}
+	public void setReturnLocation(Location returnLocation){
+		if(_returnLocation==null){
+			_returnLocation = returnLocation;
+			sendMessage("Marked return location.");
+		}
+		else sendMessage("Return location already marked.");
+	}
+	public void clearReturnLocation(){
+		_returnLocation = null;
+	}
+	
+	public void warpToReturnLocation(){
+		warpToSafety(_returnLocation);
+		sendMessage("Returned.");
+		clearReturnLocation();
+	}
+	
+	public Location findSafeWarpLocation(Location loc){
+		return loc;
+	}
+
 	public boolean isSneaking(){
 		if(getPlayer()!=null) return getPlayer().isSneaking();
 		return false;

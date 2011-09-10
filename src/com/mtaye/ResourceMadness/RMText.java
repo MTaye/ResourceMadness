@@ -215,12 +215,15 @@ public final class RMText {
 	
 	//Get Sorted Items from ItemStack Array
 	public static String getStringSortedItems(List<ItemStack> items){
+		return getStringSortedItems(items, plugin.config.getTypeLimit());
+	}
+	public static String getStringSortedItems(List<ItemStack> items, int typeLimit){
 		String strItems = "";
 		HashMap<Integer, ItemStack> hashItems = RMInventoryHelper.combineItemsByItemStack(items);
 		
 		Integer[] array = hashItems.keySet().toArray(new Integer[hashItems.size()]);
 		Arrays.sort(array);
-		if(array.length>plugin.config.getTypeLimit()){
+		if(array.length>typeLimit){
 			for(Integer id : array){
 				strItems += ChatColor.WHITE+""+id+RMText.includeItem(new RMItem(hashItems.get(id)))+ChatColor.WHITE+", ";
 			}

@@ -23,7 +23,7 @@ public final class RMInventoryHelper {
 			for(ItemStack item : items){
 				if(item!=null){
 					String idData = ""+item.getTypeId()+":"+item.getDurability();
-					if(item.getData()!=null) idData += ":"+Byte.toString(item.getData().getData());
+					//if(item.getData()!=null) idData += ":"+Byte.toString(item.getData().getData());
 					if(hashItems.containsKey(idData)){
 						int amount = hashItems.get(idData).getAmount()+item.getAmount();
 						ItemStack itemClone = item.clone();
@@ -40,7 +40,7 @@ public final class RMInventoryHelper {
 				//int id = getIntByString(splitItems[0]);
 				ItemStack item = hashItems.get(idData);
 				line+=item.getTypeId()+":"+item.getAmount()+":"+item.getDurability();
-				if(item.getData()!=null) line+=":"+Byte.toString(item.getData().getData());
+				//if(item.getData()!=null) line+=":"+Byte.toString(item.getData().getData());
 				line+=",";
 			}
 		}
@@ -61,6 +61,7 @@ public final class RMInventoryHelper {
 			int amount = RMHelper.getIntByString(args[1]);
 			short durability = RMHelper.getShortByString(args[2]);
 			if((id!=-1)&&(amount!=-1)&&(durability!=-1)){
+				/*
 				if(args.length==4){
 					byte data = RMHelper.getByteByString(args[3]);
 					if(data!=-1){
@@ -69,14 +70,15 @@ public final class RMInventoryHelper {
 						items.add(item);
 					}
 				}
-				else if(args.length==3){
+				else if(args.length==3){*/
+				if(args.length>2){
 					Material mat = Material.getMaterial(id);
 					while(amount>mat.getMaxStackSize()){
 						ItemStack item = new ItemStack(mat, mat.getMaxStackSize(), durability);
 						items.add(item);
 						amount-=mat.getMaxStackSize();
 					}
-					ItemStack item = new ItemStack(mat,amount, durability);
+					ItemStack item = new ItemStack(mat, amount, durability);
 					items.add(item);
 				}
 			}
