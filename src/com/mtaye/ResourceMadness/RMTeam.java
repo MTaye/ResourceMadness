@@ -95,7 +95,7 @@ public class RMTeam {
 	public void addRemovePlayer(RMPlayer rmp){
 		if(!_players.containsKey(rmp.getName())){
 			if(!rmp.hasPermission("resourcemadness.join")){
-				rmp.sendMessage(RMText.noPermissionAction);
+				rmp.sendMessage(RMText.eNoPermissionAction);
 				return;
 			}
 			addPlayer(rmp);
@@ -103,7 +103,7 @@ public class RMTeam {
 		}
 		else{
 			if(!rmp.hasPermission("resourcemadness.quit")){
-				rmp.sendMessage(RMText.noPermissionAction);
+				rmp.sendMessage(RMText.eNoPermissionAction);
 				return;
 			}
 			removePlayer(rmp);

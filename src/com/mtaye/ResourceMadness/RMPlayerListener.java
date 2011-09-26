@@ -287,7 +287,7 @@ public class RMPlayerListener extends PlayerListener{
 						if(rmGame!=null){
 							if(RMHelper.isMaterial(b.getType(), RMGame.getMaterials())){
 								if(!rmp.hasPermission("resourcemadness")){
-									rmp.sendMessage(RMText.noPermissionAction);
+									rmp.sendMessage(RMText.eNoPermissionAction);
 									return;
 								}
 								rmGame.handleLeftClick(b, rmp);

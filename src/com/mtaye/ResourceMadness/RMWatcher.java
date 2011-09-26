@@ -19,7 +19,7 @@ public class RMWatcher implements Runnable {
 	@Override
 	public void run() {
 		if(autoSave){
-			if(autoSaveTimer>0) autoSaveTimer-=1;
+			if(autoSaveTimer>1) autoSaveTimer-=1;
 			else{
 				autoSaveTimer = 60*plugin.config.getAutoSave();
 				plugin.saveAllBackup();

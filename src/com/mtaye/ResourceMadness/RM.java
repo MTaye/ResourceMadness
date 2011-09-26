@@ -14,6 +14,7 @@ import org.bukkit.World;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -25,6 +26,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -110,7 +112,7 @@ public class RM extends JavaPlugin {
 		
 		log = getServer().getLogger();
 		log.log(Level.INFO, pdfFile.getName() + " v" + pdfFile.getVersion() + " enabled!" );
-        RMDebug.disable();
+        RMDebug.enable();
 
         //setupPermissions();
 		PluginManager pm = getServer().getPluginManager();
@@ -231,7 +233,7 @@ public class RM extends JavaPlugin {
 	}
 	
 	public String[] processCommandArgs(String[] args){
-		if(args.length==0){
+		if(args.length!=0){
 			String strArg = Arrays.toString(args);
 			strArg = strArg.replace("[", "");
 			strArg = strArg.replace("]", "");
@@ -292,7 +294,7 @@ public class RM extends JavaPlugin {
 			RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
 			if(rmp!=null){
 				if(cmd.getName().equals("resourcemadness")){
-					if(!rmp.hasPermission("resourcemadness")) return rmp.sendMessage(RMText.noPermissionCommand);
+					if(!rmp.hasPermission("resourcemadness")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 					if(args.length==0){
 						rmInfo(rmp, 1);
 					}
@@ -314,65 +316,65 @@ public class RM extends JavaPlugin {
 						args = processCommandArgs(args);
 						//ADD
 						if(args[0].equalsIgnoreCase("add")){
-							if(!rmp.hasPermission("resourcemadness.add")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.add")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							rmp.setPlayerAction(PlayerAction.ADD);
-							rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"add "+ChatColor.WHITE+"a new game.");
+							rmp.sendMessage(RMText.aAdd);
 							return true;
 						}
 						//REMOVE
 						else if(args[0].equalsIgnoreCase("remove")){
-							if(!rmp.hasPermission("resourcemadness.remove")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.remove")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if(rmGame!=null) RMGame.tryRemoveGame(rmGame, rmp, true);
 							else{
 								rmp.setPlayerAction(PlayerAction.REMOVE);
-								rmp.sendMessage("Left click a game block to "+ChatColor.GRAY+"remove "+ChatColor.WHITE+"a game.");
+								rmp.sendMessage(RMText.aRemove);
 							}
 							return true;
 						}
 						//LIST
 						else if(args[0].equalsIgnoreCase("list")){
-							if(!rmp.hasPermission("resourcemadness.list")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.list")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if(args.length==2) sendListById(args[1], rmp);
 							else sendListByInt(0, rmp);
 							return true;
 						}
 						//ALIASES
 						else if(args[0].equalsIgnoreCase("commands")){
-							if(!rmp.hasPermission("resourcemadness.commands")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.commands")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if(args.length==2) sendAliasesById(args[1], rmp);
 							else sendAliasesById("0", rmp);
 							return true;
 						}
 						//INFO
 						else if(args[0].equalsIgnoreCase("info")){
-							if(!rmp.hasPermission("resourcemadness.info")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.info")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if(args.length>1){
 								if(args[1].equalsIgnoreCase("found")){
-									if(!rmp.hasPermission("resourcemadness.info.found")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.info.found")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									if(rmGame!=null) rmGame.getInfoFound(rmp);
 									else{
 										rmp.setPlayerAction(PlayerAction.INFO_FOUND);
-										rmp.sendMessage("Left click a game block to get "+ChatColor.YELLOW+"info "+ChatColor.WHITE+"about the game's "+ChatColor.YELLOW+"found items"+ChatColor.WHITE+".");
+										rmp.sendMessage(RMText.aInfoFound);
 									}
 									return true;
 								}
 								else if(args[1].equalsIgnoreCase("claim")){
-									if(!rmp.hasPermission("resourcemadness.info.claim")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.info.claim")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									rmp.getInfoClaim();
 									return true;
 								}
 								else if(args[1].equalsIgnoreCase("items")){
-									if(!rmp.hasPermission("resourcemadness.info.items")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.info.items")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									rmp.getInfoItems();
 									return true;
 								}
 								else if(args[1].equalsIgnoreCase("reward")){
-									if(!rmp.hasPermission("resourcemadness.info.reward")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.info.reward")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									rmp.getInfoReward();
 									return true;
 								}
 								else if(args[1].equalsIgnoreCase("tools")){
-									if(!rmp.hasPermission("resourcemadness.info.tools")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.info.tools")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									rmp.getInfoTools();
 									return true;
 								}
@@ -381,20 +383,20 @@ public class RM extends JavaPlugin {
 								if(rmGame!=null) rmGame.sendInfo(rmp);
 								else{
 									rmp.setPlayerAction(PlayerAction.INFO);
-									rmp.sendMessage("Left click a game block to get "+ChatColor.YELLOW+"info"+ChatColor.WHITE+".");
+									rmp.sendMessage(RMText.aInfo);
 								}
 								return true;
 							}
 						}
 						//SETTINGS
 						else if(args[0].equalsIgnoreCase("settings")){
-							if(!rmp.hasPermission("resourcemadness.settings")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.settings")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if((args.length==2)&&(args[1].equalsIgnoreCase("reset"))){
-								if(!rmp.hasPermission("resourcemadness.settings")) return rmp.sendMessage(RMText.noPermissionCommand);
+								if(!rmp.hasPermission("resourcemadness.settings")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 								if(rmGame!=null) rmGame.resetSettings(rmp);
 								else{
 									rmp.setPlayerAction(PlayerAction.SETTINGS_RESET);
-									rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"reset "+ChatColor.WHITE+"settings.");
+									rmp.sendMessage(RMText.aSettingsReset);
 								}
 								return true;
 							}
@@ -404,47 +406,47 @@ public class RM extends JavaPlugin {
 							else{
 								rmp.setRequestInt(page);
 								rmp.setPlayerAction(PlayerAction.SETTINGS);
-								rmp.sendMessage("Left click a game block to get "+ChatColor.YELLOW+"settings"+ChatColor.WHITE+".");
+								rmp.sendMessage(RMText.aSettings);
 							}
 							return true;
 						}
 						//MODE
 						else if(args[0].equalsIgnoreCase("mode")){
-							if(!rmp.hasPermission("resourcemadness.mode")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.mode")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if(args.length==2){
 								if(args[1].equalsIgnoreCase("filter")){
-									if(!rmp.hasPermission("resourcemadness.mode.filter")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.mode.filter")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									if(rmGame!=null){
 										rmGame.changeMode(InterfaceState.FILTER, rmp);
 									}
 									else{
 										rmp.setRequestInterface(InterfaceState.FILTER);
 										rmp.setPlayerAction(PlayerAction.MODE);
-										rmp.sendMessage("Left click a game block to change the "+ChatColor.YELLOW+"interface mode "+ChatColor.WHITE+"to "+ChatColor.YELLOW+"filter"+ChatColor.WHITE+".");
+										rmp.sendMessage(RMText.aModeFilter);
 									}
 									return true;
 								}
 								else if(args[1].equalsIgnoreCase("reward")){
-									if(!rmp.hasPermission("resourcemadness.mode.reward")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.mode.reward")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									if(rmGame!=null){
 										rmGame.changeMode(InterfaceState.REWARD, rmp);
 									}
 									else{
 										rmp.setRequestInterface(InterfaceState.REWARD);
 										rmp.setPlayerAction(PlayerAction.MODE);
-										rmp.sendMessage("Left click a game block to change the "+ChatColor.YELLOW+"interface mode "+ChatColor.WHITE+"to "+ChatColor.YELLOW+"reward"+ChatColor.WHITE+".");
+										rmp.sendMessage(RMText.aModeReward);
 									}
 									return true;
 								}
 								else if(args[1].equalsIgnoreCase("tools")){
-									if(!rmp.hasPermission("resourcemadness.mode.tools")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.mode.tools")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									if(rmGame!=null){
 										rmGame.changeMode(InterfaceState.TOOLS, rmp);
 									}
 									else{
 										rmp.setRequestInterface(InterfaceState.TOOLS);
 										rmp.setPlayerAction(PlayerAction.MODE);
-										rmp.sendMessage("Left click a game block to change the "+ChatColor.YELLOW+"interface mode "+ChatColor.WHITE+"to "+ChatColor.YELLOW+"tools"+ChatColor.WHITE+".");
+										rmp.sendMessage(RMText.aModeTools);
 									}
 									return true;
 								}
@@ -453,38 +455,38 @@ public class RM extends JavaPlugin {
 								if(rmGame!=null) rmGame.cycleMode(rmp);
 								else{
 									rmp.setPlayerAction(PlayerAction.MODE_CYCLE);
-									rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"cycle "+ChatColor.WHITE+"the "+ChatColor.YELLOW+"interface mode"+ChatColor.WHITE+".");
+									rmp.sendMessage(RMText.aModeCycle);
 								}
 								return true;
 							}
 						}
 						//SAVE
 						else if(args[0].equalsIgnoreCase("save")){
-							if(!rmp.hasOpPermission("resourcemadness.admin.save")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasOpPermission("resourcemadness.admin.save")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if(RMGame.getGames().size()!=0){
-								rmp.sendMessage(ChatColor.RED+"Saving...");
+								rmp.sendMessage(RMText.saveSaving);
 								log.log(Level.INFO, RMText.preLog+"Saving...");
 								switch(saveAll()){
 								case SUCCESS:
-									rmp.sendMessage(ChatColor.GREEN+"Data was saved successfully.");
+									rmp.sendMessage(RMText.saveSuccess);
 									log.log(Level.INFO, RMText.preLog+"Data was saved successfully.");
 									break;
 								case FAIL:
-									rmp.sendMessage(ChatColor.RED+"Data was not saved properly!");
+									rmp.sendMessage(RMText.saveFail);
 									log.log(Level.INFO, RMText.preLog+"Data was not saved properly!");
 									break;
 								case NO_DATA:
-									rmp.sendMessage(ChatColor.GRAY+"No data to save.");
+									rmp.sendMessage(RMText.saveNoData);
 									log.log(Level.INFO, RMText.preLog+"No data to save.");
 									break;
 								}
 							}
-							else rmp.sendMessage(ChatColor.GRAY+"No data to save.!");
+							else rmp.sendMessage(RMText.saveNoData);
 							return true;
 						}
 						//JOIN
 						else if(args[0].equalsIgnoreCase("join")){
-							if(!rmp.hasPermission("resourcemadness.join")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.join")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if(args.length==2){
 								if(rmGame!=null){								
 									RMTeam rmTeam = RMGame.getTeamById(args[1], rmGame);
@@ -499,19 +501,19 @@ public class RM extends JavaPlugin {
 										rmGame.joinTeam(rmTeam, rmp);
 										return true;
 									}
-									rmp.sendMessage("This team does not exist!");
+									rmp.sendMessage(RMText.eTeamDoesNotExist);
 									return true;
 								}
 							}
 							else{
 								rmp.setPlayerAction(PlayerAction.JOIN);
-								rmp.sendMessage("Left click a team block to "+ChatColor.YELLOW+"join "+ChatColor.WHITE+"the team.");
+								rmp.sendMessage(RMText.aJoin);
 								return true;
 							}
 						}
 						//QUIT
 						else if(args[0].equalsIgnoreCase("quit")){
-							if(!rmp.hasPermission("resourcemadness.quit")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.quit")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							for(RMTeam rmTeam : RMTeam.getTeams()){
 								RMPlayer rmPlayer = rmTeam.getPlayer(rmp.getName());
 								if(rmPlayer!=null){
@@ -524,13 +526,13 @@ public class RM extends JavaPlugin {
 									return true;
 								}
 							}
-							rmp.sendMessage("You did not "+ChatColor.YELLOW+"join "+ChatColor.WHITE+"any "+ChatColor.YELLOW+"team "+ChatColor.WHITE+"yet.");
+							rmp.sendMessage(RMText.eDidNotJoinAnyTeamYet);
 							return true;
 							
 						}
 						//READY
 						else if(args[0].equalsIgnoreCase("ready")){
-							if(!rmp.hasPermission("resourcemadness.quit")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.quit")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							for(RMTeam rmTeam : RMTeam.getTeams()){
 								RMPlayer rmPlayer = rmTeam.getPlayer(rmp.getName());
 								if(rmPlayer!=null){
@@ -539,19 +541,19 @@ public class RM extends JavaPlugin {
 										if(game.getConfig().getState()==GameState.SETUP){
 											rmTeam.getGame().toggleReady(rmp);
 										}
-										else rmp.sendMessage(ChatColor.GRAY+"You cannot ready yourself while in a game.");
+										else rmp.sendMessage(RMText.eCannotReadyWhileIngame);
 										return true;
 									}
 								}
 							}
-							rmp.sendMessage("You did not "+ChatColor.YELLOW+"join "+ChatColor.WHITE+"any "+ChatColor.YELLOW+"team "+ChatColor.WHITE+"yet.");
+							rmp.sendMessage(RMText.eDidNotJoinAnyTeamYet);
 							return true;
 							
 						}
 						/*
 						//RETURN
 						else if(args[0].equalsIgnoreCase("return")){
-							if(!rmp.hasPermission("resourcemadness.return")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.return")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if(!rmp.isIngame())
 								if(rmp.getReturnLocation()!=null){
 									rmp.warpToReturnLocation();
@@ -563,11 +565,11 @@ public class RM extends JavaPlugin {
 						*/
 						//START
 						else if(args[0].equalsIgnoreCase("start")){
-							if(!rmp.hasPermission("resourcemadness.start")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.start")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if(args.length==2){
 								int amount = RMHelper.getIntByString(args[1]);
 								if(amount!=-1){
-									if(!rmp.hasPermission("resourcemadness.start.random")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.start.random")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									if(rmGame!=null){
 										rmGame.setRandomizeAmount(rmp, amount);
 										rmGame.startGame(rmp);
@@ -575,7 +577,7 @@ public class RM extends JavaPlugin {
 									else{
 										rmp.setRequestInt(amount);
 										rmp.setPlayerAction(PlayerAction.START_RANDOM);
-										rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"start "+ChatColor.WHITE+"the game with "+ChatColor.GREEN+amount+"random item(s)"+ChatColor.WHITE+".");
+										rmp.sendMessage(RMText.aStartRandom.replace("*", ""+amount));
 									}
 									return true;
 								}
@@ -584,7 +586,7 @@ public class RM extends JavaPlugin {
 								if(rmGame!=null) rmGame.startGame(rmp);
 								else{
 									rmp.setPlayerAction(PlayerAction.START);
-									rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"start "+ChatColor.WHITE+"the game.");
+									rmp.sendMessage(RMText.aStart);
 								}
 								return true;
 							}
@@ -592,73 +594,73 @@ public class RM extends JavaPlugin {
 						/*
 						//RESTART
 						else if(args[0].equalsIgnoreCase("restart")){
-							if(!rmp.hasPermission("resourcemadness.restart")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.restart")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if(rmGame!=null) rmGame.restartGame(rmp);
 							else{
 								rmp.setPlayerAction(PlayerAction.RESTART);
-								rmp.sendMessage("Left click a game block to "+ChatColor.GOLD+"restart "+ChatColor.WHITE+"the game.");
+								rmp.sendMessage(RMText.aRestart);
 							}
 							return true;
 						}
 						*/
 						//STOP
 						else if(args[0].equalsIgnoreCase("stop")){
-							if(!rmp.hasPermission("resourcemadness.stop")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.stop")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if(rmGame!=null) rmGame.stopGame(rmp, true);
 							else{
 								rmp.setPlayerAction(PlayerAction.STOP);
-								rmp.sendMessage("Left click a game block to "+ChatColor.RED+"stop "+ChatColor.WHITE+"the game.");
+								rmp.sendMessage(RMText.aStop);
 							}
 							return true;
 						}
 						//PAUSE
 						else if(args[0].equalsIgnoreCase("pause")){
-							if(!rmp.hasPermission("resourcemadness.pause")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.pause")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if(rmGame!=null) rmGame.pauseGame(rmp);
 							else{
 								rmp.setRequestBool(true);
 								rmp.setPlayerAction(PlayerAction.PAUSE);
-								rmp.sendMessage("Left click a game block to "+ChatColor.RED+"pause "+ChatColor.WHITE+"the game.");
+								rmp.sendMessage(RMText.aPause);
 							}
 							return true;
 						}
 						//RESUME
 						else if(args[0].equalsIgnoreCase("resume")){
-							if(!rmp.hasPermission("resourcemadness.pause")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.pause")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if(rmGame!=null) rmGame.resumeGame(rmp);
 							else{
 								rmp.setRequestBool(false);
 								rmp.setPlayerAction(PlayerAction.RESUME);
-								rmp.sendMessage("Left click a game block to "+ChatColor.GREEN+"resume "+ChatColor.WHITE+"the game.");
+								rmp.sendMessage(RMText.aResume);
 							}
 							return true;
 						}
 						//RESTORE WORLD
 						else if(args[0].equalsIgnoreCase("restore")){
-							if(!rmp.hasPermission("resourcemadness.restore")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.restore")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if(rmGame!=null) rmGame.restoreWorld(rmp);
 							else{
 								rmp.setPlayerAction(PlayerAction.RESTORE);
-								rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"restore world changes "+ChatColor.WHITE+".");
+								rmp.sendMessage(RMText.aRestore);
 							}
 							return true;
 						}
 						//ITEMS
 						else if(args[0].equalsIgnoreCase("items")){
-							if(!rmp.hasPermission("resourcemadness.items")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.items")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if(rmp.isIngame()){
 								rmp.getGameInProgress().updateGameplayInfo(rmp, rmp.getTeam());
 								return true;
 							}
-							rmp.sendMessage("You must be in a game to use this command.");
+							rmp.sendMessage(RMText.eMustBeIngameCommand);
 							return false;
 						}
 						//FILTER
 						FilterState filterState = null;
 						if(args[0].equalsIgnoreCase("filter")){
-							if(!rmp.hasPermission("resourcemadness.filter")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.filter")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if((args.length>1)&&(args[1].equalsIgnoreCase("info"))){
-								if(!rmp.hasPermission("resourcemadness.filter.info")) return rmp.sendMessage(RMText.noPermissionCommand);
+								if(!rmp.hasPermission("resourcemadness.filter.info")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 								if(rmGame!=null){
 									if((args.length==3)&&(args[2].equalsIgnoreCase("string"))){
 										rmGame.sendFilterInfoString(rmp);
@@ -668,11 +670,11 @@ public class RM extends JavaPlugin {
 								else{
 									if((args.length==3)&&(args[2].equalsIgnoreCase("string"))){
 										rmp.setPlayerAction(PlayerAction.FILTER_INFO_STRING);
-										rmp.sendMessage("Left click a game block to get the game's "+ChatColor.YELLOW+"filter "+ChatColor.WHITE+"as a "+ChatColor.YELLOW+"string"+ChatColor.WHITE+".");
+										rmp.sendMessage(RMText.aFilterInfoString);
 									}
 									else{
 										rmp.setPlayerAction(PlayerAction.FILTER_INFO);
-										rmp.sendMessage("Left click a game block to get "+ChatColor.YELLOW+"info "+ChatColor.WHITE+"about the game's "+ChatColor.YELLOW+"filter"+ChatColor.WHITE+".");
+										rmp.sendMessage(RMText.aFilterInfo);
 									}
 								}
 								return true;
@@ -680,9 +682,9 @@ public class RM extends JavaPlugin {
 							filterState = FilterState.FILTER;
 						}
 						else if(args[0].equalsIgnoreCase("reward")){
-							if(!rmp.hasPermission("resourcemadness.reward")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.reward")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if((args.length>1)&&(args[1].equalsIgnoreCase("info"))){
-								if(!rmp.hasPermission("resourcemadness.reward.info")) return rmp.sendMessage(RMText.noPermissionCommand);
+								if(!rmp.hasPermission("resourcemadness.reward.info")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 								if(rmGame!=null){
 									if((args.length==3)&&(args[2].equalsIgnoreCase("string"))){
 										rmGame.sendRewardInfoString(rmp);
@@ -692,11 +694,11 @@ public class RM extends JavaPlugin {
 								else{
 									if((args.length==3)&&(args[2].equalsIgnoreCase("string"))){
 										rmp.setPlayerAction(PlayerAction.REWARD_INFO_STRING);
-										rmp.sendMessage("Left click a game block to get the game's "+ChatColor.YELLOW+"reward "+ChatColor.WHITE+"as a "+ChatColor.YELLOW+"string"+ChatColor.WHITE+".");
+										rmp.sendMessage(RMText.aRewardInfoString);
 									}
 									else{
 										rmp.setPlayerAction(PlayerAction.REWARD_INFO);
-										rmp.sendMessage("Left click a game block to get "+ChatColor.YELLOW+"info "+ChatColor.WHITE+"about the game's "+ChatColor.YELLOW+"reward"+ChatColor.WHITE+".");
+										rmp.sendMessage(RMText.aRewardInfo);
 									}
 								}
 								return true;
@@ -704,9 +706,9 @@ public class RM extends JavaPlugin {
 							filterState = FilterState.REWARD;
 						}
 						else if(args[0].equalsIgnoreCase("tools")){
-							if(!rmp.hasPermission("resourcemadness.tools")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.tools")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if((args.length>1)&&(args[1].equalsIgnoreCase("info"))){
-								if(!rmp.hasPermission("resourcemadness.tools.info")) return rmp.sendMessage(RMText.noPermissionCommand);
+								if(!rmp.hasPermission("resourcemadness.tools.info")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 								if(rmGame!=null){
 									if((args.length==3)&&(args[2].equalsIgnoreCase("string"))){
 										rmGame.sendToolsInfoString(rmp);
@@ -716,11 +718,11 @@ public class RM extends JavaPlugin {
 								else{
 									if((args.length==3)&&(args[2].equalsIgnoreCase("string"))){
 										rmp.setPlayerAction(PlayerAction.TOOLS_INFO_STRING);
-										rmp.sendMessage("Left click a game block to get the game's "+ChatColor.YELLOW+"tools "+ChatColor.WHITE+"as a "+ChatColor.YELLOW+"string"+ChatColor.WHITE+".");
+										rmp.sendMessage(RMText.aToolsInfoString);
 									}
 									else{
 										rmp.setPlayerAction(PlayerAction.TOOLS_INFO);
-										rmp.sendMessage("Left click a game block to get "+ChatColor.YELLOW+"info "+ChatColor.WHITE+"about the game's "+ChatColor.YELLOW+"tools"+ChatColor.WHITE+".");
+										rmp.sendMessage(RMText.aToolsInfo);
 									}
 								}
 								return true;
@@ -744,15 +746,15 @@ public class RM extends JavaPlugin {
 										switch(filterState){
 											case FILTER:
 												rmp.setPlayerAction(PlayerAction.FILTER);
-												rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"modify "+ChatColor.WHITE+"the "+ChatColor.YELLOW+"filter"+ChatColor.WHITE+".");
+												rmp.sendMessage(RMText.aFilter);
 												break;
 											case REWARD:
 												rmp.setPlayerAction(PlayerAction.REWARD);
-												rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"modify "+ChatColor.WHITE+"the "+ChatColor.YELLOW+"reward"+ChatColor.WHITE+".");
+												rmp.sendMessage(RMText.aReward);
 												break;
 											case TOOLS:
 												rmp.setPlayerAction(PlayerAction.TOOLS);
-												rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"modify "+ChatColor.WHITE+"the "+ChatColor.YELLOW+"tools"+ChatColor.WHITE+".");
+												rmp.sendMessage(RMText.aTools);
 												break;
 										}
 										return true;
@@ -771,16 +773,16 @@ public class RM extends JavaPlugin {
 						}
 						//TEMPLATE
 						else if(args[0].equalsIgnoreCase("template")){
-							if(!rmp.hasPermission("resourcemadness.template")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.template")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if(args.length>1){
 								if(args[1].equalsIgnoreCase("list")){
-									if(!rmp.hasPermission("resourcemadness.template.list")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.template.list")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									if(args.length==2) sendTemplateListById(args[1], rmp);
 									else sendTemplateListById("0", rmp);
 									return true;
 								}
 								else if(args[1].equalsIgnoreCase("load")){
-									if(!rmp.hasPermission("resourcemadness.template.load")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.template.load")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									if(args.length==3){
 										RMTemplate template = rmp.loadTemplate(args[2].toLowerCase());
 										if(template!=null){
@@ -788,26 +790,27 @@ public class RM extends JavaPlugin {
 											else{
 												rmp.setRequestString(args[2]);
 												rmp.setPlayerAction(PlayerAction.TEMPLATE_LOAD);
-												rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"load "+ChatColor.WHITE+"template "+ChatColor.GREEN+args[2]+ChatColor.WHITE+".");
+												rmp.sendMessage(RMText.aTemplateLoad.replace("*", args[2]));
 											}
 										}
 										return true;
 									}
 								}
 								else if(args[1].equalsIgnoreCase("save")){
-									if(!rmp.hasPermission("resourcemadness.template.save")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.template.save")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									if(args.length==3){
 										if(rmGame!=null) rmGame.saveTemplate(args[2].toLowerCase(), rmp);
 										else{
 											rmp.setRequestString(args[2].toLowerCase());
 											rmp.setPlayerAction(PlayerAction.TEMPLATE_SAVE);
-											rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"save "+ChatColor.WHITE+"template "+ChatColor.GREEN+args[2]+ChatColor.WHITE+".");
+											
+											//rmp.sendMessage(RMText.aTemplateSave.replace("*", args[2]));
 										}
 										return true;
 									}
 								}
 								else if(args[1].equalsIgnoreCase("remove")){
-									if(!rmp.hasPermission("resourcemadness.template.remove")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.template.remove")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									if(args.length>2){
 										rmp.removeTemplates(Arrays.asList(args).subList(2, args.length));
 										return true;
@@ -819,23 +822,23 @@ public class RM extends JavaPlugin {
 						}
 						//CLAIM
 						else if(args[0].equalsIgnoreCase("claim")){
-							if(!rmp.hasPermission("resourcemadness.claim")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.claim")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							if(args.length>1){
 								if(args[1].equalsIgnoreCase("found")){
-									if(!rmp.hasPermission("resourcemadness.claim.found")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.claim.found")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									if(!rmp.isIngame()){
 										if(args.length>2){
 											if(args[2].equalsIgnoreCase("chest")){
-												if(!rmp.hasPermission("resourcemadness.claim.found.chest")) return rmp.sendMessage(RMText.noPermissionCommand);
+												if(!rmp.hasPermission("resourcemadness.claim.found.chest")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 												rmp.setRequestItems(requestClaimItemsAtArgsPos(rmp, args, 3));
 												if(rmGame!=null){
 													rmp.setRequestInt(rmGame.getConfig().getId());
 													rmp.setPlayerAction(PlayerAction.CLAIM_FOUND_CHEST);
-													rmp.sendMessage("Left click a "+ChatColor.YELLOW+"chest "+ChatColor.WHITE+"to "+ChatColor.YELLOW+"store items"+ChatColor.WHITE+".");
+													rmp.sendMessage(RMText.aClaimFoundChest);
 												}
 												else{
 													rmp.setPlayerAction(PlayerAction.CLAIM_FOUND_CHEST_SELECT);
-													rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"claim found items "+ChatColor.WHITE+"to "+ChatColor.YELLOW+"chest"+ChatColor.WHITE+".");
+													rmp.sendMessage(RMText.aClaimFoundChestSelect);
 												}
 												return true;
 											}
@@ -844,57 +847,57 @@ public class RM extends JavaPlugin {
 										else{
 											rmp.setRequestItems(requestClaimItemsAtArgsPos(rmp, args, 2));
 											rmp.setPlayerAction(PlayerAction.CLAIM_FOUND);
-											rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"claim found items"+ChatColor.WHITE+".");
+											rmp.sendMessage(RMText.aClaimFound);
 										}
 										return true;
 									}
-									else rmp.sendMessage("You can't claim the game's "+ChatColor.YELLOW+"found items "+ChatColor.WHITE+"while you're in a game.");
+									else rmp.sendMessage(RMText.eCannotClaimFoundIngame);
 									return true;
 								}
 								else if(args[1].equalsIgnoreCase("items")){
-									if(!rmp.hasPermission("resourcemadness.claim.items")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.claim.items")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									if(!rmp.isIngame()){
 										if(args.length>2){
 											if(args[2].equalsIgnoreCase("chest")){
-												if(!rmp.hasPermission("resourcemadness.claim.items.chest")) return rmp.sendMessage(RMText.noPermissionCommand);
+												if(!rmp.hasPermission("resourcemadness.claim.items.chest")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 												rmp.setRequestItems(requestClaimItemsAtArgsPos(rmp, args, 3));
 												rmp.setPlayerAction(PlayerAction.CLAIM_ITEMS_CHEST);
-												rmp.sendMessage("Left click a "+ChatColor.YELLOW+"chest "+ChatColor.WHITE+"to "+ChatColor.YELLOW+"store items"+ChatColor.WHITE+".");
+												rmp.sendMessage(RMText.aClaimItemsChest);
 												return true;
 											}
 										}
 										rmp.claimItems(requestClaimItemsAtArgsPos(rmp, args, 2));
 										return true;
 									}
-									else rmp.sendMessage("You can't claim your "+ChatColor.YELLOW+"items "+ChatColor.WHITE+"while you're in a game.");
+									else rmp.sendMessage(RMText.eCannotClaimItemsIngame);
 									return true;
 								}
 								else if(args[1].equalsIgnoreCase("reward")){
-									if(!rmp.hasPermission("resourcemadness.claim.reward")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.claim.reward")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									if(!rmp.isIngame()){
 										if(args.length>2){
 											if(args[2].equalsIgnoreCase("chest")){
-												if(!rmp.hasPermission("resourcemadness.claim.reward.chest")) return rmp.sendMessage(RMText.noPermissionCommand);
+												if(!rmp.hasPermission("resourcemadness.claim.reward.chest")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 												rmp.setRequestItems(requestClaimItemsAtArgsPos(rmp, args, 3));
 												rmp.setPlayerAction(PlayerAction.CLAIM_REWARD_CHEST);
-												rmp.sendMessage("Left click a "+ChatColor.YELLOW+"chest "+ChatColor.WHITE+"to "+ChatColor.YELLOW+"store reward"+ChatColor.WHITE+".");;
+												rmp.sendMessage(RMText.aClaimRewardChest);;
 												return true;
 											}
 										}
 										rmp.claimReward(requestClaimItemsAtArgsPos(rmp, args, 2));
 										return true;
 									}
-									else rmp.sendMessage("You can't claim your "+ChatColor.YELLOW+"reward "+ChatColor.WHITE+"while you're in a game.");
+									else rmp.sendMessage(RMText.eCannotClaimRewardIngame);
 									return true;
 								}
 								else if(args[1].equalsIgnoreCase("tools")){
-									if(!rmp.hasPermission("resourcemadness.claim.tools")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.claim.tools")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									if(args.length>2){
 										if(args[2].equalsIgnoreCase("chest")){
-											if(!rmp.hasPermission("resourcemadness.claim.tools.chest")) return rmp.sendMessage(RMText.noPermissionCommand);
+											if(!rmp.hasPermission("resourcemadness.claim.tools.chest")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 											rmp.setRequestItems(requestClaimItemsAtArgsPos(rmp, args, 3));
 											rmp.setPlayerAction(PlayerAction.CLAIM_TOOLS_CHEST);
-											rmp.sendMessage("Left click a "+ChatColor.YELLOW+"chest "+ChatColor.WHITE+"to "+ChatColor.YELLOW+"store tools"+ChatColor.WHITE+".");
+											rmp.sendMessage(RMText.aClaimToolsChest);
 											return true;
 										}
 									}
@@ -907,43 +910,45 @@ public class RM extends JavaPlugin {
 						}
 						//SET
 						else if(args[0].equalsIgnoreCase("set")){
-							if(!rmp.hasPermission("resourcemadness.set")) return rmp.sendMessage(RMText.noPermissionCommand);
+							if(!rmp.hasPermission("resourcemadness.set")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 							page = 0;
 							if(args.length>1){
 								PlayerAction action = null;
 								//MIN PLAYERS
 								if(args[1].equalsIgnoreCase("minplayers")){
-									if(!rmp.hasPermission("resourcemadness.set.minplayers")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.minplayers")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_MIN_PLAYERS;
 								}
 								//MAX PLAYERS
 								else if(args[1].equalsIgnoreCase("maxplayers")){
-									if(!rmp.hasPermission("resourcemadness.set.maxplayers")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.maxplayers")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_MAX_PLAYERS;
 								}
 								//MIN TEAM PLAYERS
 								else if(args[1].equalsIgnoreCase("minteamplayers")){
-									if(!rmp.hasPermission("resourcemadness.set.minteamplayers")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.minteamplayers")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_MIN_TEAM_PLAYERS;
 								}
 								//MAX TEAM PLAYERS
 								else if(args[1].equalsIgnoreCase("maxteamplayers")){
-									if(!rmp.hasPermission("resourcemadness.set.maxteamplayers")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.maxteamplayers")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_MAX_TEAM_PLAYERS;
 								}
+								/*
 								//MAX ITEMS
 								else if(args[1].equalsIgnoreCase("maxitems")){
-									if(!rmp.hasPermission("resourcemadness.set.maxitems")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.maxitems")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_MAX_ITEMS;
 								}
+								*/
 								//MATCH TIME LIMIT
 								else if(args[1].equalsIgnoreCase("timelimit")){
-									if(!rmp.hasPermission("resourcemadness.set.timelimit")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.timelimit")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_TIME_LIMIT;
 								}
 								//AUTO RANDOM ITEMS
 								else if(args[1].equalsIgnoreCase("random")){
-									if(!rmp.hasPermission("resourcemadness.set.random")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.random")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_RANDOM;
 								}
 								else page = RMHelper.getIntByString(args[1]);
@@ -958,7 +963,7 @@ public class RM extends JavaPlugin {
 													case SET_MAX_PLAYERS: rmGame.setSetting(rmp, Setting.maxPlayers, amount); break;
 													case SET_MIN_TEAM_PLAYERS: rmGame.setSetting(rmp, Setting.minTeamPlayers, amount); break;
 													case SET_MAX_TEAM_PLAYERS: rmGame.setSetting(rmp, Setting.maxPlayers, amount); break;
-													case SET_MAX_ITEMS: rmGame.setSetting(rmp, Setting.maxItems, amount); break;
+													//case SET_MAX_ITEMS: rmGame.setSetting(rmp, Setting.maxItems, amount); break;
 													case SET_TIME_LIMIT: rmGame.setSetting(rmp, Setting.timeLimit, amount); break;
 													case SET_RANDOM: rmGame.setSetting(rmp, Setting.autoRandomizeAmount, amount); break;
 												}
@@ -969,31 +974,33 @@ public class RM extends JavaPlugin {
 												switch(action){
 													case SET_MIN_PLAYERS:
 														rmp.setPlayerAction(PlayerAction.SET_MIN_PLAYERS);
-														rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set min players"+ChatColor.WHITE+".");
+														rmp.sendMessage(RMText.aSetMinPlayers);
 														break;
 													case SET_MAX_PLAYERS:
 														rmp.setPlayerAction(PlayerAction.SET_MAX_PLAYERS);
-														rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set max players"+ChatColor.WHITE+".");
+														rmp.sendMessage(RMText.aSetMaxPlayers);
 														break;
 													case SET_MIN_TEAM_PLAYERS:
 														rmp.setPlayerAction(PlayerAction.SET_MIN_TEAM_PLAYERS);
-														rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set min team players"+ChatColor.WHITE+".");
+														rmp.sendMessage(RMText.aSetMinTeamPlayers);
 														break;
 													case SET_MAX_TEAM_PLAYERS:
 														rmp.setPlayerAction(PlayerAction.SET_MAX_TEAM_PLAYERS);
-														rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set max team players"+ChatColor.WHITE+".");
+														rmp.sendMessage(RMText.aSetMaxTeamPlayers);
 														break;
+													/*
 													case SET_MAX_ITEMS:
 														rmp.setPlayerAction(PlayerAction.SET_MAX_ITEMS);
-														rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set max items"+ChatColor.WHITE+".");
+														rmp.sendMessage(RMText.aSetMaxItems);
 														break;
+													*/
 													case SET_TIME_LIMIT:
 														rmp.setPlayerAction(PlayerAction.SET_TIME_LIMIT);
-														rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set match time limit"+ChatColor.WHITE+".");
+														rmp.sendMessage(RMText.aSetTimeLimit);
 														break;
 													case SET_RANDOM:
 														rmp.setPlayerAction(PlayerAction.SET_RANDOM);
-														rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set auto randomize items"+ChatColor.WHITE+".");
+														rmp.sendMessage(RMText.aSetRandom);
 														break;
 												}
 												return true;
@@ -1006,67 +1013,67 @@ public class RM extends JavaPlugin {
 								action = null;
 								//ADVERTISE GAME IN SEARCH
 								if(args[1].equalsIgnoreCase("advertise")){
-									if(!rmp.hasPermission("resourcemadness.set.advertise")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.advertise")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_ADVERTISE;
 								}
 								//AUTO RESTORE WORLD
 								else if(args[1].equalsIgnoreCase("restore")){
-									if(!rmp.hasPermission("resourcemadness.set.restore")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.restore")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_RESTORE;
 								}
 								//GATHER PLAYERS
 								else if(args[1].equalsIgnoreCase("warp")){
-									if(!rmp.hasPermission("resourcemadness.set.warp")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.warp")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_WARP;
 								}
 								//ALLOW MIDGAME JOIN
 								else if(args[1].equalsIgnoreCase("midgamejoin")){
-									if(!rmp.hasPermission("resourcemadness.set.midgamejoin")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.midgamejoin")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_MIDGAME_JOIN;
 								}
 								//HEAL PLAYER
 								else if(args[1].equalsIgnoreCase("healplayer")){
-									if(!rmp.hasPermission("resourcemadness.set.healplayer")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.healplayer")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_HEAL_PLAYER;
 								}
 								//CLEAR PLAYER INVENTORY
 								else if(args[1].equalsIgnoreCase("clearinventory")){
-									if(!rmp.hasPermission("resourcemadness.set.clearinventory")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.clearinventory")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_CLEAR_INVENTORY;
 								}
 								//USE A GAME'S FOUND ITEMS AS REWARD
 								else if(args[1].equalsIgnoreCase("foundasreward")){
-									if(!rmp.hasPermission("resourcemadness.set.foundasreward")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.foundasreward")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_FOUND_AS_REWARD;
 								}
 								//WARN UNEQUAL ITEMS
 								else if(args[1].equalsIgnoreCase("warnunequal")){
-									if(!rmp.hasPermission("resourcemadness.set.warnunequal")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.warnunequal")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_WARN_UNEQUAL;
 								}
 								//ALLOW UNEQUAL ITEMS
 								else if(args[1].equalsIgnoreCase("allowunequal")){
-									if(!rmp.hasPermission("resourcemadness.set.allowunequal")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.allowunequal")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_ALLOW_UNEQUAL;
 								}
 								//WARN HACK ITEMS
 								else if(args[1].equalsIgnoreCase("warnhacked")){
-									if(!rmp.hasPermission("resourcemadness.set.warnhacked")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.warnhacked")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_WARN_HACKED;
 								}
 								//ALLOW HACK ITEMS
 								else if(args[1].equalsIgnoreCase("allowhacked")){
-									if(!rmp.hasPermission("resourcemadness.set.allowhacked")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.allowhacked")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_ALLOW_HACKED;
 								}
 								//INFINITE REWARD ITEMS
 								else if(args[1].equalsIgnoreCase("infinitereward")){
-									if(!rmp.hasPermission("resourcemadness.set.infinitereward")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.infinitereward")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_INFINITE_REWARD;
 								}
 								//INFINITE TOOLS ITEMS
 								else if(args[1].equalsIgnoreCase("infinitetools")){
-									if(!rmp.hasPermission("resourcemadness.set.infinitetools")) return rmp.sendMessage(RMText.noPermissionCommand);
+									if(!rmp.hasPermission("resourcemadness.set.infinitetools")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 									action = PlayerAction.SET_INFINITE_TOOLS;
 								}
 								
@@ -1100,54 +1107,54 @@ public class RM extends JavaPlugin {
 										switch(action){
 											case SET_ADVERTISE:
 												rmp.setPlayerAction(PlayerAction.SET_ADVERTISE);
-												rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set advertise"+ChatColor.WHITE+".");
+												rmp.sendMessage(RMText.aSetAdvertise);
 												break;
 											case SET_RESTORE:
 												rmp.setPlayerAction(PlayerAction.SET_RESTORE);
-												rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set auto restore world"+ChatColor.WHITE+".");
+												rmp.sendMessage(RMText.aSetRestore);
 												break;
 											case SET_WARP:
 												rmp.setPlayerAction(PlayerAction.SET_WARP);
-												rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set teleport players"+ChatColor.WHITE+".");
+												rmp.sendMessage(RMText.aSetWarp);
 												break;
 											case SET_MIDGAME_JOIN:
 												rmp.setPlayerAction(PlayerAction.SET_MIDGAME_JOIN);
-												rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set allow midgame join"+ChatColor.WHITE+".");
+												rmp.sendMessage(RMText.aSetMidgameJoin);
 												break;
 											case SET_HEAL_PLAYER:
 												rmp.setPlayerAction(PlayerAction.SET_HEAL_PLAYER);
-												rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set heal player"+ChatColor.WHITE+".");
+												rmp.sendMessage(RMText.aSetHealPlayer);
 												break;
 											case SET_CLEAR_INVENTORY:
 												rmp.setPlayerAction(PlayerAction.SET_CLEAR_INVENTORY);
-												rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set clear player inventory"+ChatColor.WHITE+".");
+												rmp.sendMessage(RMText.aSetClearInventory);
 												break;
 											case SET_FOUND_AS_REWARD:
 												rmp.setPlayerAction(PlayerAction.SET_FOUND_AS_REWARD);
-												rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set use found as reward"+ChatColor.WHITE+".");
+												rmp.sendMessage(RMText.aSetFoundAsReward);
 											case SET_WARN_UNEQUAL:
 												rmp.setPlayerAction(PlayerAction.SET_WARN_UNEQUAL);
-												rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set warn unequal items"+ChatColor.WHITE+".");
+												rmp.sendMessage(RMText.aSetWarnUnequal);
 												break;
 											case SET_ALLOW_UNEQUAL:
 												rmp.setPlayerAction(PlayerAction.SET_ALLOW_UNEQUAL);
-												rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set allow unequal items"+ChatColor.WHITE+".");
+												rmp.sendMessage(RMText.aSetAllowUnequal);
 												break;
 											case SET_WARN_HACKED:
 												rmp.setPlayerAction(PlayerAction.SET_WARN_HACKED);
-												rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set warn hacked items"+ChatColor.WHITE+".");
+												rmp.sendMessage(RMText.aSetWarnHacked);
 												break;
 											case SET_ALLOW_HACKED:
 												rmp.setPlayerAction(PlayerAction.SET_ALLOW_HACKED);
-												rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set allow hacked items"+ChatColor.WHITE+".");
+												rmp.sendMessage(RMText.aSetAllowHacked);
 												break;
 											case SET_INFINITE_REWARD:
 												rmp.setPlayerAction(PlayerAction.SET_INFINITE_REWARD);
-												rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set infinite reward"+ChatColor.WHITE+".");
+												rmp.sendMessage(RMText.aSetInfiniteReward);
 												break;
 											case SET_INFINITE_TOOLS:
 												rmp.setPlayerAction(PlayerAction.SET_INFINITE_TOOLS);
-												rmp.sendMessage("Left click a game block to "+ChatColor.YELLOW+"set infinite tools"+ChatColor.WHITE+".");
+												rmp.sendMessage(RMText.aSetInfiniteTools);
 												break;
 										}
 									}
@@ -1174,9 +1181,9 @@ public class RM extends JavaPlugin {
 									}
 									else{
 										switch(chatMode){
-										case WORLD: rmp.sendMessage("You must be in a game to use "+ChatColor.YELLOW+"world "+ChatColor.WHITE+"chat."); break;
-										case GAME: rmp.sendMessage("You must be in a game to use "+ChatColor.YELLOW+"game "+ChatColor.WHITE+"chat."); break;
-										case TEAM: rmp.sendMessage("You must be in a game to use "+ChatColor.YELLOW+"team "+ChatColor.WHITE+"chat."); break;
+										case WORLD: rmp.sendMessage(RMText.eMustBeIngameChatWorld); break;
+										case GAME: rmp.sendMessage(RMText.eMustBeIngameChatGame); break;
+										case TEAM: rmp.sendMessage(RMText.eMustBeIngameChatTeam); break;
 										}
 									}
 									return true;
@@ -1192,7 +1199,7 @@ public class RM extends JavaPlugin {
 								listArgs.add(args[i]);
 							}
 							if(listArgs.size()>0){
-								if(!rmp.hasPermission("resourcemadness.iteminfo")) return rmp.sendMessage(RMText.noPermissionCommand);
+								if(!rmp.hasPermission("resourcemadness.iteminfo")) return rmp.sendMessage(RMText.eNoPermissionCommand);
 								HashMap<Integer, Material> items = new HashMap<Integer, Material>();
 								List<String> itemsWarn = new ArrayList<String>();
 								for(String str : listArgs){
@@ -1242,7 +1249,7 @@ public class RM extends JavaPlugin {
 									return true;
 								}
 								else if(itemsWarn.size()>0){
-									rmp.sendMessage("These items do not exist!");
+									rmp.sendMessage(RMText.eItemsDoNotExist);
 									//rmp.sendMessage("These items don't exist: "+getFormattedStringByList(itemsWarn));
 									return true;
 								}
@@ -1258,15 +1265,6 @@ public class RM extends JavaPlugin {
 			}
 		}
 		return true;
-	}
-	
-	public void saveTemplate(RMTemplate template){
-		if(template==null) return;
-		File folder = new File(getDataFolder()+File.separator+"template");
-		if(!folder.exists()){
-			log.log(Level.INFO, RMText.preLog+"Creating templates directory...");
-			folder.mkdir();
-		}
 	}
 	
 	public void saveAllBackup(){
@@ -1898,7 +1896,7 @@ public class RM extends JavaPlugin {
 								if((data!=null)&&(data.length()>0)&&(!data.equalsIgnoreCase("TOOLS"))){
 									rmTemplate.setToolsParseString(data);
 								}
-								rmp.saveTemplate(rmTemplate);
+								rmp.setTemplate(rmTemplate);
 							}
 						}
 					}
@@ -2483,7 +2481,7 @@ public class RM extends JavaPlugin {
 		else if(args.size()>1){
 			if(args.get(0).equalsIgnoreCase("add")){
 				if(!rmp.hasPermission("resourcemadness.filter.add")){
-					rmp.sendMessage(RMText.noPermissionCommand);
+					rmp.sendMessage(RMText.eNoPermissionCommand);
 					return;
 				}
 				force = ForceState.ADD;
@@ -2491,7 +2489,7 @@ public class RM extends JavaPlugin {
 			}
 			else if(args.get(0).equalsIgnoreCase("subtract")){
 				if(!rmp.hasPermission("resourcemadness.filter.subtract")){
-					rmp.sendMessage(RMText.noPermissionCommand);
+					rmp.sendMessage(RMText.eNoPermissionCommand);
 					return;
 				}
 				force = ForceState.SUBTRACT;
@@ -2500,7 +2498,7 @@ public class RM extends JavaPlugin {
 			else if(args.get(0).equalsIgnoreCase("random")){
 				if(filterState==FilterState.FILTER){
 					if(!rmp.hasPermission("resourcemadness.filter.random")){
-						rmp.sendMessage(RMText.noPermissionCommand);
+						rmp.sendMessage(RMText.eNoPermissionCommand);
 						return;
 					}
 					randomize = RMHelper.getIntByString(args.get(1));
@@ -2515,7 +2513,7 @@ public class RM extends JavaPlugin {
 				if(args.get(1).equalsIgnoreCase("random")){
 					if(filterState==FilterState.FILTER){
 						if(!rmp.hasPermission("resourcemadness.filter.random")){
-							rmp.sendMessage(RMText.noPermissionCommand);
+							rmp.sendMessage(RMText.eNoPermissionCommand);
 							return;
 						}
 						randomize = RMHelper.getIntByString(args.get(2));
@@ -2528,19 +2526,19 @@ public class RM extends JavaPlugin {
 			switch(filterState){
 			case FILTER:
 				if(!rmp.hasPermission("resourcemadness.filter.clear")){
-					rmp.sendMessage(RMText.noPermissionCommand);
+					rmp.sendMessage(RMText.eNoPermissionCommand);
 					return;
 				}
 				break;
 			case REWARD:
 				if(!rmp.hasPermission("resourcemadness.reward.clear")){
-					rmp.sendMessage(RMText.noPermissionCommand);
+					rmp.sendMessage(RMText.eNoPermissionCommand);
 					return;
 				}
 				break;
 			case TOOLS:
 				if(!rmp.hasPermission("resourcemadness.tools.clear")){
-					rmp.sendMessage(RMText.noPermissionCommand);
+					rmp.sendMessage(RMText.eNoPermissionCommand);
 					return;
 				}
 				break;
@@ -2664,7 +2662,7 @@ public class RM extends JavaPlugin {
 		}
 		
 		if(aliasMap.size()==0){
-			rmp.sendMessage(ChatColor.GRAY+"No aliases yet");
+			rmp.sendMessage(RMText.eNoAliasesYet);
 			return;
 		}
 		if(id<1) id=1;
@@ -2692,7 +2690,7 @@ public class RM extends JavaPlugin {
 		String[] templates = rmpTemplates.keySet().toArray(new String[rmpTemplates.size()]);
 		Arrays.sort(templates);
 		if(templates.length==0){
-			rmp.sendMessage(ChatColor.GRAY+"No templates yet");
+			rmp.sendMessage(RMText.eNoTemplateYet);
 			return;
 		}
 		if(id<1) id=1;
@@ -2740,14 +2738,14 @@ public class RM extends JavaPlugin {
 		Integer[] games = RMGame.getAdvertisedGames();
 		Arrays.sort(games);
 		if(games.length==0){
-			rmp.sendMessage(ChatColor.GRAY+"No games yet");
+			rmp.sendMessage(RMText.eNoGamesYet);
 			return;
 		}
 		if(id<1) id=1;
 		int size = (int)Math.ceil((double)games.length/(double)listLimit);
 		if(id>size) id=1;
 		int i=(id-1)*listLimit;
-		rmp.sendMessage(ChatColor.GOLD+"/rm list "+ChatColor.GRAY+"(Page "+(id)+" of " +size+")");
+		rmp.sendMessage(ChatColor.GOLD+"/rm list "+RMText.iPage.replace("*1", ""+id).replace("*2", ""+size));
 		
 		int found = 0;
 		while((found<listLimit)&&(i<games.length)){
@@ -2771,13 +2769,13 @@ public class RM extends JavaPlugin {
 		int pageLimit = 2;
 		if(page<=0) page = 1;
 		if(page>pageLimit) page = pageLimit;
-		rmp.sendMessage(ChatColor.GOLD+"ResourceMadness "+ChatColor.GRAY+"(Page "+page+" of "+pageLimit+")");
-		rmp.sendMessage(ChatColor.GRAY+"Gray"+ChatColor.WHITE+"/"+ChatColor.GREEN+"green "+ChatColor.WHITE+"text is optional.");
+		rmp.sendMessage(ChatColor.GOLD+"ResourceMadness "+RMText.iPage.replace("*1", ""+page).replace("*2", ""+pageLimit));
+		rmp.sendMessage(RMText.iGrayGreenOptional);
 		if(page==1){
-			if(rmp.hasPermission("resourcemadness.add")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"add "+ChatColor.WHITE+"Create a new game.");
-			if(rmp.hasPermission("resourcemadness.remove")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"remove "+ChatColor.WHITE+"Remove an existing game.");
-			if(rmp.hasPermission("resourcemadness.list")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"list "+ChatColor.GREEN+"[page] "+ChatColor.WHITE+"List games.");
-			if(rmp.hasPermission("resourcemadness.commands")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"commands "+ChatColor.GREEN+"[page] "+ChatColor.WHITE+"List commands and aliases.");
+			if(rmp.hasPermission("resourcemadness.add")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"add "+ChatColor.WHITE+RMText.iAdd);
+			if(rmp.hasPermission("resourcemadness.remove")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"remove "+RMText.iRemove);
+			if(rmp.hasPermission("resourcemadness.list")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"list "+ChatColor.GREEN+"[page] "+RMText.iList);
+			if(rmp.hasPermission("resourcemadness.commands")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"commands "+ChatColor.GREEN+"[page] "+RMText.iCommands);
 			
 			//Info/Settings
 			String line="";
@@ -2786,12 +2784,12 @@ public class RM extends JavaPlugin {
 			if(rmp.hasPermission("resourcemadness.info.reward")) line+="reward/";
 			if(rmp.hasPermission("resourcemadness.info.tools")) line+="tools/";
 			line = RMText.stripLast(line, "/");
-			if(line.length()!=0) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"info "+ChatColor.GREEN+line+" "+ChatColor.WHITE+"Show "+line+".");
+			if(line.length()!=0) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"info "+ChatColor.GREEN+line+" "+RMText.iInfo.replace("*", line));
 			
 			line ="";
 			if(rmp.hasPermission("resourcemadness.info.settings.reset")) line+="reset";
-			if(rmp.hasPermission("resourcemadness.info.settings")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"settings "+ChatColor.GREEN+line+ChatColor.WHITE+" Show"+(line.length()>0?"/"+line:"")+" settings.");
-			if(rmp.hasPermission("resourcemadness.set")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"set "+ChatColor.WHITE+"Set various game related settings.");
+			if(rmp.hasPermission("resourcemadness.info.settings")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"settings "+ChatColor.GREEN+line+" "+RMText.iSettings.replace("*", (line.length()>0?"/"+line:"")));
+			if(rmp.hasPermission("resourcemadness.set")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"set "+RMText.iSet);
 			
 			//Mode
 			line="";
@@ -2799,11 +2797,11 @@ public class RM extends JavaPlugin {
 			if(rmp.hasPermission("resourcemadness.mode.reward")) line+="reward/";
 			if(rmp.hasPermission("resourcemadness.mode.tools")) line+="tools/";
 			line = RMText.stripLast(line, "/");
-			if(line.length()!=0) if(rmp.hasPermission("resourcemadness.mode")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"mode "+ChatColor.GREEN+line+" "+ChatColor.WHITE+"Change filter mode.");
+			if(line.length()!=0) if(rmp.hasPermission("resourcemadness.mode")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"mode "+ChatColor.GREEN+line+" "+RMText.iMode);
 			
-			if(rmp.hasPermission("resourcemadness.filter")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.GREEN+(rmp.hasPermission("resourcemadness.filter.info")?"info":"")+" "+ChatColor.WHITE+"Add items to filter.");
-			if(rmp.hasPermission("resourcemadness.reward")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"reward "+ChatColor.GREEN+(rmp.hasPermission("resourcemadness.reward.info")?"info":"")+" "+ChatColor.WHITE+"Add reward items.");
-			if(rmp.hasPermission("resourcemadness.tools")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"tools "+ChatColor.GREEN+(rmp.hasPermission("resourcemadness.tools.info")?"info":"")+" "+ChatColor.WHITE+"Add tools items.");
+			if(rmp.hasPermission("resourcemadness.filter")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"filter "+ChatColor.GREEN+(rmp.hasPermission("resourcemadness.filter.info")?"info":"")+" "+RMText.iFilter);
+			if(rmp.hasPermission("resourcemadness.reward")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"reward "+ChatColor.GREEN+(rmp.hasPermission("resourcemadness.reward.info")?"info":"")+" "+RMText.iReward);
+			if(rmp.hasPermission("resourcemadness.tools")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"tools "+ChatColor.GREEN+(rmp.hasPermission("resourcemadness.tools.info")?"info":"")+" "+RMText.iTools);
 			
 			line="";
 			if(rmp.hasPermission("resourcemadness.template.list")) line+="list/";
@@ -2811,38 +2809,38 @@ public class RM extends JavaPlugin {
 			if(rmp.hasPermission("resourcemadness.template.save")) line+="save/";
 			if(rmp.hasPermission("resourcemadness.template.remove")) line+="remove/";
 			line = RMText.stripLast(line, "/");
-			if(rmp.hasPermission("resourcemadness.template")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"template "+line+ChatColor.WHITE+" "+RMText.firstLetterToUpperCase(line)+" templates.");
+			if(rmp.hasPermission("resourcemadness.template")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"template "+line+" "+RMText.iTemplate.replace("*", RMText.firstLetterToUpperCase(line)));
 		}
 		else if(page==2){
-			if(rmp.hasPermission("resourcemadness.start")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"start "+ChatColor.GREEN+"[amount] "+ChatColor.WHITE+"Start a game. Randomize with "+ChatColor.GREEN+"amount"+ChatColor.WHITE+".");
+			if(rmp.hasPermission("resourcemadness.start")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"start "+ChatColor.GREEN+"[amount] "+RMText.iStart);
 			
 			//Restart/Stop
 			String line="";
 			//if(rmp.hasPermission("resourcemadness.restart")) line+="Restart/";
 			if(rmp.hasPermission("resourcemadness.stop")) line+="Stop/";
 			line = RMText.stripLast(line, "/");
-			if(line.length()!=0) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+line.toLowerCase()+" "+ChatColor.WHITE+line+" a game.");
+			if(line.length()!=0) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+line.toLowerCase()+" "+RMText.iStop.replace("*", line));
 			
 			line = "";
 			if(rmp.hasPermission("resourcemadness.pause")) line+="pause/";
 			if(rmp.hasPermission("resourcemadness.resume")) line+="resume/";
 			line = RMText.stripLast(line, "/");
-			if(line.length()!=0) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+line+" "+ChatColor.WHITE+RMText.firstLetterToUpperCase(line)+" a game.");
+			if(line.length()!=0) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+line+" "+RMText.iPause.replace("*", RMText.firstLetterToUpperCase(line)));
 			
-			if(rmp.hasPermission("resourcemadness.restore")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"restore "+ChatColor.WHITE+"Restore game world changes.");
-			if(rmp.hasPermission("resourcemadness.join")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"join "+ChatColor.GREEN+"[team(id/color)] "+ChatColor.WHITE+"Join a team.");
-			if(rmp.hasPermission("resourcemadness.quit")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"quit "+ChatColor.WHITE+"Quit a team.");
-			if(rmp.hasPermission("resourcemadness.ready")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"ready "+ChatColor.WHITE+"Ready yourself.");
+			if(rmp.hasPermission("resourcemadness.restore")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"restore "+RMText.iRestore);
+			if(rmp.hasPermission("resourcemadness.join")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"join "+ChatColor.GREEN+"[team(id/color)] "+RMText.iJoin);
+			if(rmp.hasPermission("resourcemadness.quit")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"quit "+RMText.iQuit);
+			if(rmp.hasPermission("resourcemadness.ready")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"ready "+RMText.iReady);
 			
 			line = "";
 			if(rmp.hasPermission("resourcemadness.chat.world")) line+="world/";
 			if(rmp.hasPermission("resourcemadness.chat.game")) line+="game/";
 			if(rmp.hasPermission("resourcemadness.chat.team")) line+="team/";
 			line = RMText.stripLast(line, "/");
-			if(line.length()!=0) if(rmp.hasPermission("resourcemadness.chat")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"chat "+line+" "+ChatColor.WHITE+RMText.firstLetterToUpperCase(line)+" chat.");
+			if(line.length()!=0) if(rmp.hasPermission("resourcemadness.chat")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"chat "+line+" "+RMText.iChat.replace("*", RMText.firstLetterToUpperCase(line)));
 			
-			if(rmp.hasPermission("resourcemadness.items")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"items "+ChatColor.WHITE+"Get which items you need to gather.");
-			if(rmp.hasPermission("resourcemadness.item")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"item "+ChatColor.AQUA+"[items(id/name)] "+ChatColor.WHITE+"Get the item's name or id");
+			if(rmp.hasPermission("resourcemadness.items")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"items "+RMText.iItems);
+			if(rmp.hasPermission("resourcemadness.item")) rmp.sendMessage("/rm "+ChatColor.YELLOW+"item "+ChatColor.AQUA+"[items(id/name)] "+RMText.iItem);
 			
 			line = "";
 			if(rmp.hasPermission("resourcemadness.claim.found")) line+="found/";
@@ -2850,7 +2848,7 @@ public class RM extends JavaPlugin {
 			if(rmp.hasPermission("resourcemadness.claim.reward")) line+="reward/";
 			if(rmp.hasPermission("resourcemadness.claim.tools")) line+="tools/";
 			line = RMText.stripLast(line, "/");
-			if(rmp.hasPermission("resourcemadness.claim")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"claim "+line+" "+ChatColor.GREEN+"chest "+ChatColor.WHITE+"Claim "+line.toLowerCase()+" to inventory or chest.");
+			if(rmp.hasPermission("resourcemadness.claim")) rmp.sendMessage("/rm "+ChatColor.GRAY+"[id] "+ChatColor.YELLOW+"claim "+line+" "+ChatColor.GREEN+"chest "+RMText.iClaim.replace("*", line.toLowerCase()));
 		}
 	}
 	
@@ -2860,29 +2858,29 @@ public class RM extends JavaPlugin {
 			int pageLimit = 2;
 			if(page<=0) page = 1;
 			if(page>pageLimit) page = pageLimit;
-			rmp.sendMessage(ChatColor.GOLD+"/rm set "+ChatColor.GRAY+"(Page "+page+" of "+pageLimit+")");
+			rmp.sendMessage(ChatColor.GOLD+"/rm set "+RMText.iPage.replace("*1", ""+page).replace("*2", ""+pageLimit));
 			if(page==1){
-				if(rmp.hasPermission("resourcemadness.set.minplayers")) if(!config.getLock().contains(Setting.minPlayers)) rmp.sendMessage(ChatColor.YELLOW+"min "+ChatColor.AQUA+"[amount] "+ChatColor.WHITE+"Set min players.");
-				if(rmp.hasPermission("resourcemadness.set.maxplayers")) if(!config.getLock().contains(Setting.maxPlayers)) rmp.sendMessage(ChatColor.YELLOW+"max "+ChatColor.AQUA+"[amount] "+ChatColor.WHITE+"Set max players.");
-				if(rmp.hasPermission("resourcemadness.set.minteamplayers")) if(!config.getLock().contains(Setting.minTeamPlayers)) rmp.sendMessage(ChatColor.YELLOW+"minteam "+ChatColor.AQUA+"[amount] "+ChatColor.WHITE+"Set min team players.");
-				if(rmp.hasPermission("resourcemadness.set.maxteamplayers")) if(!config.getLock().contains(Setting.maxTeamPlayers)) rmp.sendMessage(ChatColor.YELLOW+"maxteam "+ChatColor.AQUA+"[amount] "+ChatColor.WHITE+"Set max team players.");
-				if(rmp.hasPermission("resourcemadness.set.timelimit")) if(!config.getLock().contains(Setting.timeLimit)) rmp.sendMessage(ChatColor.YELLOW+"timelimit "+ChatColor.AQUA+"[amount] "+ChatColor.WHITE+RMText.timeLimit+".");
-				if(rmp.hasPermission("resourcemadness.set.random")) if(!config.getLock().contains(Setting.autoRandomizeAmount)) rmp.sendMessage(ChatColor.YELLOW+"random "+ChatColor.AQUA+"[amount] "+ChatColor.WHITE+"Randomly pick "+ChatColor.GREEN+"amount "+ChatColor.WHITE+"of items every match.");
-				if(rmp.hasPermission("resourcemadness.set.advertise")) if(!config.getLock().contains(Setting.advertise)) rmp.sendMessage(ChatColor.YELLOW+"advertise "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.advertise+".");
-				if(rmp.hasPermission("resourcemadness.set.restore")) if(!config.getLock().contains(Setting.autoRestoreWorld)) rmp.sendMessage(ChatColor.YELLOW+"restore "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.autoRestoreWorld+".");
-				if(rmp.hasPermission("resourcemadness.set.warp")) if(!config.getLock().contains(Setting.warpToSafety)) rmp.sendMessage(ChatColor.YELLOW+"warp "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.warpToSafety+".");
-				if(rmp.hasPermission("resourcemadness.set.midgamejoin")) if(!config.getLock().contains(Setting.allowMidgameJoin)) rmp.sendMessage(ChatColor.YELLOW+"midgamejoin "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.allowMidgameJoin+".");
-				if(rmp.hasPermission("resourcemadness.set.healplayer")) if(!config.getLock().contains(Setting.healPlayer)) rmp.sendMessage(ChatColor.YELLOW+"healplayer "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.healPlayer+".");
-				if(rmp.hasPermission("resourcemadness.set.clearinventory")) if(!config.getLock().contains(Setting.clearPlayerInventory)) rmp.sendMessage(ChatColor.YELLOW+"clearinventory "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.clearPlayerInventory+".");
-				if(rmp.hasPermission("resourcemadness.set.foundasreward")) if(!config.getLock().contains(Setting.foundAsReward)) rmp.sendMessage(ChatColor.YELLOW+"foundasreward "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.foundAsReward+".");
+				if(rmp.hasPermission("resourcemadness.set.minplayers")) if(!config.getLock().contains(Setting.minPlayers)) rmp.sendMessage(ChatColor.YELLOW+"min "+ChatColor.AQUA+"[amount] "+ChatColor.WHITE+RMText.sMinPlayers+".");
+				if(rmp.hasPermission("resourcemadness.set.maxplayers")) if(!config.getLock().contains(Setting.maxPlayers)) rmp.sendMessage(ChatColor.YELLOW+"max "+ChatColor.AQUA+"[amount] "+ChatColor.WHITE+RMText.sMaxPlayers+".");
+				if(rmp.hasPermission("resourcemadness.set.minteamplayers")) if(!config.getLock().contains(Setting.minTeamPlayers)) rmp.sendMessage(ChatColor.YELLOW+"minteam "+ChatColor.AQUA+"[amount] "+ChatColor.WHITE+RMText.sMinTeamPlayers+".");
+				if(rmp.hasPermission("resourcemadness.set.maxteamplayers")) if(!config.getLock().contains(Setting.maxTeamPlayers)) rmp.sendMessage(ChatColor.YELLOW+"maxteam "+ChatColor.AQUA+"[amount] "+ChatColor.WHITE+RMText.sMaxTeamPlayers+".");
+				if(rmp.hasPermission("resourcemadness.set.timelimit")) if(!config.getLock().contains(Setting.timeLimit)) rmp.sendMessage(ChatColor.YELLOW+"timelimit "+ChatColor.AQUA+"[amount] "+ChatColor.WHITE+RMText.sTimeLimit+".");
+				if(rmp.hasPermission("resourcemadness.set.random")) if(!config.getLock().contains(Setting.autoRandomizeAmount)) rmp.sendMessage(ChatColor.YELLOW+"random "+ChatColor.AQUA+"[amount] "+ChatColor.WHITE+RMText.sAutoRandomizeAmount+".");
+				if(rmp.hasPermission("resourcemadness.set.advertise")) if(!config.getLock().contains(Setting.advertise)) rmp.sendMessage(ChatColor.YELLOW+"advertise "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.sAdvertise+".");
+				if(rmp.hasPermission("resourcemadness.set.restore")) if(!config.getLock().contains(Setting.autoRestoreWorld)) rmp.sendMessage(ChatColor.YELLOW+"restore "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.sAutoRestoreWorld+".");
+				if(rmp.hasPermission("resourcemadness.set.warp")) if(!config.getLock().contains(Setting.warpToSafety)) rmp.sendMessage(ChatColor.YELLOW+"warp "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.sWarpToSafety+".");
+				if(rmp.hasPermission("resourcemadness.set.midgamejoin")) if(!config.getLock().contains(Setting.allowMidgameJoin)) rmp.sendMessage(ChatColor.YELLOW+"midgamejoin "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.sAllowMidgameJoin+".");
+				if(rmp.hasPermission("resourcemadness.set.healplayer")) if(!config.getLock().contains(Setting.healPlayer)) rmp.sendMessage(ChatColor.YELLOW+"healplayer "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.sHealPlayer+".");
+				if(rmp.hasPermission("resourcemadness.set.clearinventory")) if(!config.getLock().contains(Setting.clearPlayerInventory)) rmp.sendMessage(ChatColor.YELLOW+"clearinventory "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.sClearPlayerInventory+".");
+				if(rmp.hasPermission("resourcemadness.set.foundasreward")) if(!config.getLock().contains(Setting.foundAsReward)) rmp.sendMessage(ChatColor.YELLOW+"foundasreward "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.sFoundAsReward+".");
 			}
 			else if(page==2){
-				if(rmp.hasPermission("resourcemadness.set.warnunequal")) if(!config.getLock().contains(Setting.warnUnequal)) rmp.sendMessage(ChatColor.YELLOW+"warnunequal "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.warnUnequal+".");
-				if(rmp.hasPermission("resourcemadness.set.allowunequal")) if(!config.getLock().contains(Setting.allowUnequal)) rmp.sendMessage(ChatColor.YELLOW+"allowunequal "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.allowUnequal+".");
-				if(rmp.hasPermission("resourcemadness.set.warnhacked")) if(!config.getLock().contains(Setting.warnHackedItems)) rmp.sendMessage(ChatColor.YELLOW+"warnhacked "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.warnHackedItems+".");
-				if(rmp.hasPermission("resourcemadness.set.allowhacked")) if(!config.getLock().contains(Setting.allowHackedItems)) rmp.sendMessage(ChatColor.YELLOW+"allowhacked "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.allowHackedItems+".");
-				if(rmp.hasPermission("resourcemadness.set.infinitereward")) if(!config.getLock().contains(Setting.infiniteReward)) rmp.sendMessage(ChatColor.YELLOW+"infinitereward "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.infiniteReward+".");
-				if(rmp.hasPermission("resourcemadness.set.infinitetools")) if(!config.getLock().contains(Setting.infiniteTools)) rmp.sendMessage(ChatColor.YELLOW+"infinitetools "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.infiniteTools+".");
+				if(rmp.hasPermission("resourcemadness.set.warnunequal")) if(!config.getLock().contains(Setting.warnUnequal)) rmp.sendMessage(ChatColor.YELLOW+"warnunequal "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.sWarnUnequal+".");
+				if(rmp.hasPermission("resourcemadness.set.allowunequal")) if(!config.getLock().contains(Setting.allowUnequal)) rmp.sendMessage(ChatColor.YELLOW+"allowunequal "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.sAllowUnequal+".");
+				if(rmp.hasPermission("resourcemadness.set.warnhacked")) if(!config.getLock().contains(Setting.warnHackedItems)) rmp.sendMessage(ChatColor.YELLOW+"warnhacked "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.sWarnHackedItems+".");
+				if(rmp.hasPermission("resourcemadness.set.allowhacked")) if(!config.getLock().contains(Setting.allowHackedItems)) rmp.sendMessage(ChatColor.YELLOW+"allowhacked "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.sAllowHackedItems+".");
+				if(rmp.hasPermission("resourcemadness.set.infinitereward")) if(!config.getLock().contains(Setting.infiniteReward)) rmp.sendMessage(ChatColor.YELLOW+"infinitereward "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.sInfiniteReward+".");
+				if(rmp.hasPermission("resourcemadness.set.infinitetools")) if(!config.getLock().contains(Setting.infiniteTools)) rmp.sendMessage(ChatColor.YELLOW+"infinitetools "+ChatColor.GREEN+"[true/false] "+ChatColor.WHITE+RMText.sInfiniteTools+".");
 			}
 		}
 	}

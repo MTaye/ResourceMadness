@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
 
+import com.mtaye.ResourceMadness.RMGame.Setting;
 import com.mtaye.ResourceMadness.Helper.RMInventoryHelper;
 
 /**
@@ -20,34 +21,142 @@ public final class RMText {
 	public static RM plugin;
 	
 	public static String preLog = "ResourceMadness: ";
-	public static String noPermissionCommand =  ChatColor.RED+"You don't have permission to use this command.";
-	public static String noPermissionAction =  ChatColor.RED+"You don't have permission to use this action.";
-	public static String noChangeLocked = ChatColor.RED+"This setting is locked. "+ChatColor.GRAY+"It cannot be changed.";
-	public static String noOwnerCommand =  ChatColor.RED+"Only the owner can use this command.";
-	public static String noOwnerAction =  ChatColor.RED+"Only the owner can use this action.";
 	
-	public static String maxGames = "Max games";
-	public static String maxGamesPerPlayer = "Max games per player";
-	public static String minPlayers = "Min players";
-	public static String maxPlayers = "Max players";
-	public static String minTeamPlayers = "Min team players";
-	public static String maxTeamPlayers = "Max team players";
-	public static String maxItems = "Max items";
-	public static String timeLimit = "Match time limit";
-	public static String autoRandomizeAmount = "Randomly pick amount of items every match";
-	public static String advertise = "Advertise game in list";
-	public static String autoRestoreWorld = "Auto restore world changes after match";
-	public static String warpToSafety = "Teleport players before and after match";
-	public static String allowMidgameJoin = "Allow players to join mid-game";
-	public static String healPlayer = "Heal players at game start";
-	public static String clearPlayerInventory = "Clear/return player's items at game start/finish";
-	public static String warnUnequal = "Warn when reward/tools can't be distributed equally";
-	public static String allowUnequal = "Allow reward/tools to be distributed unequally";
-	public static String warnHackedItems = "Warn when hacked items are added";
-	public static String allowHackedItems = "Allow the use of hacked items";
-	public static String infiniteReward = "Use infinite reward";
-	public static String infiniteTools = "Use infinite tools";
-	public static String foundAsReward = "Use the game's found items as reward";
+	//Errors
+	public static String eNoPermissionCommand =  ChatColor.RED+"You don't have permission to use this command.";
+	public static String eNoPermissionAction =  ChatColor.RED+"You don't have permission to use this action.";
+	public static String eNoChangeLocked = ChatColor.RED+"This setting is locked. "+ChatColor.GRAY+"It cannot be changed.";
+	public static String eNoOwnerCommand =  ChatColor.RED+"Only the owner can use this command.";
+	public static String eNoOwnerAction =  ChatColor.RED+"Only the owner can use this action.";
+	public static String eNoGamesYet = ChatColor.GRAY+"No games yet";
+	public static String eNoAliasesYet = ChatColor.GRAY+"No aliases yet";
+	public static String eNoTemplateYet = ChatColor.GRAY+"No templates yet";
+	public static String eTeamDoesNotExist = "This team does not exist!";
+	public static String eDidNotJoinAnyTeamYet = "You did not "+ChatColor.YELLOW+"join "+ChatColor.WHITE+"any "+ChatColor.YELLOW+"team "+ChatColor.WHITE+"yet.";
+	public static String eCannotReadyWhileIngame = ChatColor.GRAY+"You cannot ready yourself while in a game.";
+	public static String eCannotClaimFoundIngame = "You can't claim the game's "+ChatColor.YELLOW+"found items "+ChatColor.WHITE+"while you're in a game.";
+	public static String eCannotClaimItemsIngame = "You can't claim your "+ChatColor.YELLOW+"items "+ChatColor.WHITE+"while you're in a game.";
+	public static String eCannotClaimRewardIngame = "You can't claim your "+ChatColor.YELLOW+"reward "+ChatColor.WHITE+"while you're in a game.";
+	public static String eMustBeIngameCommand = "You must be in a game to use this command.";
+	public static String eMustBeIngameAction = "You must be in a game to use this action.";
+	public static String eMustBeIngameChatWorld = "You must be in a game to use "+ChatColor.YELLOW+"world "+ChatColor.WHITE+"chat.";
+	public static String eMustBeIngameChatGame = "You must be in a game to use "+ChatColor.YELLOW+"game "+ChatColor.WHITE+"chat.";
+	public static String eMustBeIngameChatTeam = "You must be in a game to use "+ChatColor.YELLOW+"team "+ChatColor.WHITE+"chat.";
+	public static String eItemsDoNotExist = "These items do not exist!";
+	
+	//Info
+	public static String iPage = ChatColor.GRAY+"(Page *1 of *2)";
+	public static String iGrayGreenOptional = ChatColor.GRAY+"Gray"+ChatColor.WHITE+"/"+ChatColor.GREEN+"green "+ChatColor.WHITE+"text is optional.";
+	public static String iAdd = ChatColor.WHITE+"Create a new game.";
+	public static String iRemove = ChatColor.WHITE+"Remove an existing game.";
+	public static String iList = ChatColor.WHITE+"List games.";
+	public static String iCommands = ChatColor.WHITE+"List commands and aliases.";
+	public static String iInfo = ChatColor.WHITE+"Show *.";
+	public static String iSettings = ChatColor.WHITE+"Show* settings.";
+	public static String iSet = ChatColor.WHITE+"Set various game related settings.";
+	public static String iMode = ChatColor.WHITE+"Change filter mode.";
+	public static String iFilter = ChatColor.WHITE+"Add items to filter.";
+	public static String iReward = ChatColor.WHITE+"Add reward items.";
+	public static String iTools = ChatColor.WHITE+"Add tools items.";
+	public static String iTemplate = ChatColor.WHITE+"* templates.";
+	public static String iStart = ChatColor.WHITE+"Start a game. Randomize with "+ChatColor.GREEN+"amount"+ChatColor.WHITE+".";
+	public static String iStop = ChatColor.WHITE+"* a game.";
+	public static String iPause = ChatColor.WHITE+"* a game.";
+	public static String iRestore = ChatColor.WHITE+"Restore game world changes.";
+	public static String iJoin = ChatColor.WHITE+"Join a team.";
+	public static String iQuit = ChatColor.WHITE+"Quit a team.";
+	public static String iReady = ChatColor.WHITE+"Ready yourself.";
+	public static String iChat = ChatColor.WHITE+"* chat.";
+	public static String iItems = ChatColor.WHITE+"Get which items you need to gather.";
+	public static String iItem = ChatColor.WHITE+"Get the item's name or id.";
+	public static String iClaim = ChatColor.WHITE+"Claim * to inventory or chest.";
+	
+	//Save
+	public static String saveSaving = ChatColor.RED+"Saving...";
+	public static String saveSuccess = ChatColor.GREEN+"Data was saved successfully.";
+	public static String saveFail = ChatColor.RED+"Data was not saved properly!";
+	public static String saveNoData = ChatColor.GRAY+"No data to save.!";
+	
+	//Command Actions
+	public static String aAdd = "Left click a game block to "+ChatColor.YELLOW+"add "+ChatColor.WHITE+"a new game.";
+	public static String aRemove = "Left click a game block to "+ChatColor.GRAY+"remove "+ChatColor.WHITE+"a game.";
+	public static String aInfoFound = "Left click a game block to get "+ChatColor.YELLOW+"info "+ChatColor.WHITE+"about the game's "+ChatColor.YELLOW+"found items"+ChatColor.WHITE+".";
+	public static String aInfo = "Left click a game block to get "+ChatColor.YELLOW+"info"+ChatColor.WHITE+".";
+	public static String aSettingsReset = "Left click a game block to "+ChatColor.YELLOW+"reset "+ChatColor.WHITE+"settings.";
+	public static String aSettings = "Left click a game block to get "+ChatColor.YELLOW+"settings"+ChatColor.WHITE+".";
+	public static String aModeFilter = "Left click a game block to change the "+ChatColor.YELLOW+"interface mode "+ChatColor.WHITE+"to "+ChatColor.YELLOW+"filter"+ChatColor.WHITE+".";
+	public static String aModeReward = "Left click a game block to change the "+ChatColor.YELLOW+"interface mode "+ChatColor.WHITE+"to "+ChatColor.YELLOW+"reward"+ChatColor.WHITE+".";
+	public static String aModeTools = "Left click a game block to change the "+ChatColor.YELLOW+"interface mode "+ChatColor.WHITE+"to "+ChatColor.YELLOW+" tools"+ChatColor.WHITE+".";
+	public static String aModeCycle = "Left click a game block to "+ChatColor.YELLOW+"cycle "+ChatColor.WHITE+"the "+ChatColor.YELLOW+"interface mode"+ChatColor.WHITE+".";
+	public static String aJoin = "Left click a team block to "+ChatColor.YELLOW+"join "+ChatColor.WHITE+"the team.";
+	public static String aStartRandom = "Left click a game block to "+ChatColor.YELLOW+"start "+ChatColor.WHITE+"the game with "+ChatColor.GREEN+"* "+"random item(s)"+ChatColor.WHITE+".";
+	public static String aStart = "Left click a game block to "+ChatColor.YELLOW+"start "+ChatColor.WHITE+"the game.";
+	//public static String aRestart = "Left click a game block to "+ChatColor.GOLD+"restart "+ChatColor.WHITE+"the game.";
+	public static String aStop = "Left click a game block to "+ChatColor.RED+"stop "+ChatColor.WHITE+"the game.";
+	public static String aPause = "Left click a game block to "+ChatColor.RED+"pause "+ChatColor.WHITE+"the game.";
+	public static String aResume = "Left click a game block to "+ChatColor.GREEN+"resume "+ChatColor.WHITE+"the game.";
+	public static String aRestore = "Left click a game block to "+ChatColor.YELLOW+"restore world changes "+ChatColor.WHITE+".";
+	public static String aFilterInfoString = "Left click a game block to get the game's "+ChatColor.YELLOW+"filter "+ChatColor.WHITE+"as a "+ChatColor.YELLOW+"string"+ChatColor.WHITE+".";
+	public static String aFilterInfo = "Left click a game block to get "+ChatColor.YELLOW+"info "+ChatColor.WHITE+"about the game's "+ChatColor.YELLOW+"filter"+ChatColor.WHITE+".";
+	public static String aRewardInfoString = "Left click a game block to get the game's "+ChatColor.YELLOW+"reward "+ChatColor.WHITE+"as a "+ChatColor.YELLOW+"string"+ChatColor.WHITE+".";
+	public static String aRewardInfo = "Left click a game block to get "+ChatColor.YELLOW+"info "+ChatColor.WHITE+"about the game's "+ChatColor.YELLOW+"reward"+ChatColor.WHITE+".";
+	public static String aToolsInfoString = "Left click a game block to get the game's "+ChatColor.YELLOW+"tools "+ChatColor.WHITE+"as a "+ChatColor.YELLOW+"string"+ChatColor.WHITE+".";
+	public static String aToolsInfo = "Left click a game block to get "+ChatColor.YELLOW+"info "+ChatColor.WHITE+"about the game's "+ChatColor.YELLOW+"tools"+ChatColor.WHITE+".";
+	public static String aFilter = "Left click a game block to "+ChatColor.YELLOW+"modify "+ChatColor.WHITE+"the "+ChatColor.YELLOW+"filter"+ChatColor.WHITE+".";
+	public static String aReward = "Left click a game block to "+ChatColor.YELLOW+"modify "+ChatColor.WHITE+"the "+ChatColor.YELLOW+"reward"+ChatColor.WHITE+".";
+	public static String aTools = "Left click a game block to "+ChatColor.YELLOW+"modify "+ChatColor.WHITE+"the "+ChatColor.YELLOW+"tools"+ChatColor.WHITE+".";
+	public static String aTemplateLoad = "Left click a game block to "+ChatColor.YELLOW+"load "+ChatColor.WHITE+"template "+ChatColor.GREEN+"*"+ChatColor.WHITE+".";
+	public static String aTemplateSave = "Left click a game block to "+ChatColor.YELLOW+"save "+ChatColor.WHITE+"template "+ChatColor.GREEN+"*"+ChatColor.WHITE+".";
+	public static String aClaimFoundChest = "Left click a "+ChatColor.YELLOW+"chest "+ChatColor.WHITE+"to "+ChatColor.YELLOW+"store items"+ChatColor.WHITE+".";
+	public static String aClaimFoundChestSelect = "Left click a game block to "+ChatColor.YELLOW+"claim found items "+ChatColor.WHITE+"to "+ChatColor.YELLOW+"chest"+ChatColor.WHITE+".";
+	public static String aClaimFound = "Left click a game block to "+ChatColor.YELLOW+"claim found items"+ChatColor.WHITE+".";
+	public static String aClaimItemsChest = "Left click a "+ChatColor.YELLOW+"chest "+ChatColor.WHITE+"to "+ChatColor.YELLOW+"store items"+ChatColor.WHITE+".";
+	public static String aClaimRewardChest = "Left click a "+ChatColor.YELLOW+"chest "+ChatColor.WHITE+"to "+ChatColor.YELLOW+"store reward"+ChatColor.WHITE+".";
+	public static String aClaimToolsChest = "Left click a "+ChatColor.YELLOW+"chest "+ChatColor.WHITE+"to "+ChatColor.YELLOW+"store tools"+ChatColor.WHITE+".";
+	public static String aSetMinPlayers = "Left click a game block to "+ChatColor.YELLOW+"set min players"+ChatColor.WHITE+".";
+	public static String aSetMaxPlayers = "Left click a game block to "+ChatColor.YELLOW+"set max players"+ChatColor.WHITE+".";
+	public static String aSetMinTeamPlayers = "Left click a game block to "+ChatColor.YELLOW+"set min team players"+ChatColor.WHITE+".";
+	public static String aSetMaxTeamPlayers = "Left click a game block to "+ChatColor.YELLOW+"set max team players"+ChatColor.WHITE+".";
+	//public static String aSetMaxItems = "Left click a game block to "+ChatColor.YELLOW+"set max items"+ChatColor.WHITE+".";
+	public static String aSetTimeLimit = "Left click a game block to "+ChatColor.YELLOW+"set match time limit"+ChatColor.WHITE+".";
+	public static String aSetRandom = "Left click a game block to "+ChatColor.YELLOW+"set auto randomize items"+ChatColor.WHITE+".";
+	public static String aSetAdvertise = "Left click a game block to "+ChatColor.YELLOW+"set advertise"+ChatColor.WHITE+".";
+	public static String aSetRestore = "Left click a game block to "+ChatColor.YELLOW+"set "+Setting.autoRestoreWorld.name()+ChatColor.WHITE+".";
+	public static String aSetWarp = "Left click a game block to "+ChatColor.YELLOW+"set teleport players"+ChatColor.WHITE+".";
+	public static String aSetMidgameJoin = "Left click a game block to "+ChatColor.YELLOW+"set allow midgame join"+ChatColor.WHITE+".";
+	public static String aSetHealPlayer = "Left click a game block to "+ChatColor.YELLOW+"set heal player"+ChatColor.WHITE+".";
+	public static String aSetClearInventory = "Left click a game block to "+ChatColor.YELLOW+"set clear player inventory"+ChatColor.WHITE+".";
+	public static String aSetFoundAsReward = "Left click a game block to "+ChatColor.YELLOW+"set use found as reward"+ChatColor.WHITE+".";
+	public static String aSetWarnUnequal = "Left click a game block to "+ChatColor.YELLOW+"set warn unequal items"+ChatColor.WHITE+".";
+	public static String aSetAllowUnequal = "Left click a game block to "+ChatColor.YELLOW+"set allow unequal items"+ChatColor.WHITE+".";
+	public static String aSetWarnHacked = "Left click a game block to "+ChatColor.YELLOW+"set warn hacked items"+ChatColor.WHITE+".";
+	public static String aSetAllowHacked = "Left click a game block to "+ChatColor.YELLOW+"set allow hacked items"+ChatColor.WHITE+".";
+	public static String aSetInfiniteReward = "Left click a game block to "+ChatColor.YELLOW+"set infinite reward"+ChatColor.WHITE+".";
+	public static String aSetInfiniteTools = "Left click a game block to "+ChatColor.YELLOW+"set infinite tools"+ChatColor.WHITE+".";
+	
+	//Settting description
+	public static String sMaxGames = "Max games";
+	public static String sMaxGamesPerPlayer = "Max games per player";
+	public static String sMinPlayers = "Min players";
+	public static String sMaxPlayers = "Max players";
+	public static String sMinTeamPlayers = "Min team players";
+	public static String sMaxTeamPlayers = "Max team players";
+	public static String sMaxItems = "Max items";
+	public static String sTimeLimit = "Match time limit";
+	public static String sAutoRandomizeAmount = "Randomly pick "+ChatColor.GREEN+"amount "+ChatColor.WHITE+"of items every match";
+	public static String sAdvertise = "Advertise game in list";
+	public static String sAutoRestoreWorld = "Auto restore world changes after match";
+	public static String sWarpToSafety = "Teleport players before and after match";
+	public static String sAllowMidgameJoin = "Allow players to join mid-game";
+	public static String sHealPlayer = "Heal players at game start";
+	public static String sClearPlayerInventory = "Clear/return player's items at game start/finish";
+	public static String sWarnUnequal = "Warn when reward/tools can't be distributed equally";
+	public static String sAllowUnequal = "Allow reward/tools to be distributed unequally";
+	public static String sWarnHackedItems = "Warn when hacked items are added";
+	public static String sAllowHackedItems = "Allow the use of hacked items";
+	public static String sInfiniteReward = "Use infinite reward";
+	public static String sInfiniteTools = "Use infinite tools";
+	public static String sFoundAsReward = "Use the game's found items as reward";
 	
 	//Config section
 	public static String cAutoSave =
@@ -113,14 +222,14 @@ public final class RMText {
 	
 	public static String gPrepare = ChatColor.GOLD+"Prepare yourselves...";
 	public static String gStartMatch = ChatColor.GOLD+"ResourceMadness!";
-	public static String gSuddenDeath = paintString("Sudden Death!", ChatColor.LIGHT_PURPLE, ChatColor.DARK_PURPLE);
+	public static String gSuddenDeath = colorizeString("Sudden Death!", ChatColor.LIGHT_PURPLE, ChatColor.DARK_PURPLE);
 	
 	HashMap<Integer, String> gTimeLeft = new HashMap<Integer, String>();
 	
 	private RMText(){
 	}
 	
-	public static String paintString(String str, ChatColor... colors){
+	public static String colorizeString(String str, ChatColor... colors){
 		if((str==null)||(str.length() == 0)) return str;
 		if((colors == null)||(colors.length == 0)) return str;
 		String line = "";
