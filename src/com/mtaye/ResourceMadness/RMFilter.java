@@ -12,8 +12,6 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import com.mtaye.ResourceMadness.Helper.RMHelper;
-import com.mtaye.ResourceMadness.RM.ClaimType;
-import com.mtaye.ResourceMadness.RMGame.FilterState;
 import com.mtaye.ResourceMadness.RMGame.ItemHandleState;
 
 /**
@@ -389,7 +387,6 @@ public class RMFilter {
 	//Split Args By Colon
 	public static List<String> splitArgsByColon(String listArg){
 		List<String> args = new ArrayList<String>();
-		//getServer().broadcastMessage("listArg:"+listArg);
 		if(listArg.contains(":")){
 			int pos = 0;
 			int posEnd = 0;
@@ -397,12 +394,10 @@ public class RMFilter {
 				posEnd = listArg.indexOf(":",pos);
 				if(posEnd!=-1) posEnd = listArg.indexOf(",",posEnd);
 				if(posEnd!=-1){
-					//getServer().broadcastMessage("add:"+listArg.substring(pos,posEnd));
 					args.add(listArg.substring(pos,posEnd));
 					pos = posEnd+1;
 				}
 				else{
-					//getServer().broadcastMessage("add:"+listArg.substring(pos));
 					args.add(listArg.substring(pos));
 					pos = -1;
 				}

@@ -10,7 +10,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import com.mtaye.ResourceMadness.RMText;
-import com.mtaye.ResourceMadness.RM.ClaimType;
 
 public final class RMInventoryHelper {
 	public RMInventoryHelper(){
@@ -23,7 +22,6 @@ public final class RMInventoryHelper {
 			for(ItemStack item : items){
 				if(item!=null){
 					String idData = ""+item.getTypeId()+":"+item.getDurability();
-					//if(item.getData()!=null) idData += ":"+Byte.toString(item.getData().getData());
 					if(hashItems.containsKey(idData)){
 						int amount = hashItems.get(idData).getAmount()+item.getAmount();
 						ItemStack itemClone = item.clone();
@@ -36,11 +34,8 @@ public final class RMInventoryHelper {
 			String[] array = hashItems.keySet().toArray(new String[hashItems.size()]);
 			Arrays.sort(array);
 			for(String idData : array){
-				//String[] splitItems = idData.split(":");
-				//int id = getIntByString(splitItems[0]);
 				ItemStack item = hashItems.get(idData);
 				line+=item.getTypeId()+":"+item.getAmount()+":"+item.getDurability();
-				//if(item.getData()!=null) line+=":"+Byte.toString(item.getData().getData());
 				line+=",";
 			}
 		}
@@ -61,16 +56,6 @@ public final class RMInventoryHelper {
 			int amount = RMHelper.getIntByString(args[1]);
 			short durability = RMHelper.getShortByString(args[2]);
 			if((id!=-1)&&(amount!=-1)&&(durability!=-1)){
-				/*
-				if(args.length==4){
-					byte data = RMHelper.getByteByString(args[3]);
-					if(data!=-1){
-						Material mat = Material.getMaterial(id);
-						ItemStack item = new ItemStack(mat, amount, durability, data);
-						items.add(item);
-					}
-				}
-				else if(args.length==3){*/
 				if(args.length>2){
 					Material mat = Material.getMaterial(id);
 					while(amount>mat.getMaxStackSize()){

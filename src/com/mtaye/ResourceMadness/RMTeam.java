@@ -13,6 +13,7 @@ import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
 
 import com.mtaye.ResourceMadness.RMGame.GameState;
+import com.mtaye.ResourceMadness.RMPlayer.ChatMode;
 import com.mtaye.ResourceMadness.Helper.RMHelper;
 
 /**
@@ -128,6 +129,7 @@ public class RMTeam {
 				rmp.setTeam(this);
 				_players.put(rmp.getName(), rmp);
 				rmp.setReady(false);
+				rmp.setChatMode(ChatMode.GAME);
 				if(rmp.getPlayer()!=null){
 					if(rmp.getRequestBool()){
 						rmp.setReturnLocation(rmp.getPlayer().getLocation());
@@ -160,29 +162,19 @@ public class RMTeam {
 			}
 		}
 	}
+	
 	public RMPlayer getPlayer(String name){
 		return _players.get(name);
 	}
+	
 	public RMPlayer[] getPlayers(){
-		/*
-		RMPlayer[] rmplayers = _players.values().toArray(new RMPlayer[_players.values().size()]);
-		return rmplayers;
-		*/
 		List<RMPlayer> rmPlayers = new ArrayList<RMPlayer>();
 		for(RMPlayer rmPlayer : _players.values()){
 			if(rmPlayer!=null) rmPlayers.add(rmPlayer);
 		}
 		return rmPlayers.toArray(new RMPlayer[rmPlayers.size()]);
 	}
-	/*
-	public RMPlayer[] getOnlinePlayers(){
-		List<RMPlayer> rmPlayers = new ArrayList<RMPlayer>();
-		for(RMPlayer rmPlayer : _players.values()){
-			if(rmPlayer!=null) rmPlayers.add(rmPlayer);
-		}
-		return rmPlayers.toArray(new RMPlayer[rmPlayers.size()]);
-	}
-	*/
+
 	public String getPlayersNames(){
 		RMPlayer[] rmplayers = _players.values().toArray(new RMPlayer[_players.values().size()]);
 		String names = "[";

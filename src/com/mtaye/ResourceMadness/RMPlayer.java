@@ -8,7 +8,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -32,13 +31,17 @@ public class RMPlayer {
 	public enum PlayerAction{
 		ADD, REMOVE, INFO, INFO_FOUND, MODE, MODE_CYCLE, SETTINGS, SETTINGS_RESET,
 		JOIN, QUIT, START, START_RANDOM, RESTART, STOP, PAUSE, RESUME,
-		TEMPLATE_LIST, TEMPLATE_SAVE, TEMPLATE_LOAD, TEMPLATE_REMOVE, RESTORE, FILTER, REWARD, TOOLS,
+		TEMPLATE_LIST, TEMPLATE_SAVE, TEMPLATE_LOAD, TEMPLATE_REMOVE, RESTORE,
+		FILTER, FILTER_INFO, FILTER_INFO_STRING, REWARD, REWARD_INFO, REWARD_INFO_STRING, TOOLS, TOOLS_INFO, TOOLS_INFO_STRING,
 		CLAIM_FOUND, CLAIM_FOUND_CHEST, CLAIM_FOUND_CHEST_SELECT, CLAIM_ITEMS_CHEST, CLAIM_REWARD_CHEST, CLAIM_TOOLS_CHEST,
 		SET_MIN_PLAYERS, SET_MAX_PLAYERS, SET_MIN_TEAM_PLAYERS, SET_MAX_TEAM_PLAYERS, SET_MAX_ITEMS, SET_TIME_LIMIT, SET_RANDOM,
-		SET_ADVERTISE, SET_RESTORE, SET_WARP, SET_MIDGAME_JOIN, SET_HEAL_PLAYER, SET_CLEAR_INVENTORY, SET_WARN_UNEQUAL, SET_ALLOW_UNEQUAL,
-		SET_WARN_HACKED, SET_ALLOW_HACKED, SET_INFINITE_REWARD, SET_INFINITE_TOOLS,
+		SET_ADVERTISE, SET_RESTORE, SET_WARP, SET_MIDGAME_JOIN, SET_HEAL_PLAYER, SET_CLEAR_INVENTORY, SET_FOUND_AS_REWARD,
+		SET_WARN_UNEQUAL, SET_ALLOW_UNEQUAL, SET_WARN_HACKED, SET_ALLOW_HACKED, SET_INFINITE_REWARD, SET_INFINITE_TOOLS,
 		NONE;
 	}
+	
+	public enum ChatMode { WORLD, GAME, TEAM };
+	
 	private String _name;
 	private RMTeam _team;
 	//private List<RMGame> _games;
@@ -55,6 +58,56 @@ public class RMPlayer {
 	private HashMap<String, RMTemplate> _templates = new HashMap<String, RMTemplate>();
 	private boolean _ready = false;
 	private Location _returnLocation;
+	private ChatMode _chatMode = ChatMode.WORLD;
+	
+	public String getChatMessage(ChatMode chatMode, String message){
+		String str = "";
+		if(message.length()==0) return str;
+		RMTeam team = getTeam();
+		switch(chatMode){
+		case WORLD: str = team.getChatColor()+"<"+getName()+ChatColor.WHITE+"@"+team.getChatColor()+"World> "+ChatColor.WHITE+message; break;
+		case GAME: str = team.getChatColor()+"<"+getName()+ChatColor.WHITE+"@"+team.getChatColor()+"Game> "+ChatColor.WHITE+message; break;
+		case TEAM: str = team.getChatColor()+"<"+getName()+ChatColor.WHITE+"@"+team.getChatColor()+"Team> "+ChatColor.WHITE+message; break;
+		}
+		return str;
+	}
+	
+	public void chat(ChatMode chatMode, String message){
+		if(message.length()==0) return;
+		switch(chatMode){
+		case WORLD: plugin.getServer().broadcastMessage(message); break;
+		case GAME: getGameInProgress().teamBroadcastMessage(message); break;
+		case TEAM: getTeam().teamMessage(message); break;
+		}
+	}
+	
+	public ChatMode getChatMode(){
+		return _chatMode;
+	}
+	public void setChatMode(ChatMode chatMode, boolean notify){
+		if(notify){
+			if(_chatMode==chatMode){
+				switch(chatMode){
+				case WORLD: sendMessage(ChatColor.YELLOW+"World "+ChatColor.WHITE+"chat is already activated."); break;
+				case GAME: sendMessage(ChatColor.YELLOW+"Game "+ChatColor.WHITE+"chat is already activated."); break;
+				case TEAM: sendMessage(ChatColor.YELLOW+"Team "+ChatColor.WHITE+"chat is already activated."); break;
+				}
+				return;
+			}
+			switch(chatMode){
+			case WORLD: sendMessage("Switched to "+ChatColor.YELLOW+"world "+ChatColor.WHITE+"chat."); break;
+			case GAME: sendMessage("Switched to "+ChatColor.YELLOW+"game "+ChatColor.WHITE+"chat."); break;
+			case TEAM: sendMessage("Switched to "+ChatColor.YELLOW+"team "+ChatColor.WHITE+"chat."); break;
+			}
+		}
+		_chatMode = chatMode;
+	}
+	
+	public void setChatMode(ChatMode chatMode){
+		setChatMode(chatMode, false);
+	}
+	
+	
 	
 	public boolean getReady(){
 		return _ready;
@@ -76,8 +129,6 @@ public class RMPlayer {
 	}
 	
 	public boolean saveTemplate(RMTemplate template){
-		RMDebug.warning("TEMPLATES:"+_templates);
-		RMDebug.warning("TEMPLATES size:"+_templates.size());
 		if(template.isEmpty()){
 			sendMessage("Cannot save an empty template!");
 			return false;
@@ -128,7 +179,6 @@ public class RMPlayer {
 		_templates.clear();
 	}
 	
-
 	public void getInfoItems(){
 		String items = RMText.getStringSortedItems(_items.getItems());
 		if(items.length()>0){
@@ -136,6 +186,7 @@ public class RMPlayer {
 		}
 		else sendMessage(ChatColor.GRAY+"No items found.");
 	}
+	
 	public void getInfoReward(){
 		String items = RMText.getStringSortedItems(_reward.getItems());
 		if(items.length()>0){
@@ -143,12 +194,26 @@ public class RMPlayer {
 		}
 		else sendMessage(ChatColor.GRAY+"No reward found.");
 	}
+	
 	public void getInfoTools(){
 		String items = RMText.getStringSortedItems(_tools.getItems());
 		if(items.length()>0){
 			sendMessage(ChatColor.YELLOW+"Tools items: "+items);
 		}
 		else sendMessage(ChatColor.GRAY+"No tools found.");
+	}
+	
+	public void getInfoClaim(){
+		int strLength = 74;
+		String items = RMText.getStringSortedItems(_items.getItems(), 0);
+		String reward = RMText.getStringSortedItems(_reward.getItems(), 0);
+		String tools = RMText.getStringSortedItems(_tools.getItems(), 0);
+		if(items.length()>strLength) items = items.substring(0, strLength)+"...";
+		if(reward.length()>strLength) reward = reward.substring(0, strLength)+"...";
+		if(tools.length()>strLength) tools = tools.substring(0, strLength)+"...";
+		sendMessage("Items: "+ChatColor.GREEN+_items.size()+ChatColor.WHITE+" Total: "+ChatColor.GREEN+_items.getAmount()+ChatColor.WHITE+" "+items);
+		sendMessage("Reward: "+ChatColor.GREEN+_reward.size()+ChatColor.WHITE+" Total: "+ChatColor.GREEN+_reward.getAmount()+ChatColor.WHITE+" "+reward);
+		sendMessage("Tools: "+ChatColor.GREEN+_tools.size()+ChatColor.WHITE+" Total: "+ChatColor.GREEN+_tools.getAmount()+ChatColor.WHITE+" "+tools);
 	}
 	
 	public RMStash getItems(){
@@ -204,6 +269,7 @@ public class RMPlayer {
 			getPlayer().getInventory().clear();
 		}
 	}
+	
 	/*
 	public HandleState addItem(ItemStack item, RMStash rmStash){
 		return rmStash.addItem(item);
@@ -357,220 +423,6 @@ public class RMPlayer {
 	public void claimTools(ItemStack... items){
 		claim(_tools, ClaimType.TOOLS, items);
 	}
-	
-	/*
-	public RMClaimInfo claimBig(RMStash rmStash, ClaimType claimType){
-		RMClaimInfo claimInfo = new RMClaimInfo(rmStash, HandleState.NO_CHANGE);
-		if(getPlayer()==null) return claimInfo;
-		RMDebug.log(Level.WARNING, "RMSTASH SIZE:"+rmStash.size());
-		if(rmStash.size()==0){
-			announceNoItemsToGive(claimType);
-			return claimInfo;
-		}
-		Inventory inv = getPlayer().getInventory();
-		int rmStashAmount = rmStash.getAmount();
-		
-		List<Integer> removeItems = new ArrayList<Integer>();
-		for(Integer id : rmStash.keySet()){
-			RMStashItem rmStashItem = rmStash.get(id);
-			int amount = rmStashItem.getAmount();
-			
-			List<ItemStack> stashItems = rmStash.getItems();
-			String strItems = "";
-			for(ItemStack strItem : stashItems){
-				strItems+=strItem.getType()+":"+strItem.getAmount()+",";
-			}
-			
-			if(stashItems.size()==0) continue;
-			
-			while(rmStashItem.getAmount()>0){
-				if(RMInventoryHelper.findUsableStack(inv, id)!=-1){
-					HashMap<Integer, ? extends ItemStack> hashSlots = inv.all(id);
-					RMDebug.log(Level.WARNING, "USABLE");
-					for(ItemStack slotItem : hashSlots.values()){
-						RMDebug.log(Level.WARNING, "SLOTITEM:"+slotItem.getAmount());
-						Iterator<ItemStack> iter = stashItems.iterator();
-						while(iter.hasNext()){
-							ItemStack stashItem = iter.next();
-							RMDebug.log(Level.WARNING, "ITER AMOUNT:"+stashItem.getAmount());
-							int itemAmount = stashItem.getAmount();
-							if(itemAmount==0){
-								RMDebug.log(Level.WARNING, "CONTINUE");
-								continue;
-							}
-							RMDebug.log(Level.WARNING, "slotItem.getMaxStackSize():"+slotItem.getMaxStackSize());
-							RMDebug.log(Level.WARNING, "slotItem.getAmount():"+slotItem.getAmount());
-							int freeAmount = slotItem.getMaxStackSize()-slotItem.getAmount();
-							RMDebug.log(Level.WARNING, "freeAmount:"+freeAmount);
-							if(freeAmount!=0){
-								RMDebug.log(Level.WARNING, "freeAmount != 0:"+freeAmount);
-								int overflow = freeAmount - itemAmount;
-								if(overflow>=0){
-									RMDebug.log(Level.WARNING, "overflow >= 0:"+overflow);
-									RMDebug.log(Level.WARNING, "slotItem.getAmount():"+slotItem.getAmount());
-									RMDebug.log(Level.WARNING, "slotItem.getAmount():"+slotItem.getAmount());
-									RMDebug.log(Level.WARNING, "slotItem.getAmount():"+slotItem.getAmount());
-									RMDebug.log(Level.WARNING, "slotItem.getAmount():"+slotItem.getAmount());
-									RMDebug.log(Level.WARNING, "itemAmount:"+itemAmount);
-									RMDebug.log(Level.WARNING, "itemAmount:"+itemAmount);
-									RMDebug.log(Level.WARNING, "itemAmount:"+itemAmount);
-									RMDebug.log(Level.WARNING, "itemAmount:"+itemAmount);
-									RMDebug.log(Level.WARNING, "slotItem.getAmount()+itemAmount:"+slotItem.getAmount()+itemAmount);
-									RMDebug.log(Level.WARNING, "slotItem.getAmount()+itemAmount:"+slotItem.getAmount()+itemAmount);
-									RMDebug.log(Level.WARNING, "slotItem.getAmount()+itemAmount:"+slotItem.getAmount()+itemAmount);
-									RMDebug.log(Level.WARNING, "slotItem.getAmount()+itemAmount:"+slotItem.getAmount()+itemAmount);
-									slotItem.setAmount(slotItem.getAmount()+itemAmount);
-									RMDebug.log(Level.WARNING, "slotItem.getAmount() NEW:"+slotItem.getAmount());
-									RMDebug.log(Level.WARNING, "slotItem.getAmount() NEW:"+slotItem.getAmount());
-									RMDebug.log(Level.WARNING, "slotItem.getAmount() NEW:"+slotItem.getAmount());
-									RMDebug.log(Level.WARNING, "slotItem.getAmount() NEW:"+slotItem.getAmount());
-									
-									RMDebug.log(Level.WARNING, "rmStash.getAmount() BEFORE REMOVE:"+rmStash.getAmount());
-									rmStash.removeByIdAmount(id, itemAmount);
-									RMDebug.log(Level.WARNING, "rmStash.getAmount() AFTER REMOVE:"+rmStash.getAmount());
-									RMDebug.log(Level.WARNING, "slotItem.getAmount() NEW:"+slotItem.getAmount());
-									RMDebug.log(Level.WARNING, "stashItem.getAmount():"+stashItem.getAmount());
-									//stashItem.setAmount(0);
-									RMDebug.log(Level.WARNING, "stashItem.getAmount() NEW:"+stashItem.getAmount());
-									//rmStashItem.removeByAmount(itemAmount);
-								}
-								else{
-									RMDebug.log(Level.WARNING, "overflow < 0:"+overflow);
-									//rmStashItem.removeByAmount(freeAmount);
-									RMDebug.log(Level.WARNING, "stashItem.getAmount():"+stashItem.getAmount());
-									RMDebug.log(Level.WARNING, "freeAmount:"+freeAmount);
-									//stashItem.setAmount(stashItem.getAmount()-freeAmount);
-									RMDebug.log(Level.WARNING, "stashItem.getAmount() NEW:"+stashItem.getAmount());
-									RMDebug.log(Level.WARNING, "rmStash.getAmount() BEFORE REMOVE:"+rmStash.getAmount());
-									RMDebug.log(Level.WARNING, "freeAmount:"+freeAmount);
-									rmStash.removeByIdAmount(id, freeAmount);
-									RMDebug.log(Level.WARNING, "rmStash.getAmount() AFTER REMOVE:"+rmStash.getAmount());
-									RMDebug.log(Level.WARNING, "slotItem.getAmount():"+slotItem.getAmount());
-									slotItem.setAmount(slotItem.getMaxStackSize());
-									RMDebug.log(Level.WARNING, "slotItem.getAmount() NEW:"+slotItem.getAmount());
-								}
-								if(stashItem.getAmount()==0){
-									RMDebug.log(Level.WARNING, "stashItem.getAmount()==0 REMOVE:"+stashItem.getAmount());
-									iter.remove();
-								}
-							}
-							else RMDebug.log(Level.WARNING, "freeAmount = 0:"+freeAmount);
-						}
-						if(rmStashItem.getAmount()==0){
-							RMDebug.log(Level.WARNING, "rmStashItem.getAmount()==0 BREAK:"+rmStashItem.getAmount());
-							break;
-						}
-					}
-				}
-				else if(inv.firstEmpty()!=-1){
-					RMDebug.log(Level.WARNING, "FIRST EMPTY");
-					while((rmStashItem.size()>0)&&(inv.firstEmpty()!=-1)){
-						ItemStack item = rmStashItem.getItem();
-						if((item!=null)&&(item.getType()!=Material.AIR)){
-							Material mat = item.getType();
-							while(item.getAmount()>mat.getMaxStackSize()){
-								if(inv.firstEmpty()!=-1){
-									ItemStack itemClone = item.clone();
-									itemClone.setAmount(mat.getMaxStackSize());
-									inv.addItem(itemClone);
-									item.setAmount(item.getAmount()-mat.getMaxStackSize());
-								}
-								else break;
-							}
-							if(item.getAmount()<=mat.getMaxStackSize()){
-								inv.addItem(item);
-								HashMap<Integer, ItemStack> hashItems = inv.addItem(item);
-								rmStashItem.removeItemByItemStack(item);
-							}
-						}
-					}
-					if(rmStashItem.size()==0){
-						removeItems.add(id);
-					}
-				}
-				else break;
-			}
-		}
-		rmStash.removeItemsByIdSilent(removeItems);
-
-		if(rmStashAmount==rmStash.getAmount()){
-			announceInventoryIsFull(claimType);
-		}
-		else if(rmStash.size()>0){
-			announceInventoryIsFull(rmStash.getAmount());
-			claimInfo.setHandleState(HandleState.CLAIM_RETURNED_SOME);
-		}
-		else{
-			announceAllReturned(claimType);
-			claimInfo.setHandleState(HandleState.CLAIM_RETURNED_ALL);
-		}
-		return claimInfo;
-	}
-	*/
-	
-	/*
-	public RMStash claimToSlots(RMStash rmStash){
-		if(getPlayer()==null) return rmStash;
-		Inventory inv = getPlayer().getInventory();
-		
-		for(RMStashItem rmStashItem : rmStash.values()){
-			int id = rmStashItem.getId();
-			int amount = rmStashItem.getAmount();
-			int usableStack = RMInventoryHelper.findUsableStack(inv, id);
-			if(usableStack==-1) continue;
-			
-			List<ItemStack> stashItems = rmStash.getItems();
-			String strItems = "";
-			for(ItemStack strItem : stashItems){
-				strItems+=strItem.getType()+":"+strItem.getAmount()+",";
-			}
-			HashMap<Integer, ? extends ItemStack> hashSlots = inv.all(id);
-			if(stashItems.size()==0) continue;
-
-			if(hashSlots.size()!=0){
-				for(ItemStack slotItem : hashSlots.values()){
-					Iterator<ItemStack> iter = stashItems.iterator();
-					while(iter.hasNext()){
-						ItemStack stashItem = iter.next();
-						int itemAmount = stashItem.getAmount();
-						if(itemAmount==0){
-							continue;
-						}
-						int freeAmount = slotItem.getMaxStackSize()-slotItem.getAmount();
-						if(freeAmount!=0){
-							int overflow = freeAmount - itemAmount;
-							if(overflow>=0){
-								slotItem.setAmount(slotItem.getAmount()+itemAmount);
-								rmStash.removeByIdAmount(id, itemAmount);
-								stashItem.setAmount(stashItem.getAmount()-itemAmount);
-								amount -= itemAmount;
-							}
-							else{
-								amount -= freeAmount;
-								stashItem.setAmount(stashItem.getAmount()-freeAmount);
-								rmStash.removeByIdAmount(id, freeAmount);
-								slotItem.setAmount(slotItem.getMaxStackSize());
-							}
-							if(stashItem.getAmount()==0){
-								iter.remove();
-							}
-						}
-					}
-					if(amount==0){
-						break;
-					}
-				}
-			}
-		}
-		if(rmStash.size()>0){
-			sendMessage(ChatColor.RED+"Not all items could be returned. "+ChatColor.YELLOW+rmStash.getAmount()+ChatColor.WHITE+" item(s) remaining.");
-		}
-		else{
-			sendMessage(ChatColor.YELLOW+"All items were returned.");
-		}
-		return rmStash;
-	}
-	*/
 	
 	public RMStats getStats(){
 		return _stats;
@@ -735,15 +587,10 @@ public class RMPlayer {
 	public void warpToSafety(Location loc){
 		if(getPlayer()!=null){
 			Player p = getPlayer();
-			loc = findSafeWarpLocation(loc);
-			//double pLocX = p.getLocation().getBlockX();
-			//double pLocY = p.getLocation().getBlockY();
-			//double pLocZ = p.getLocation().getBlockZ();
-			//if((Math.abs(pLocX-loc.getX())>4)||(Math.abs(pLocY-loc.getY())>4)||(Math.abs(pLocZ-loc.getZ())>4)){
-				loc.setPitch(p.getLocation().getPitch());
-				loc.setYaw(p.getLocation().getYaw());
-				p.teleport(loc);
-			//}
+			loc = findSafeWarpLocation(loc); //Not yet working
+			loc.setPitch(p.getLocation().getPitch());
+			loc.setYaw(p.getLocation().getYaw());
+			p.teleport(loc);
 		}
 	}
 	
@@ -825,14 +672,32 @@ public class RMPlayer {
 		return p.isOnline();
 	}
 	
+	public boolean hasOpPermission(){
+		return hasOpPermission("resourcemadness.admin");
+	}
+	
+	public boolean hasOpPermission(String node){
+		Player p = getPlayer();
+		if(p!=null){
+			if(plugin.isPermissionEnabled()){
+				if(p.isOp()) return true;
+				else return (plugin.hasPermission(p, node));
+			}
+			if(p.isOp()) return true;
+		}
+		return false;
+	}
+	
 	public boolean hasOwnerPermission(String ownerName){
 		Player p = getPlayer();
 		if(p!=null){
 			if(plugin.isPermissionEnabled()){
 				if(ownerName.equalsIgnoreCase(p.getName())) return true;
+				else if(p.isOp()) return true;
 				else return (plugin.hasPermission(p, "resourcemadness.admin"));
 			}
 			if(ownerName.equalsIgnoreCase(p.getName())) return true;
+			else if(p.isOp()) return true;
 		}
 		return false;
 	}

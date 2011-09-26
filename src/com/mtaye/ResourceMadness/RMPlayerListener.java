@@ -5,11 +5,13 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerRespawnEvent;
 
+import com.mtaye.ResourceMadness.RMGame.Setting;
 import com.mtaye.ResourceMadness.RMPlayer.PlayerAction;
 import com.mtaye.ResourceMadness.Helper.RMHelper;
 
@@ -98,12 +100,6 @@ public class RMPlayerListener extends PlayerListener{
 										rmGame = RMGame.getGameByBlock(b);
 										if(rmGame!=null) rmGame.cycleMode(rmp);
 										break;
-										/*
-									case SAVE_TEMPLATE:
-										rmGame = RMGame.getGameByBlock(b);
-										if(rmGame!=null) rmGame.saveTemplate();
-										break;
-										*/
 									case JOIN:
 										rmGame.joinTeamByBlock(b, rmp);
 										break;
@@ -132,14 +128,31 @@ public class RMPlayerListener extends PlayerListener{
 									case FILTER:
 										rmGame.tryParseFilter(b, rmp);
 										break;
+									case FILTER_INFO:
+										rmGame.sendFilterInfo(rmp);
+										break;
+									case FILTER_INFO_STRING:
+										rmGame.sendFilterInfoString(rmp);
+										break;
 									case REWARD:
 										rmGame.tryParseFilter(b, rmp);
+										break;
+									case REWARD_INFO:
+										rmGame.sendRewardInfo(rmp);
+										break;
+									case REWARD_INFO_STRING:
+										rmGame.sendRewardInfoString(rmp);
 										break;
 									case TOOLS:
 										rmGame.tryParseFilter(b, rmp);
 										break;
+									case TOOLS_INFO:
+										rmGame.sendToolsInfo(rmp);
+										break;
+									case TOOLS_INFO_STRING:
+										rmGame.sendToolsInfoString(rmp);
+										break;
 									case TEMPLATE_SAVE:
-										RMDebug.warning("TEMPLATE SAVE:"+rmp.getRequestString());
 										rmGame.saveTemplate(rmp.getRequestString(), rmp);
 										rmp.clearRequestString();
 										break;
@@ -168,62 +181,65 @@ public class RMPlayerListener extends PlayerListener{
 										rmp.sendMessage(ChatColor.GRAY+"You are not allowed to claim items into game chests.");
 										break;
 									case SET_MIN_PLAYERS:
-										rmGame.setMinPlayers(rmp, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.minPlayers, rmp.getRequestInt());
 										break;
 									case SET_MAX_PLAYERS:
-										rmGame.setMaxPlayers(rmp, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.maxPlayers, rmp.getRequestInt());
 										break;
 									case SET_MIN_TEAM_PLAYERS:
-										rmGame.setMinTeamPlayers(rmp, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.minTeamPlayers, rmp.getRequestInt());
 										break;
 									case SET_MAX_TEAM_PLAYERS:
-										rmGame.setMaxTeamPlayers(rmp, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.maxTeamPlayers, rmp.getRequestInt());
 										break;
 									case SET_MAX_ITEMS:
 										rmGame = RMGame.getGameByBlock(b);
-										if(rmGame!=null) rmGame.setMaxItems(rmp, rmp.getRequestInt());
+										if(rmGame!=null) rmGame.setSetting(rmp, Setting.maxItems, rmp.getRequestInt());
 										break;
 									case SET_TIME_LIMIT:
-										rmGame.setTimeLimit(rmp, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.timeLimit, rmp.getRequestInt());
 										break;
 									case SET_RANDOM:
-										rmGame.setAutoRandomizeAmount(rmp, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.autoRandomizeAmount, rmp.getRequestInt());
 										break;
 									case SET_ADVERTISE:
-										rmGame.setAdvertise(rmp, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.advertise, rmp.getRequestInt());
 										break;
 									case SET_RESTORE:
-										rmGame.setAutoRestoreWorld(rmp, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.autoRestoreWorld, rmp.getRequestInt());
 										break;
 									case SET_WARP:
-										rmGame.setWarpToSafety(rmp, rmp.getRequestInt());
-										break;
-									case SET_WARN_HACKED:
-										rmGame.setWarnHackedItems(rmp, rmp.getRequestInt());
-										break;
-									case SET_ALLOW_HACKED:
-										rmGame.setAllowHackedItems(rmp, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.warpToSafety, rmp.getRequestInt());
 										break;
 									case SET_MIDGAME_JOIN:
-										rmGame.setAllowMidgameJoin(rmp, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.allowMidgameJoin, rmp.getRequestInt());
 										break;
 									case SET_HEAL_PLAYER:
-										rmGame.setHealPlayer(rmp, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.healPlayer, rmp.getRequestInt());
 										break;
 									case SET_CLEAR_INVENTORY:
-										rmGame.setClearPlayerInventory(rmp, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.clearPlayerInventory, rmp.getRequestInt());
+										break;
+									case SET_FOUND_AS_REWARD:
+										rmGame.setSetting(rmp, Setting.foundAsReward, rmp.getRequestInt());
 										break;
 									case SET_WARN_UNEQUAL:
-										rmGame.setWarnUnequal(rmp, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.warnUnequal, rmp.getRequestInt());
 										break;
 									case SET_ALLOW_UNEQUAL:
-										rmGame.setAllowUnequal(rmp, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.allowUnequal, rmp.getRequestInt());
+										break;
+									case SET_WARN_HACKED:
+										rmGame.setSetting(rmp, Setting.warnHackedItems, rmp.getRequestInt());
+										break;
+									case SET_ALLOW_HACKED:
+										rmGame.setSetting(rmp, Setting.allowHackedItems, rmp.getRequestInt());
 										break;
 									case SET_INFINITE_REWARD:
-										rmGame.setInfiniteReward(rmp, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.infiniteReward, rmp.getRequestInt());
 										break;
 									case SET_INFINITE_TOOLS:
-										rmGame.setInfiniteTools(rmp, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.infiniteTools, rmp.getRequestInt());
 										break;
 									default:
 										rmp.sendMessage(ChatColor.GRAY+"This is not a game block");
@@ -312,6 +328,21 @@ public class RMPlayerListener extends PlayerListener{
 		if(rmp!=null){
 			if(rmp.isIngame()){
 				e.setRespawnLocation(rmp.getTeam().getWarpLocation());
+			}
+		}
+	}
+	
+	@Override
+	public void onPlayerChat(PlayerChatEvent e){
+		Player p = e.getPlayer();
+		RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
+		if(rmp!=null){
+			if(rmp.isIngame()){
+				String message = rmp.getChatMessage(rmp.getChatMode(), e.getMessage());
+				if(message.length()!=0){
+					e.setCancelled(true);
+					rmp.chat(rmp.getChatMode(), message);
+				}
 			}
 		}
 	}

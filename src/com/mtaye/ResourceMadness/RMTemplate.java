@@ -1,16 +1,8 @@
 package com.mtaye.ResourceMadness;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-
-import org.bukkit.inventory.ItemStack;
 
 import com.mtaye.ResourceMadness.Helper.RMInventoryHelper;
-import com.mtaye.ResourceMadness.RM.ClaimType;
-import com.mtaye.ResourceMadness.RMGame.FilterState;
-
 /**
  * ResourceMadness for Bukkit
  *

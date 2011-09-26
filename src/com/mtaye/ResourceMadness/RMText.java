@@ -47,39 +47,73 @@ public final class RMText {
 	public static String allowHackedItems = "Allow the use of hacked items";
 	public static String infiniteReward = "Use infinite reward";
 	public static String infiniteTools = "Use infinite tools";
+	public static String foundAsReward = "Use the game's found items as reward";
 	
-	public static String cAutoSave = "#Backup data at regular intervals to avoid loss. Interval is measured in minutes (0 = do not autosave).";
-	public static String cUsePermissions = "#If you don't use permissions just leave it at false. Supported permissions are: p3, pex";
-	public static String cUseRestore1 = "#Change this to false if you don't want the games to use the restore world changes functionality.";
-	public static String cUseRestore2 = "#It may save some memory.";
-	public static String cServerWide = "#These are server wide settings.";
-	public static String cMaxGames = "#The maximum number of games allowed on server (0 = unlimited)";
-	public static String cMaxGamesPerPlayer = "#The maximum number of games allowed per player. (0 = unlimited)";
-	public static String cDefaultSettings1 = "#All settings from here on out are the game defaults.";
-	public static String cDefaultSettings2 = "#Using :lock after a setting locks it for all games, e.g. minPlayersPerTeam=2:lock";
-	public static String cMinPlayers = "#The minimum number of players allowed per game. The Lowest number is 1 player. Only numbers higher than the amount of teams in a game will be evaluated.";
-	public static String cMaxPlayers = "#The maximum number of players allowed per game. (0 = unlimited)";
-	public static String cMinTeamPlayers = "#The minimum number of players allowed per team. The lowest number is 1 player";
-	public static String cMaxTeamPlayers = "#The maximum number of players allowed per team. (0 = unlimited)";
-	public static String cTimeLimit = "#Match time limit (0 = no time limit)";
-	public static String cDefaultSettings3 = "#The following settings can be true or false.";
-	public static String cDefaultSettings4 = "#Using :lock after true/false locks the setting for all games, e.g. allowHacked=false:lock";
-	public static String cAdvertise = "#Advertise game in list.";
-	public static String cAutoRestoreWorld = "#Auto restore world changes after match.";
-	public static String cWarpToSafety = "#Teleport players before and after match.";
-	public static String cAllowMidgameJoin = "#Allow players to join mid-game.";
-	public static String cHealPlayer = "#Heal players at game start";
-	public static String cClearPlayerInventory = "#Clear/return player's items at game start/finish.";
-	public static String cWarnUnequal = "#Warn when reward/tools can't be distributed equally.";
-	public static String cAllowUnequal = "#Allow reward/tools to be distributed unequally.";
-	public static String cWarnHackedItems = "#Warn when hacked items are added. Only the game's owner gets a warning.";
-	public static String cAllowHackedItems = "#Allow the use of hacked items.";
-	public static String cInfiniteReward = "#Use infinite reward";
-	public static String cInfiniteTools = "#Use infinite tools";
+	//Config section
+	public static String cAutoSave =
+			"# Backup data at regular intervals to avoid loss.\n" +
+			"# Interval is measured in minutes (0 = do not autosave).";
+	
+	public static String cUsePermissions =
+			"# If you don't use permissions just leave it at false.\n" +
+			"# Supported permissions are: p3, pex, bukkit";
+	
+	public static String cUseRestore =
+			"# Change this to false if you don't want the games to use the restore world changes functionality.\n" +
+			"# It may save some memory.";
+	
+	public static String cServerWide = "# These are server wide settings.";
+	public static String cMaxGames = "# The maximum number of games allowed on server. (0 = unlimited)";
+	public static String cMaxGamesPerPlayer = "# The maximum number of games allowed per player. (0 = unlimited)";
+	public static String cDefaultSettings1 =
+			"# All settings from here on out are the game defaults.\n" +
+			"# Using :lock after a setting locks it for all games, e.g. minPlayersPerTeam=2:lock";
+	
+	public static String cMinPlayers =
+			"# The minimum number of players allowed per game. The Lowest number is 1 player.\n" +
+			"# Only numbers higher than the amount of teams in a game will be evaluated.";
+	
+	public static String cMaxPlayers = "# The maximum number of players allowed per game. (0 = unlimited)";
+	public static String cMinTeamPlayers = "# The minimum number of players allowed per team. The lowest number is 1 player.";
+	public static String cMaxTeamPlayers = "# The maximum number of players allowed per team. (0 = unlimited)";
+	public static String cTimeLimit = "# Match time limit. (0 = no time limit)";
+	public static String cDefaultSettings2 =
+			"# The following settings can be true or false.\n" +
+			"# Using :lock after true/false locks the setting for all games, e.g. allowHacked=false:lock";
+	
+	public static String cAdvertise = "# Advertise game in list.";
+	public static String cAutoRestoreWorld = "# Auto restore world changes after match.";
+	public static String cWarpToSafety = "#T eleport players before and after match.";
+	public static String cAllowMidgameJoin = "# Allow players to join mid-game.";
+	public static String cHealPlayer = "# Heal players at game start";
+	public static String cClearPlayerInventory = "# Clear/return player's items at game start/finish.";
+	public static String cFoundAsReward = "# Use the game's found items as reward.";
+	public static String cWarnUnequal = "# Warn when reward/tools can't be distributed equally.";
+	public static String cAllowUnequal = "# Allow reward/tools to be distributed unequally.";
+	public static String cWarnHackedItems = "# Warn when hacked items are added. Only the game's owner gets a warning.";
+	public static String cAllowHackedItems = "# Allow the use of hacked items.";
+	public static String cInfiniteReward = "# Use infinite reward";
+	public static String cInfiniteTools = "# Use infinite tools";
+	
+	//Aliases section
+	public static String aAliases =
+			"# You can use aliases for most commands.\n" +
+			"# Usage:\n" +
+			"#    command: alias\n\n" +
+			"# Multiple aliases must be separated with a comma.\n" +
+			"# Usage:\n" +
+			"#    command: alias1, alias2, alias3\n\n" +
+			"# Example: filter random: filter r\n" +
+			"# Result: /rm filter r\n\n" +
+			"# Example: filter random: filter r\n" +
+			"# Result: /rm filter r\n\n" +
+			"# Example: filter random: filter r\n" +
+			"# Result: /rm filter r\n\n" +
+			"# Command list:";
 	
 	public static String gPrepare = ChatColor.GOLD+"Prepare yourselves...";
 	public static String gStartMatch = ChatColor.GOLD+"ResourceMadness!";
-	public static String gSuddenDeath = paintString("Sudden Death!", ChatColor.DARK_PURPLE, ChatColor.LIGHT_PURPLE);
+	public static String gSuddenDeath = paintString("Sudden Death!", ChatColor.LIGHT_PURPLE, ChatColor.DARK_PURPLE);
 	
 	HashMap<Integer, String> gTimeLeft = new HashMap<Integer, String>();
 	
@@ -179,18 +213,11 @@ public final class RMText {
 	
 	//Get String By String List
 	public static String getStringByStringList(List<String> strList, String strSeparator){
-
-		if(strSeparator==null) strSeparator = ",";
-		String line = "";
-		for(String str : strList){
-			line+=str+strSeparator;
-		}
-		if(line.length()!=0) line = RMText.stripLast(line, strSeparator);
-		return line;
+		return getStringByStringList(strList, strSeparator, null, null);
 	}
 	
 	//Get String By String List
-	public static String getStringByStringList(List<String> strList, String strPre, String strAfter, String strSeparator){
+	public static String getStringByStringList(List<String> strList, String strSeparator, String strPre, String strAfter){
 		if(strPre==null) strPre = "";
 		if(strAfter==null) strAfter = "";
 		if(strSeparator==null) strSeparator = ",";
@@ -251,5 +278,25 @@ public final class RMText {
 			str = str.replaceFirst(character,character.toUpperCase());
 		}
 		return str;
+	}
+	
+	public static String getTextFromArgs(String[] args){
+		return getTextFromArgs(args, 0);
+	}
+	
+	public static String getTextFromArgs(String[] args, int beginIndex){
+		String str = "";
+		for(int i=beginIndex; i<args.length; i++){
+			str+=args[i]+" ";
+		}
+		str = stripLast(str, " ");
+		return str;
+	}
+	
+	public static boolean equalsIgnoreCase(String arg, String... strArray){
+		for(String str : strArray){
+			if(str.toLowerCase() == arg.toLowerCase()) return true;
+		}
+		return false;
 	}
 }

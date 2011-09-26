@@ -10,6 +10,7 @@ public final class RMDebug {
 	
 	public static void enable(){
 		_enabled = true;
+		warning(RMText.preLog+"Debug messages are enabled!");
 	}
 	public static void disable(){
 		_enabled = false;

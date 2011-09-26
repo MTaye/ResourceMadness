@@ -1,10 +1,10 @@
 name: ResourceMadness
 main: com.mtaye.ResourceMadness.RM
-version: 0.1
+version: 0.1.2
 author: M-Taye
 description: Competitive team-based resource gathering
 commands:
- resourcemadness:
-  description: Access to ResourceMadness commands
-  aliases:
-      - rm
+    resourcemadness:
+        description: Access to ResourceMadness commands
+        aliases:
+            - rm

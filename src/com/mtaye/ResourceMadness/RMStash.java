@@ -14,7 +14,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import com.mtaye.ResourceMadness.RM.ClaimType;
-import com.mtaye.ResourceMadness.RMGame.FilterState;
 import com.mtaye.ResourceMadness.RMGame.HandleState;
 
 public class RMStash {
@@ -272,21 +271,31 @@ public class RMStash {
 	}
 	
 	public void setItems(List<ItemStack> items){
+		List<Integer> match = new ArrayList<Integer>();
 		RMStash stash = new RMStash(items);
 		List<ItemStack> stashItems = stash.getItems();
+		Iterator<ItemStack> iter = stashItems.iterator();
+		while(iter.hasNext()){
+			if(iter.next()==null) iter.remove();
+		}
 		for(ItemStack item : stashItems){
-			if(item==null) continue;
 			int id = item.getTypeId();
-			if(!_items.containsKey(id)){
-				addItemToChanged(_added, item);
-				_items.put(id, new RMStashItem(item));
+			if(!match.contains(id)){
+				match.add(id);
+				_items.remove(id);
 			}
+		}
+		for(ItemStack item : stashItems){
+			int id = item.getTypeId();
+			if(!match.contains(id)) addItemToChanged(_added, item);
 			else{
 				if(!_added.containsKey(item.getTypeId())) addItemToChanged(_modified, item);
 				else addItemToChanged(_added, item);
+			}
+			if(!_items.containsKey(id)) _items.put(id, new RMStashItem(item));
+			else{
 				RMStashItem rmStashItem = _items.get(id);
-				rmStashItem.setItem(item);
-				if(rmStashItem.getAmount()==0) removeRMStashItem(rmStashItem);
+				rmStashItem.addItem(item);
 			}
 		}
 	}

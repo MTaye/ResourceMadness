@@ -22,7 +22,6 @@ public class RMGameConfig {
 	private RMPartList _partList = new RMPartList();
 	private String _worldName;
 	private int _id;
-	//private RMPlayer _owner;
 	private String _ownerName;
 	private int _minPlayers = 0;
 	private int _maxPlayers = 0;
@@ -35,6 +34,7 @@ public class RMGameConfig {
 	private boolean _allowMidgameJoin = true;
 	private boolean _healPlayer = false;
 	private boolean _clearPlayerInventory = true;
+	private boolean _foundAsReward = false;
 	private boolean _warnUnequal = true;
 	private boolean _allowUnequal = true;
 	private boolean _warnHackedItems = true;
@@ -42,7 +42,6 @@ public class RMGameConfig {
 	private boolean _infiniteReward = false;
 	private boolean _infiniteTools = false;
 	private HashMap<String, RMPlayer> _players = new HashMap<String, RMPlayer>();
-	//private List<RMTeam> _teams = new ArrayList<RMTeam>();
 	private RMFilter _filter = new RMFilter();
 	private RMFilter _items = new RMFilter();
 	private RMStash _found = new RMStash();
@@ -80,7 +79,6 @@ public class RMGameConfig {
 		this.plugin = plugin;
 		this._partList = config._partList;
 		this._id = config._id;
-		//this._owner = rmGameConfig._owner;
 		this._ownerName = config._ownerName;
 		this._minPlayers = config._minPlayers;
 		this._maxPlayers = config._maxPlayers;
@@ -93,12 +91,14 @@ public class RMGameConfig {
 		this._allowMidgameJoin = config._allowMidgameJoin;
 		this._healPlayer = config._healPlayer;
 		this._clearPlayerInventory = config._clearPlayerInventory;
+		this._foundAsReward = config._foundAsReward;
 		this._warnUnequal = config._warnUnequal;
 		this._allowUnequal = config._allowUnequal;
 		this._warnHackedItems = config._warnHackedItems;
 		this._allowHackedItems = config._allowHackedItems;
 		this._infiniteReward = config._infiniteReward;
 		this._infiniteTools = config._infiniteTools;
+		
 		this._players = config._players;
 		this._filter = config._filter;
 		this._items = config._items;
@@ -131,14 +131,15 @@ public class RMGameConfig {
 	public boolean getAllowMidgameJoin() { return _allowMidgameJoin; }
 	public boolean getHealPlayer() { return _healPlayer; }
 	public boolean getClearPlayerInventory() { return _clearPlayerInventory; }
+	public boolean getFoundAsReward() { return _foundAsReward; }
 	public boolean getWarnUnequal() { return _warnUnequal; };
 	public boolean getAllowUnequal() { return _allowUnequal; };
 	public boolean getWarnHackedItems() { return _warnHackedItems; }
 	public boolean getAllowHackedItems() { return _allowHackedItems; }
 	public boolean getInfiniteReward() { return _infiniteReward; }
 	public boolean getInfiniteTools() { return _infiniteTools; }
+	
 	public HashMap<String, RMPlayer> getPlayers() { return _players; }
-	//public List<RMTeam> getTeams() { return _teams; }
 	public RMFilter getFilter() { return _filter; }
 	public RMFilter getItems() { return _items; }
 	public RMStash getFound() { return _found; }
@@ -174,11 +175,6 @@ public class RMGameConfig {
 	public void setOwner(RMPlayer owner){
 		setOwnerName(owner.getName());
 	}
-	/*
-	public void setOwnerByName(String ownerName){
-		_ownerName = ownerName;
-	}
-	*/
 	public void setOwnerName(String ownerName){
 		_ownerName = ownerName;
 	}
@@ -227,6 +223,9 @@ public class RMGameConfig {
 	}
 	public void setClearPlayerInventory(boolean clear){
 		_clearPlayerInventory = clear;
+	}
+	public void setFoundAsReward(boolean foundAsReward){
+		_foundAsReward = foundAsReward;
 	}
 	public void setWarnUnequal(boolean warn){
 		_warnUnequal = warn;
@@ -339,6 +338,10 @@ public class RMGameConfig {
 		if(_clearPlayerInventory) _clearPlayerInventory = false;
 		else _clearPlayerInventory = true;
 	}
+	public void toggleFoundAsReward(){
+		if(_foundAsReward) _foundAsReward = false;
+		else _foundAsReward = true;
+	}
 	public void toggleWarnUnequal(){
 		if(_warnUnequal) _warnUnequal = false;
 		else _warnUnequal = true;
@@ -381,12 +384,14 @@ public class RMGameConfig {
 		setAllowMidgameJoin(config.getAllowMidgameJoin());
 		setHealPlayer(config.getHealPlayer());
 		setClearPlayerInventory(config.getClearPlayerInventory());
+		setFoundAsReward(config.getFoundAsReward());
 		setWarnUnequal(config.getWarnUnequal());
 		setAllowUnequal(config.getAllowUnequal());
 		setWarnHackedItems(config.getWarnHackedItems());
 		setAllowHackedItems(config.getAllowHackedItems());
 		setInfiniteReward(config.getInfiniteReward());
 		setInfiniteTools(config.getInfiniteTools());
+		
 		setPlayers(config.getPlayers());
 		setFilter(config.getFilter());
 		setItems(config.getItems());
@@ -413,6 +418,7 @@ public class RMGameConfig {
 		setAllowMidgameJoin(config.getAllowMidgameJoin());
 		setHealPlayer(config.getHealPlayer());
 		setClearPlayerInventory(config.getClearPlayerInventory());
+		setFoundAsReward(config.getFoundAsReward());
 		setWarnUnequal(config.getWarnUnequal());
 		setAllowUnequal(config.getAllowUnequal());
 		setWarnHackedItems(config.getWarnHackedItems());

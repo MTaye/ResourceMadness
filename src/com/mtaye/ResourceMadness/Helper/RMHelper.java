@@ -14,6 +14,7 @@ import org.bukkit.inventory.ItemStack;
 import com.mtaye.ResourceMadness.RM;
 import com.mtaye.ResourceMadness.RMGame.GameState;
 import com.mtaye.ResourceMadness.RMGame.InterfaceState;
+import com.mtaye.ResourceMadness.RMPlayer.ChatMode;
 
 public final class RMHelper {
 	public RM plugin;
@@ -137,6 +138,15 @@ public final class RMHelper {
 			case 4: return InterfaceState.REWARD_CLEAR;
 			case 5: return InterfaceState.TOOLS_CLEAR;
 			default: return InterfaceState.FILTER;
+		}
+	}
+	
+	public static ChatMode getChatModeByInt(int i){
+		switch(i){
+		case 0: return ChatMode.WORLD;
+		case 1: return ChatMode.GAME;
+		case 2: return ChatMode.WORLD;
+		default: return ChatMode.GAME;
 		}
 	}
 	

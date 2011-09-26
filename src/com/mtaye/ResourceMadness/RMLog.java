@@ -40,12 +40,10 @@ public class RMLog {
 		Location loc = bState.getBlock().getLocation();
 		if(!_locList.contains(loc)){
 			if(RMHelper.isMaterial(mat, _blockItemMaterials)){
-				//plugin.log.log(Level.WARNING, "addLogItemList:"+bState.getType().name());
 				_locList.add(loc);
 				_logItemList.add(new RMBlock(bState));
 			}
 			else{
-				//plugin.log.log(Level.WARNING, "addLogList:"+bState.getType().name());
 				_locList.add(loc);
 				_logList.add(new RMBlock(bState));
 			}
@@ -76,12 +74,10 @@ public class RMLog {
 					//if(isMaterial(mat, Material.TORCH, Material.REDSTONE_TORCH_ON, Material.REDSTONE_TORCH_OFF, Material.LEVER, Material.LADDER, Material.PAINTING, Material.STONE_BUTTON, Material.WALL_SIGN)){
 					if(!_locList.contains(loc)){
 						if(RMHelper.isMaterial(mat, _blockItemMaterials)){
-								//plugin.log.log(Level.WARNING, i+",checkLogItemList:"+block.getType().name());
 								_locList.add(loc);
 								_logItemList.add(new RMBlock(block));
 						}
 						else{
-							//plugin.log.log(Level.WARNING, i+",checkLogList:"+block.getType().name());
 							_locList.add(loc);
 							_logList.add(new RMBlock(block));
 						}
@@ -92,12 +88,10 @@ public class RMLog {
 					if(RMHelper.isMaterial(mat, Material.CACTUS, Material.CROPS, Material.SUGAR_CANE_BLOCK, Material.GRAVEL, Material.SAND)){
 						if(!_locList.contains(loc)){
 							if(RMHelper.isMaterial(mat, _blockItemMaterials)){
-								//plugin.log.log(Level.WARNING, i+",checkLogItemListCCSGS:"+block.getType().name());
 								_locList.add(loc);
 								_logItemList.add(new RMBlock(block));
 							}
 							else{
-								//plugin.log.log(Level.WARNING, i+",checkLogListCCSGS:"+block.getType().name());
 								_locList.add(loc);
 								_logList.add(new RMBlock(block));
 							}
@@ -107,12 +101,10 @@ public class RMLog {
 					else{
 						if(!_locList.contains(loc)){
 							if(RMHelper.isMaterial(mat, _blockItemMaterials)){
-								//plugin.log.log(Level.WARNING, i+",checkLogItemList:"+block.getType().name());
 								_locList.add(loc);
 								_logItemList.add(new RMBlock(block));
 							}
 							else{
-								//plugin.log.log(Level.WARNING, i+",checkLogList:"+block.getType().name());
 								_locList.add(loc);
 								_logList.add(new RMBlock(block));
 							}

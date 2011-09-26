@@ -23,6 +23,13 @@ public class RMStashItem {
 		_id = item.getTypeId();
 		addItem(item);
 	}
+	public RMStashItem(ItemStack... items){
+		if((items==null)||(items.length==0)) return;
+		_id = items[0].getTypeId();
+		for(ItemStack item : items){
+			addItem(item);
+		}
+	}
 	
 	public RMStashItem clone(){
 		RMStashItem clone = new RMStashItem(_id);

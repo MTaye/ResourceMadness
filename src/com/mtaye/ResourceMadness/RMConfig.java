@@ -1,7 +1,10 @@
 package com.mtaye.ResourceMadness;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+
+import com.mtaye.ResourceMadness.RMGame.Setting;
 
 /**
  * ResourceMadness for Bukkit
@@ -13,11 +16,8 @@ public class RMConfig {
 	private int _typeLimit = 50;
 	
 	public enum PermissionType { P3, PEX, BUKKIT, FALSE };
-	public enum Lock { minPlayers, maxPlayers, minTeamPlayers, maxTeamPlayers, timeLimit, autoRandomizeAmount,
-		advertise, autoRestoreWorld, warpToSafety, keepIngame, allowMidgameJoin, healPlayer, clearPlayerInventory,
-		warnUnequal, allowUnequal, warnHackedItems, allowHackedItems, infiniteReward, infiniteTools };
 	
-	public List<Lock> _lock = new ArrayList<Lock>();
+	public List<Setting> _lock = new ArrayList<Setting>();
 	private int _autoSave = 10;
 	private PermissionType _permissionType = PermissionType.FALSE;
 	private boolean _useRestore = true;
@@ -35,17 +35,19 @@ public class RMConfig {
 	private boolean _allowMidgameJoin = true;
 	private boolean _healPlayer = true;
 	private boolean _clearPlayerInventory = true;
+	private boolean _foundAsReward = false;
 	private boolean _warnUnequal = true;
 	private boolean _allowUnequal = true;
 	private boolean _warnHackedItems = true;
 	private boolean _allowHackedItems = false;
 	private boolean _infiniteReward = false;
 	private boolean _infiniteTools = false;
+	private RMCommands _commands = new RMCommands();
 	
 	public RMConfig(){
-		_lock.add(Lock.allowHackedItems);
-		_lock.add(Lock.infiniteReward);
-		_lock.add(Lock.infiniteTools);
+		_lock.add(Setting.allowHackedItems);
+		_lock.add(Setting.infiniteReward);
+		_lock.add(Setting.infiniteTools);
 	}
 	
 	public RMConfig(RMConfig config){
@@ -56,29 +58,31 @@ public class RMConfig {
 		setUseRestore(config.getUseRestore());
 		setMaxGames(config.getMaxGames());
 		setMaxGamesPerPlayer(config.getMaxGamesPerPlayer());
-		setMinPlayers(config.getMinPlayers(), config.getLock().contains(Lock.minPlayers));
-		setMaxPlayers(config.getMaxPlayers(), config.getLock().contains(Lock.maxPlayers));
-		setMinTeamPlayers(config.getMinTeamPlayers(), config.getLock().contains(Lock.minTeamPlayers));
-		setMaxTeamPlayers(config.getMaxTeamPlayers(), config.getLock().contains(Lock.maxTeamPlayers));
-		setTimeLimit(config.getTimeLimit(), config.getLock().contains(Lock.timeLimit));
-		setAutoRandomizeAmount(config.getAutoRandomizeAmount(), config.getLock().contains(Lock.autoRandomizeAmount));
-		setAdvertise(config.getAdvertise(), config.getLock().contains(Lock.advertise));
-		setAutoRestoreWorld(config.getAutoRestoreWorld(), config.getLock().contains(Lock.autoRestoreWorld));
-		setWarpToSafety(config.getWarpToSafety(), config.getLock().contains(Lock.warpToSafety));
-		setAllowMidgameJoin(config.getAllowMidgameJoin(), config.getLock().contains(Lock.allowMidgameJoin));
-		setHealPlayer(config.getHealPlayer(), config.getLock().contains(Lock.healPlayer));
-		setClearPlayerInventory(config.getClearPlayerInventory(), config.getLock().contains(Lock.clearPlayerInventory));
-		setWarnUnequal(config.getWarnUnequal(), config.getLock().contains(Lock.warnUnequal));
-		setAllowUnequal(config.getAllowUnequal(), config.getLock().contains(Lock.allowUnequal));
-		setWarnHackedItems(config.getWarnHackedItems(), config.getLock().contains(Lock.warnHackedItems));
-		setAllowHackedItems(config.getAllowHackedItems(), config.getLock().contains(Lock.allowHackedItems));
-		setInfiniteReward(config.getInfiniteReward(), config.getLock().contains(Lock.infiniteReward));
-		setInfiniteTools(config.getInfiniteTools(), config.getLock().contains(Lock.infiniteTools));
+		setSetting(Setting.minPlayers, config.getMinPlayers(), config.getLock().contains(Setting.minPlayers));
+		setSetting(Setting.maxPlayers, config.getMaxPlayers(), config.getLock().contains(Setting.maxPlayers));
+		setSetting(Setting.minTeamPlayers, config.getMinTeamPlayers(), config.getLock().contains(Setting.minTeamPlayers));
+		setSetting(Setting.maxTeamPlayers, config.getMaxTeamPlayers(), config.getLock().contains(Setting.maxTeamPlayers));
+		setSetting(Setting.timeLimit, config.getTimeLimit(), config.getLock().contains(Setting.timeLimit));
+		setSetting(Setting.autoRandomizeAmount, config.getAutoRandomizeAmount(), config.getLock().contains(Setting.autoRandomizeAmount));
+		setSetting(Setting.advertise, config.getAdvertise(), config.getLock().contains(Setting.advertise));
+		setSetting(Setting.autoRestoreWorld, config.getAutoRestoreWorld(), config.getLock().contains(Setting.autoRestoreWorld));
+		setSetting(Setting.warpToSafety, config.getWarpToSafety(), config.getLock().contains(Setting.warpToSafety));
+		setSetting(Setting.allowMidgameJoin, config.getAllowMidgameJoin(), config.getLock().contains(Setting.allowMidgameJoin));
+		setSetting(Setting.healPlayer, config.getHealPlayer(), config.getLock().contains(Setting.healPlayer));
+		setSetting(Setting.clearPlayerInventory, config.getClearPlayerInventory(), config.getLock().contains(Setting.clearPlayerInventory));
+		setSetting(Setting.foundAsReward, config.getFoundAsReward(), config.getLock().contains(Setting.foundAsReward));
+		setSetting(Setting.warnUnequal, config.getWarnUnequal(), config.getLock().contains(Setting.warnUnequal));
+		setSetting(Setting.allowUnequal, config.getAllowUnequal(), config.getLock().contains(Setting.allowUnequal));
+		setSetting(Setting.warnHackedItems, config.getWarnHackedItems(), config.getLock().contains(Setting.warnHackedItems));
+		setSetting(Setting.allowHackedItems, config.getAllowHackedItems(), config.getLock().contains(Setting.allowHackedItems));
+		setSetting(Setting.infiniteReward, config.getInfiniteReward(), config.getLock().contains(Setting.infiniteReward));
+		setSetting(Setting.infiniteTools, config.getInfiniteTools(), config.getLock().contains(Setting.infiniteTools));
+		setCommands(config.getCommands());
 	}
 	
 	//Get
 	public int getTypeLimit() { return _typeLimit; }
-	public List<Lock> getLock() { return _lock; }
+	public List<Setting> getLock() { return _lock; }
 	public int getAutoSave() { return _autoSave; }
 	public PermissionType getPermissionType() { return _permissionType; }
 	public boolean getUseRestore() { return _useRestore; }
@@ -96,25 +100,27 @@ public class RMConfig {
 	public boolean getAllowMidgameJoin() { return _allowMidgameJoin; }
 	public boolean getHealPlayer() { return _healPlayer; }
 	public boolean getClearPlayerInventory() { return _clearPlayerInventory; }
+	public boolean getFoundAsReward() { return _foundAsReward; }
 	public boolean getWarnUnequal() { return _warnUnequal; }
 	public boolean getAllowUnequal() { return _allowUnequal; }
 	public boolean getWarnHackedItems() { return _warnHackedItems; }
 	public boolean getAllowHackedItems() { return _allowHackedItems; }
 	public boolean getInfiniteReward() { return _infiniteReward; }
 	public boolean getInfiniteTools() { return _infiniteTools; }
-	
+	public RMCommands getCommands() { return _commands; }
+		
 	//Set
 	public void setTypeLimit(int typeLimit){
 		_typeLimit = typeLimit;
 		if(_typeLimit<10) _typeLimit = 10;
 	}
-	public void setLock(List<Lock> locked) { _lock = locked; }
+	public void setLock(List<Setting> locked) { _lock = locked; }
 	public void setAutoSave(int value) { _autoSave = value<0?0:value; }
 	public void setPermissionType(PermissionType permissionType) { _permissionType = permissionType; }
 	public void setPermissionTypeByString(String arg){
 		if((arg.equalsIgnoreCase("p3"))||(arg.equalsIgnoreCase("perm3"))||(arg.equalsIgnoreCase("permissions3"))) setPermissionType(PermissionType.P3);
 		else if((arg.equalsIgnoreCase("pex"))||(arg.equalsIgnoreCase("permex"))||(arg.equalsIgnoreCase("permissionsex"))) setPermissionType(PermissionType.PEX);
-		//else if(arg.equalsIgnoreCase("bukkit")) setPermissionType(PermissionType.BUKKIT);
+		else if(arg.equalsIgnoreCase("bukkit")) setPermissionType(PermissionType.BUKKIT);
 		else setPermissionType(PermissionType.FALSE);
 		return;
 	}
@@ -127,114 +133,73 @@ public class RMConfig {
 		_maxGamesPerPlayer = maxGamesPerPlayer;
 		if(_maxGamesPerPlayer<0) _maxGamesPerPlayer = 0;
 	}
-	public void setMinPlayers(int minPlayers, boolean lock){
-		if(lock) addLock(Lock.minPlayers);
-		else removeLock(Lock.minPlayers);
-		_minPlayers = minPlayers;
-		if(_minPlayers<0) _minPlayers = 1;
-	}
-	public void setMaxPlayers(int maxPlayers, boolean lock){
-		if(lock) addLock(Lock.maxPlayers);
-		else removeLock(Lock.maxPlayers);
-		_maxPlayers = maxPlayers;
-		if(_maxPlayers<0) _maxPlayers = 0;
-	}
-	public void setMinTeamPlayers(int minTeamPlayers, boolean lock){
-		if(lock) addLock(Lock.minTeamPlayers);
-		else removeLock(Lock.minTeamPlayers);
-		_minTeamPlayers = minTeamPlayers;
-		if(_minTeamPlayers<0) _minTeamPlayers = 1;
-	}
-	public void setMaxTeamPlayers(int maxTeamPlayers, boolean lock){
-		if(lock) addLock(Lock.maxTeamPlayers);
-		else removeLock(Lock.maxTeamPlayers);
-		_maxTeamPlayers = maxTeamPlayers;
-		if(_maxTeamPlayers<0) _maxTeamPlayers = 0;
-	}
-	public void setTimeLimit(int timeLimit, boolean lock){
-		if(lock) addLock(Lock.timeLimit);
-		else removeLock(Lock.timeLimit);
-		_timeLimit = timeLimit;
-		if(_timeLimit<0) _timeLimit = 0;
-	}
-	public void setAutoRandomizeAmount(int autoRandomizeAmount, boolean lock){
-		if(lock) addLock(Lock.autoRandomizeAmount);
-		else removeLock(Lock.autoRandomizeAmount);
-		_autoRandomizeAmount = autoRandomizeAmount;
-		if(_autoRandomizeAmount<0) _autoRandomizeAmount = 0;
-	}
-	public void setAdvertise(boolean advertise, boolean lock){
-		if(lock) addLock(Lock.advertise);
-		else removeLock(Lock.advertise);
-		_advertise = advertise;
-	}
-	public void setAutoRestoreWorld(boolean autoRestoreWorld, boolean lock){
-		if(lock) addLock(Lock.autoRestoreWorld);
-		else removeLock(Lock.autoRestoreWorld);
-		_autoRestoreWorld = autoRestoreWorld;
-	}
-	public void setWarpToSafety(boolean warpToSafety, boolean lock){
-		if(lock) addLock(Lock.warpToSafety);
-		else removeLock(Lock.warpToSafety);
-		_warpToSafety = warpToSafety;
-	}
-	public void setAllowMidgameJoin(boolean allowMidgameJoin, boolean lock){
-		if(lock) addLock(Lock.allowMidgameJoin);
-		else removeLock(Lock.allowMidgameJoin);
-		_allowMidgameJoin = allowMidgameJoin;
-	}
-	public void setHealPlayer(boolean healPlayer, boolean lock){
-		if(lock) addLock(Lock.healPlayer);
-		else removeLock(Lock.healPlayer);
-		_healPlayer = healPlayer;
-	}
-	public void setClearPlayerInventory(boolean clearPlayerInventory, boolean lock){
-		if(lock) addLock(Lock.clearPlayerInventory);
-		else removeLock(Lock.clearPlayerInventory);
-		_clearPlayerInventory = clearPlayerInventory;
-	}
-	public void setWarnUnequal(boolean warnUnequal, boolean lock){
-		if(lock) addLock(Lock.warnUnequal);
-		else removeLock(Lock.warnUnequal);
-		_warnUnequal = warnUnequal;
-	}
-	public void setAllowUnequal(boolean allowUnequal, boolean lock){
-		if(lock) addLock(Lock.allowUnequal);
-		else removeLock(Lock.allowMidgameJoin);
-		_allowUnequal = allowUnequal;
-	}
-	public void setWarnHackedItems(boolean warnHackedItems, boolean lock){
-		if(lock) addLock(Lock.warnHackedItems);
-		else removeLock(Lock.warnHackedItems);
-		_warnHackedItems = warnHackedItems;
-	}
-	public void setAllowHackedItems(boolean allowHackedItems, boolean lock){
-		if(lock) addLock(Lock.allowHackedItems);
-		else removeLock(Lock.allowHackedItems);
-		_allowHackedItems = allowHackedItems;
-	}
-	public void setInfiniteReward(boolean infiniteReward, boolean lock){
-		RMDebug.warning("LOCK:"+lock);
-		if(lock) addLock(Lock.infiniteReward);
-		else removeLock(Lock.infiniteReward);
-		_infiniteReward = infiniteReward;
-	}
-	public void setInfiniteTools(boolean infiniteTools, boolean lock){
-		if(lock) addLock(Lock.infiniteTools);
-		else removeLock(Lock.infiniteTools);
-		_infiniteTools = infiniteTools;
+	
+	public void setSetting(Setting setting, int value, boolean lock){
+		if(lock) addLock(setting);
+		else removeLock(setting);
+		switch(setting){
+			case minPlayers:
+				_minPlayers = value;
+				if(_minPlayers<0) _minPlayers = 1;
+				break;
+			case maxPlayers:
+				_maxPlayers = value;
+				if(_maxPlayers<0) _maxPlayers = 0;
+				break;
+			case minTeamPlayers:
+				_minTeamPlayers = value;
+				if(_minTeamPlayers<0) _minTeamPlayers = 1;
+				break;
+			case maxTeamPlayers:
+				_maxTeamPlayers = value;
+				if(_maxTeamPlayers<0) _maxTeamPlayers = 0;
+				break;
+			case timeLimit:
+				_timeLimit = value;
+				if(_timeLimit<0) _timeLimit = 0;
+				break;
+			case autoRandomizeAmount:
+				_autoRandomizeAmount = value;
+				if(_autoRandomizeAmount<0) _autoRandomizeAmount = 0;
+				break;
+		}
 	}
 	
+	public void setSetting(Setting setting, boolean value, boolean lock){
+		if(lock) addLock(setting);
+		else removeLock(setting);
+		switch(setting){
+			case advertise: _advertise = value; break;
+			case autoRestoreWorld: _autoRestoreWorld = value; break;
+			case warpToSafety: _warpToSafety = value; break;
+			case allowMidgameJoin: _allowMidgameJoin = value; break;
+			case healPlayer: _healPlayer = value; break;
+			case clearPlayerInventory: _clearPlayerInventory = value; break;
+			case foundAsReward: _foundAsReward = value; break;
+			case warnUnequal: _warnUnequal = value; break;
+			case allowUnequal: _allowUnequal = value; break;
+			case warnHackedItems: _warnHackedItems = value; break;
+			case allowHackedItems: _allowHackedItems = value; break;
+			case infiniteReward: _infiniteReward = value; break;
+			case infiniteTools: _infiniteTools = value; break;
+		}
+	}
+	
+	public void setCommands(RMCommands commands){
+		_commands = commands;
+	}
+	
+	//LOCK
 	//Add
-	public void addLock(Lock lock){
+	public void addLock(Setting lock){
 		if(!_lock.contains(lock)) _lock.add(lock);
 	}
 	//Remove
-	public void removeLock(Lock lock){
+	public void removeLock(Setting lock){
 		if(_lock.contains(lock)) _lock.remove(lock);
 	}
 	
-	public boolean isLocked(Lock lock){
+	public boolean isLocked(Setting lock){
 		if(_lock.contains(lock)) return true;
 		return false;
 	}

@@ -199,8 +199,6 @@ public class RMChest{
 			if(returnedItems.size()!=0){
 				RMGame rmGame = getTeam().getGame();
 				rmGame.getConfig().getFound().addItems(returnedItems.values().toArray(new ItemStack[returnedItems.values().size()]));
-				//RMPlayer rmp = rmGame.getConfig().getOwner();
-				//rmp.getItems().addItems(returnedItems.values().toArray(new ItemStack[returnedItems.values().size()]), false);
 			}
 		}
 	}
