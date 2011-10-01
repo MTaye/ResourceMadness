@@ -15,6 +15,7 @@ import org.bukkit.inventory.ItemStack;
 
 import com.mtaye.ResourceMadness.RM.ClaimType;
 import com.mtaye.ResourceMadness.RMGame.HandleState;
+import com.mtaye.ResourceMadness.Helper.RMTextHelper;
 
 public class RMStash {
 	public static RM plugin;
@@ -172,7 +173,7 @@ public class RMStash {
 		for(Integer id : array){
 			line+=ChatColor.WHITE+Material.getMaterial(id).name()+getChangedItemAmountString(items.get(id))+ChatColor.WHITE+", ";
 		}
-		line = RMText.stripLast(line, ",");
+		line = RMTextHelper.stripLast(line, ",");
 		return line;
 	}
 	
@@ -603,7 +604,7 @@ public class RMStash {
 		String line = "";
 		for(Integer amount : foundItems.keySet()){
 			if(line!=""){
-				line = RMText.stripLast(line, ",");
+				line = RMTextHelper.stripLast(line, ",");
 				line+=" ";
 			}
 			if(invert) line += amount+":";
@@ -642,7 +643,7 @@ public class RMStash {
 				if(amount!=1) line += ":"+amount;
 			}
 		}
-		line = RMText.stripLast(line,",");
+		line = RMTextHelper.stripLast(line,",");
 		return line;
 	}
 }

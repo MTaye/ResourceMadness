@@ -42,7 +42,7 @@ public final class RMInventoryHelper {
 		if(line.length()==0){
 			return "";
 		}
-		line = RMText.stripLast(line,",");
+		line = RMTextHelper.stripLast(line,",");
 		return line;
 	}
 	

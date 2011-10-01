@@ -15,6 +15,7 @@ import org.bukkit.block.Sign;
 import com.mtaye.ResourceMadness.RMGame.GameState;
 import com.mtaye.ResourceMadness.RMPlayer.ChatMode;
 import com.mtaye.ResourceMadness.Helper.RMHelper;
+import com.mtaye.ResourceMadness.Helper.RMTextHelper;
 
 /**
  * ResourceMadness for Bukkit
@@ -95,7 +96,7 @@ public class RMTeam {
 	public void addRemovePlayer(RMPlayer rmp){
 		if(!_players.containsKey(rmp.getName())){
 			if(!rmp.hasPermission("resourcemadness.join")){
-				rmp.sendMessage(RMText.eNoPermissionAction);
+				rmp.sendMessage(RMText.e_NoPermissionAction);
 				return;
 			}
 			addPlayer(rmp);
@@ -103,7 +104,7 @@ public class RMTeam {
 		}
 		else{
 			if(!rmp.hasPermission("resourcemadness.quit")){
-				rmp.sendMessage(RMText.eNoPermissionAction);
+				rmp.sendMessage(RMText.e_NoPermissionAction);
 				return;
 			}
 			removePlayer(rmp);
@@ -182,7 +183,7 @@ public class RMTeam {
 			names+=rmp.getName()+(rmp.getReady()?ChatColor.RED+":R"+getChatColor():"")+",";
 		}
 		if(names.length()>1){
-			names = RMText.stripLast(names, ",");
+			names = RMTextHelper.stripLast(names, ",");
 			names += "]";
 			return names;
 		}

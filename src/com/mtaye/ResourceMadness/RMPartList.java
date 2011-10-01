@@ -9,6 +9,8 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
 
+import com.mtaye.ResourceMadness.Helper.RMTextHelper;
+
 /**
  * ResourceMadness for Bukkit
  *
@@ -296,7 +298,7 @@ public class RMPartList {
 				line+=",";
 			}
 		}
-		return RMText.stripLast(line, ",");
+		return RMTextHelper.stripLast(line, ",");
 	}
 	
 	//Match Part List

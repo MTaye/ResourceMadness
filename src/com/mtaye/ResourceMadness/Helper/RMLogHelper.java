@@ -68,7 +68,7 @@ public class RMLogHelper {
 			}
 			line+=" ";
 		}
-		line = RMText.stripLast(line, " ");
+		line = RMTextHelper.stripLast(line, " ");
 		return line;
 	}
 	

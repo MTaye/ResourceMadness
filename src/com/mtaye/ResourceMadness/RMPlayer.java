@@ -21,6 +21,7 @@ import com.mtaye.ResourceMadness.RMGame.FilterState;
 import com.mtaye.ResourceMadness.RMGame.FilterType;
 import com.mtaye.ResourceMadness.RMGame.ForceState;
 import com.mtaye.ResourceMadness.RMGame.InterfaceState;
+import com.mtaye.ResourceMadness.Helper.RMTextHelper;
 
 /**
  * ResourceMadness for Bukkit
@@ -180,7 +181,7 @@ public class RMPlayer {
 	}
 	
 	public void getInfoItems(){
-		String items = RMText.getStringSortedItems(_items.getItems());
+		String items = RMTextHelper.getStringSortedItems(_items.getItems());
 		if(items.length()>0){
 			sendMessage(ChatColor.YELLOW+"Items: "+items);
 		}
@@ -188,7 +189,7 @@ public class RMPlayer {
 	}
 	
 	public void getInfoReward(){
-		String items = RMText.getStringSortedItems(_reward.getItems());
+		String items = RMTextHelper.getStringSortedItems(_reward.getItems());
 		if(items.length()>0){
 			sendMessage(ChatColor.YELLOW+"Reward items: "+items);
 		}
@@ -196,7 +197,7 @@ public class RMPlayer {
 	}
 	
 	public void getInfoTools(){
-		String items = RMText.getStringSortedItems(_tools.getItems());
+		String items = RMTextHelper.getStringSortedItems(_tools.getItems());
 		if(items.length()>0){
 			sendMessage(ChatColor.YELLOW+"Tools items: "+items);
 		}
@@ -205,9 +206,9 @@ public class RMPlayer {
 	
 	public void getInfoClaim(){
 		int strLength = 74;
-		String items = RMText.getStringSortedItems(_items.getItems(), 0);
-		String reward = RMText.getStringSortedItems(_reward.getItems(), 0);
-		String tools = RMText.getStringSortedItems(_tools.getItems(), 0);
+		String items = RMTextHelper.getStringSortedItems(_items.getItems(), 0);
+		String reward = RMTextHelper.getStringSortedItems(_reward.getItems(), 0);
+		String tools = RMTextHelper.getStringSortedItems(_tools.getItems(), 0);
 		if(items.length()>strLength) items = items.substring(0, strLength)+"...";
 		if(reward.length()>strLength) reward = reward.substring(0, strLength)+"...";
 		if(tools.length()>strLength) tools = tools.substring(0, strLength)+"...";
@@ -646,7 +647,7 @@ public class RMPlayer {
 		if(isIngame()){
 			RMGameTimer timer = getGameInProgress().getConfig().getTimer();
 			if(timer.getTimeLimit()!=0){
-				if(timer.getTimeElapsed()>timer.getTimeLimit()) sendMessage(RMText.gSuddenDeath);
+				if(timer.getTimeElapsed()>timer.getTimeLimit()) sendMessage(RMText.g_SuddenDeathColorized);
 				else sendMessage(ChatColor.AQUA+timer.getTextTimeRemaining()+" remaining"); 
 			}
 		}

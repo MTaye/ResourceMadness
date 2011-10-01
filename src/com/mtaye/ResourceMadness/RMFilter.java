@@ -12,6 +12,7 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import com.mtaye.ResourceMadness.Helper.RMHelper;
+import com.mtaye.ResourceMadness.Helper.RMTextHelper;
 import com.mtaye.ResourceMadness.RMGame.ItemHandleState;
 
 /**
@@ -248,7 +249,7 @@ public class RMFilter {
 		String line = "";
 		for(String amount : foundItems.keySet()){
 			if(line!=""){
-				line = RMText.stripLast(line, ",");
+				line = RMTextHelper.stripLast(line, ",");
 				line+=" ";
 			}
 			if(invert) line += amount+":";
@@ -287,7 +288,7 @@ public class RMFilter {
 				if(amount!="1") line += ":"+amount;
 			}
 		}
-		line = RMText.stripLast(line,",");
+		line = RMTextHelper.stripLast(line,",");
 		return line;
 	}
 		
@@ -334,16 +335,22 @@ public class RMFilter {
 					if(str.contains("-")){
 						String[] strItems2 = str.split("-");
 						int id1=RMHelper.getIntByString(strItems2[0]);
-						int id2=RMHelper.getIntByString(strItems.length>1?strItems2[1]:"-1");
+						int id2=RMHelper.getIntByString(strItems2.length>1?strItems2[1]:"-1");
+						RMDebug.warning("1_id1:"+id1);
+						RMDebug.warning("1_id2:"+id2);
 						//Check if material name
 						if(id1==-1) id1=RMHelper.getMaterialIdByString(strItems2[0]);
 						if(id2==-1) id2=RMHelper.getMaterialIdByString(strItems2[1]);
+						RMDebug.warning("2_id1:"+id1);
+						RMDebug.warning("2_id2:"+id2);
 						if((id1!=-1)&&(id2!=-1)){
 							if(id1>id2){
 								int id3=id1;
 								id1=id2;
 								id2=id3;
 							}
+							RMDebug.warning("3_id1:"+id1);
+							RMDebug.warning("3_id2:"+id2);
 							while(id1<=id2){
 								Material mat = Material.getMaterial(id1);
 								if(mat!=null){
