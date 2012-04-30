@@ -76,7 +76,7 @@ public class RMGameTimer {
 		_timeElapsed+=value;
 	}
 	public void addTimeMessage(int time){
-		_timeMessages.put(time, ChatColor.AQUA+getTextTime(time)+" remaining.");
+		_timeMessages.put(time, RMText.getLabelArgs("time.remaining", getTextTime(time)));
 	}
 	public void addTimeMessage(int time, String message){
 		_timeMessages.put(time, message);
@@ -95,13 +95,13 @@ public class RMGameTimer {
 		addTimeMessage(10*minuteInSeconds);
 		addTimeMessage(20*minuteInSeconds);
 		addTimeMessage(30*minuteInSeconds);
-		addTimeMessage(1*minuteInSeconds);
-		addTimeMessage(2*minuteInSeconds);
-		addTimeMessage(5*minuteInSeconds);
-		addTimeMessage(10*minuteInSeconds);
+		addTimeMessage(1*hourInSeconds);
+		addTimeMessage(2*hourInSeconds);
+		addTimeMessage(5*hourInSeconds);
+		addTimeMessage(10*hourInSeconds);
 	}
 	public void playCustomTimeMessage(RMGame game, int time, String message){
-		game.teamBroadcastMessage(ChatColor.AQUA+getTextTime(time)+" remaining."); 
+		game.teamBroadcastMessage(RMText.getLabelArgs("time.remaining", getTextTime(time))); 
 	}
 	
 	//Reset
@@ -131,9 +131,9 @@ public class RMGameTimer {
 		minutes = (int)(time/minuteInSeconds);
 		time = time-(minutes*minuteInSeconds);
 		seconds = time;
-		if(hours>0) return hours+" hour(s) "+(minutes>0?minutes+" minute(s)":"") + (seconds>0?seconds+" second(s)":"");
-		else if(minutes>0) return minutes+" minute(s) "+(seconds>0?seconds+" second(s)":"");
-		else return seconds+" second(s)";
+		if(hours>0) return hours+" "+RMText.getLabel("time.hours")+(minutes>0?" "+minutes+" "+RMText.getLabel("time.minutes"):"")+(seconds>0?" "+seconds+" "+RMText.getLabel("time.seconds"):"");
+		else if(minutes>0) return minutes+" "+RMText.getLabel("time.minutes")+(seconds>0?" "+seconds+" "+RMText.getLabel("time.seconds"):"");
+		else return seconds+" "+RMText.getLabel("time.seconds");
 	}
 	
 	public void announceTimeLeft(RMGame game){

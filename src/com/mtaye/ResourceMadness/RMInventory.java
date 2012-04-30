@@ -1,11 +1,17 @@
 package com.mtaye.ResourceMadness;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.ListIterator;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
+import org.bukkit.entity.HumanEntity;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
 public class RMInventory implements Inventory{
@@ -256,4 +262,66 @@ public class RMInventory implements Inventory{
 		}
 		return -1;
 	}
+	
+	//NOT WORKING
+	public InventoryHolder getHolder(){
+		for(Inventory inv:_inventories){
+			return inv.getHolder();
+		}
+		return null;
+	}
+	
+	public int getMaxStackSize(){
+		for(Inventory inv:_inventories){
+			return inv.getMaxStackSize();
+		}
+		return 64;
+	}
+	
+	public String getTitle(){
+		for(Inventory inv:_inventories){
+			return inv.getTitle();
+		}
+		return null;
+	}
+	
+	public InventoryType getType(){
+		for(Inventory inv:_inventories){
+			return inv.getType();
+		}
+		return null;
+	}
+	
+	 public List<HumanEntity> getViewers(){
+		 List<HumanEntity> viewers = new ArrayList<HumanEntity>();
+		for(Inventory inv:_inventories){
+			List<HumanEntity> invViewers = inv.getViewers();
+			for(HumanEntity viewer:invViewers){
+				if(!viewers.contains(viewer)){
+					viewers.add(viewer);
+				}
+			}
+		}
+		return viewers;
+	}
+	 
+	 public ListIterator<ItemStack> iterator(){
+		 for(Inventory inv:_inventories){
+			 return inv.iterator();
+		 }
+		 return null;
+	 }
+	 
+	 public ListIterator<ItemStack> iterator(int index){
+		 for(Inventory inv:_inventories){
+			 return inv.iterator(index);
+		 }
+		 return null;
+	 }
+	 
+	 public void setMaxStackSize(int size){
+		 for(Inventory inv:_inventories){
+			 inv.setMaxStackSize(size);
+		 }
+	 }
 }

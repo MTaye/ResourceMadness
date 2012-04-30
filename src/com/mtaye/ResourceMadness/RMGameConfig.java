@@ -17,8 +17,7 @@ import com.mtaye.ResourceMadness.RMGame.MinMaxType;
  * @author M-Taye
  */
 public class RMGameConfig {
-	private RM plugin;
-
+	//private RM plugin;
 	private RMPartList _partList = new RMPartList();
 	private String _worldName;
 	private int _id;
@@ -27,6 +26,7 @@ public class RMGameConfig {
 	private int _maxPlayers = 0;
 	private int _minTeamPlayers = 0;
 	private int _maxTeamPlayers = 0;
+	private int _safeZone = 0;
 	private int _autoRandomizeAmount = 0;
 	private boolean _advertise = true;
 	private boolean _autoRestoreWorld = true;
@@ -60,23 +60,26 @@ public class RMGameConfig {
 	
 	private RMStats _stats = new RMStats();
 	private RMGameTimer _timer = new RMGameTimer();
-	private int _moneyReward = 0;
-	private int _moneyJoin = 0;
-	private int _moneyQuit = 0;
+	
+	private RMBanList _banList = new RMBanList();
+	private RMMoney _money;
+	private RMCost _cost;
+	private RMCost _payment;
+	private String _password = "";
 	
 	public RMGameConfig(RM plugin){
-		this.plugin = plugin;
+		//this.plugin = plugin;
 		_log = new RMLog(plugin);
 	}
 	
 	public RMGameConfig(RMConfig config, RM plugin){
-		this.plugin = plugin;
+		//this.plugin = plugin;
 		_log = new RMLog(plugin);
 		getDataFrom(config);
 	}
 	
 	public RMGameConfig(RMGameConfig config, RM plugin){
-		this.plugin = plugin;
+		//this.plugin = plugin;
 		this._partList = config._partList;
 		this._id = config._id;
 		this._ownerName = config._ownerName;
@@ -84,6 +87,7 @@ public class RMGameConfig {
 		this._maxPlayers = config._maxPlayers;
 		this._maxTeamPlayers = config._maxTeamPlayers;
 		this._minTeamPlayers = config._minTeamPlayers;
+		this._safeZone = config._safeZone;
 		this._autoRandomizeAmount = config._autoRandomizeAmount;
 		this._advertise = config._advertise;
 		this._autoRestoreWorld = config._autoRestoreWorld;
@@ -112,6 +116,12 @@ public class RMGameConfig {
 		this._interface = config._interface;
 		this._stats = config._stats;
 		this._timer = config._timer;
+		
+		this._banList = config._banList;
+		this._money = config._money;
+		this._cost = config._cost;
+		this._payment = config._payment;
+		this._password = config._password;
 	}
 	
 	//Get
@@ -124,6 +134,7 @@ public class RMGameConfig {
 	public int getMaxPlayers() { return _maxPlayers; }
 	public int getMinTeamPlayers() { return _minTeamPlayers; }
 	public int getMaxTeamPlayers() { return _maxTeamPlayers; }
+	public int getSafeZone() { return _safeZone; }
 	public int getAutoRandomizeAmount() { return _autoRandomizeAmount; }
 	public boolean getAdvertise() { return _advertise; }
 	public boolean getAutoRestoreWorld() { return _autoRestoreWorld; }
@@ -161,6 +172,12 @@ public class RMGameConfig {
 	public RMStats getStats() { return _stats; }
 	public RMGameTimer getTimer() { return _timer; }
 	
+	public RMBanList getBanList() { return _banList; }
+	public RMMoney getMoney() { return _money; }
+	public RMCost getCost() { return _cost; }
+	public RMCost getPayment() { return _payment; }
+	public String getPassword() { return _password; }
+	
 	//Set
 	public void setPartList(RMPartList partList){
 		if(partList==null) return;
@@ -197,6 +214,10 @@ public class RMGameConfig {
 	public void setMaxItems(int maxItems){
 		_maxItems = maxItems;
 		if(_maxItems<0) _maxItems = 0;
+	}
+	public void setSafeZone(int radius){
+		_safeZone = radius;
+		if(_safeZone<0) _safeZone = 0;
 	}
 	public void setRandomizeAmount(int amount){
 		_randomizeAmount = amount;
@@ -289,7 +310,27 @@ public class RMGameConfig {
 		_timer = timer;
 	}
 	
+	public void setBanList(RMBanList banList){
+		_banList = banList;
+	}
+	public void setMoney(RMMoney money){
+		_money = money;
+	}
+	public void setCost(RMCost cost){
+		_cost = cost;
+	}
+	public void setPayment(RMCost payment){
+		_payment = payment;
+	}
+	public void setPassword(String password){
+		if(password==null) return;
+		_password = password;
+	}
+	
 	//Clear
+	public void clearSafeZone(){
+		_safeZone = 0;
+	}
 	public void clearRandomizeAmount(){
 		_randomizeAmount = 0;
 	}
@@ -304,6 +345,9 @@ public class RMGameConfig {
 	}
 	public void clearFound(){
 		_found.clear();
+	}
+	public void clearPassword(){
+		_password = "";
 	}
 	
 	//Parse
@@ -378,6 +422,7 @@ public class RMGameConfig {
 		setMaxPlayers(config.getMaxPlayers());
 		setMinTeamPlayers(config.getMinTeamPlayers());
 		setMaxTeamPlayers(config.getMaxTeamPlayers());
+		setSafeZone(config.getSafeZone());
 		setAutoRandomizeAmount(config.getAutoRandomizeAmount());
 		setAutoRestoreWorld(config.getAutoRestoreWorld());
 		setWarpToSafety(config.getWarpToSafety());
@@ -404,6 +449,12 @@ public class RMGameConfig {
 		setInterface(config.getInterface());
 		setStats(config.getStats());
 		setTimer(config.getTimer());
+		
+		setBanList(config.getBanList());
+		setMoney(config.getMoney());
+		setCost(config.getCost());
+		setPayment(config.getPayment());
+		setPassword(config.getPassword());
 	}
 	
 	public void getDataFrom(RMConfig config){
@@ -411,6 +462,7 @@ public class RMGameConfig {
 		setMaxPlayers(config.getMaxPlayers());
 		setMinTeamPlayers(config.getMinTeamPlayers());
 		setMaxTeamPlayers(config.getMaxTeamPlayers());
+		setSafeZone(config.getSafeZone());
 		_timer.setTimeLimit(config.getTimeLimit());
 		setAutoRandomizeAmount(config.getAutoRandomizeAmount());
 		setAutoRestoreWorld(config.getAutoRestoreWorld());

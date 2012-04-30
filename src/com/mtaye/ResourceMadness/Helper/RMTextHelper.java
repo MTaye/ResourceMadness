@@ -1,5 +1,6 @@
 package com.mtaye.ResourceMadness.Helper;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -10,8 +11,8 @@ import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
 
 import com.mtaye.ResourceMadness.RM;
+import com.mtaye.ResourceMadness.RMDebug;
 import com.mtaye.ResourceMadness.RMItem;
-import com.mtaye.ResourceMadness.RMText;
 
 public class RMTextHelper {
 	public static RM plugin;
@@ -110,6 +111,33 @@ public class RMTextHelper {
 		return stripLast(line, ",");
 	}
 	
+	public static List<String> getStringListFromArray(String[] args){
+		List<String> list = new ArrayList<String>();
+		for(String arg : args){
+			list.add(arg);
+		}
+		return list;
+	}
+	
+	public static List<String> separateStringToList(String str, String strMainSeparator, String... strSeparators){
+		return getStringListFromArray(separateStringToArray(str, strMainSeparator, strSeparators));
+	}
+	
+	public static String[] separateStringToArray(String str, String strMainSeparator, String... strSeparators){
+		RMDebug.warning("str: "+str);
+		for(String strSeparator : strSeparators){
+			str = str.replace(strSeparator, strMainSeparator);
+			RMDebug.warning("str_replaced: "+str);
+		}
+		String[] strArgs = str.split(strMainSeparator);
+		for(String strArg : strArgs){
+			RMDebug.warning("str_split: "+strArg);
+			strArg = strArg.trim();
+			RMDebug.warning("str_trim: "+strArg);
+		}
+		return strArgs;
+	}
+	
 	//Get String By String List
 	public static String getStringByStringList(List<String> strList, String strSeparator){
 		return getStringByStringList(strList, strSeparator, null, null);
@@ -131,13 +159,11 @@ public class RMTextHelper {
 	}
 	
 	//Include Item
-	public static String includeItem(RMItem rmItem, boolean... less){
+	public static String includeItem(RMItem rmItem){
 		int i1 = rmItem.getAmount();
 		int i2 = rmItem.getAmountHigh();
-		if((i1!=1)&&(less.length==0)){
-			if(i2>0) return ChatColor.GRAY+":"+i1+"-"+i2;
-			return ChatColor.GRAY+":"+i1;
-		}
+		if(i2>0) return ChatColor.GRAY+":"+i1+"-"+i2;
+		else if(i1!=1) return ChatColor.GRAY+":"+i1;
 		return "";
 	}
 	
@@ -165,14 +191,6 @@ public class RMTextHelper {
 		return strItems;
 	}
 	
-	public static String getStringTotal(String str){
-		int length = str.length();
-		if(length<9) str = "Total: "+str;
-		else if(length<11) str = "Ttl: "+str;
-		else if(length<13) str = "T: "+str;
-		return str;
-	}
-	
 	public static String firstLetterToUpperCase(String str){
 		if(str.length()>0){
 			String character = str.substring(0, 1);
@@ -190,8 +208,7 @@ public class RMTextHelper {
 		for(int i=beginIndex; i<args.length; i++){
 			str+=args[i]+" ";
 		}
-		str = stripLast(str, " ");
-		return str;
+		return str.trim();
 	}
 	
 	public static boolean equalsIgnoreCase(String arg, String... strArray){
@@ -199,5 +216,13 @@ public class RMTextHelper {
 			if(str.toLowerCase() == arg.toLowerCase()) return true;
 		}
 		return false;
+	}
+	
+	public static String genString(String str, int length){
+		if((str==null)||(str.length()==0)) return "";
+		while(str.length()<length){
+			str+=str;
+		}
+		return str.substring(0, length);
 	}
 }

@@ -1,5 +1,7 @@
 package com.mtaye.ResourceMadness;
 
+import java.util.logging.Level;
+
 /**
  * ResourceMadness for Bukkit
  *
@@ -17,7 +19,7 @@ public class RMWatcher implements Runnable {
 	}
 
 	@Override
-	public void run() {
+	public void run(){
 		if(autoSave){
 			if(autoSaveTimer>1) autoSaveTimer-=1;
 			else{
@@ -31,7 +33,7 @@ public class RMWatcher implements Runnable {
 			}
 		}
 		catch (Exception e){
-			System.out.println("Warning! An error occured!");
+			plugin.log.log(Level.INFO, "Warning! An error occured!");
 			e.printStackTrace();
 		}
 	}

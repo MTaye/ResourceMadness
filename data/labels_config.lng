@@ -1,0 +1,47 @@
+# ResourceMadness v0.1.4 Config labels
+
+# Language: English
+# Translator: M-Taye
+
+# Config
+config.language: # Load labels from external language file. (leave blank to use the default English translation) 
+config.autosave: # Backup data at regular intervals to avoid loss.|# Interval is measured in minutes. (0 = do not autosave)
+config.use_permissions: # If you don't use permissions just leave it at false or auto.|# Supported permissions are: p3, pex, bukkit
+config.use_restore: # Change this to false if you don't want the games to use the restore world changes functionality.|# It may save some memory.
+config.server_wide: # These are server wide settings.
+config.max_games: # The maximum number of games allowed on server. (0 = unlimited)
+config.max_games_per_player: # The maximum number of games allowed per player. (0 = unlimited)
+config.default_settings1: # All settings from here on out are the game defaults.|# Using :lock after a setting locks it for all games. e.g. minPlayersPerTeam=2:lock
+config.minplayers: # The minimum number of players allowed per game. The Lowest number is 1 player.|# Only numbers higher than the amount of teams in a game will be evaluated.
+config.maxplayers: # The maximum number of players allowed per game. (0 = unlimited)
+config.minteamplayers: # The minimum number of players allowed per team. The lowest number is 1 player.
+config.maxteamplayers: # The maximum number of players allowed per team. (0 = unlimited)
+config.safezone: # Safe zone radius. (0 = disabled)
+config.timelimit: # Match time limit. (0 = no time limit)
+config.default_settings2: # The following settings can be true or false.|# Using :lock after true/false locks the setting for all games. e.g. allowHacked=false:lock
+config.advertise: # Advertise game in list.
+config.restore: # Auto restore world changes after match.
+config.warp: # Teleport players before and after match.
+config.midgamejoin: # Allow players to join mid-game.
+config.healplayer: # Heal players at game start.
+config.clearinventory: # Clear/return players items at game start/finish.
+config.foundasreward: # Use the game's found items as reward.
+config.warnunequal: # Warn when reward/tools can't be distributed equally.
+config.allowunequal: # Allow reward/tools to be distributed unequally.
+config.warnhacked: # Warn when hacked items are added. Only the game's owner gets a warning.
+config.allowhacked: # Allow the use of hacked items.
+config.infinitereward: # Use infinite reward.
+config.infinitetools: # Use infinite tools.
+config.aliases: # You can use aliases for most commands.|
+config.aliases: # Usage:|
+config.aliases: #    command: alias||
+config.aliases: # Multiple aliases must be separated with a comma.|
+config.aliases: # Usage:|
+config.aliases: #    command: alias1, alias2, alias3||
+config.aliases: # Example: filter random: filter r|
+config.aliases: # Result: /rm filter r||
+config.aliases: # Example: filter random: filter|
+config.aliases: # Result: /rm filter r||
+config.aliases: # Example: filter random: filter r|
+config.aliases: # Result: /rm filter r||
+config.aliases: # Alias list:

@@ -19,15 +19,16 @@ import com.mtaye.ResourceMadness.Helper.RMHelper;
 public class RMLog {
 	RM plugin;
 	
-	List<Location> _locList = new ArrayList<Location>();
-	List<RMBlock> _logList = new ArrayList<RMBlock>();
-	List<RMBlock> _logItemList = new ArrayList<RMBlock>();
-	public static Material[] _blockItemMaterials = {Material.BED_BLOCK, Material.BROWN_MUSHROOM, Material.CACTUS, Material.CROPS, Material.DEAD_BUSH,
+	private List<Location> _locList = new ArrayList<Location>();
+	private List<RMBlock> _logList = new ArrayList<RMBlock>();
+	private List<RMBlock> _logItemList = new ArrayList<RMBlock>();
+	private static Material[] _blockItemMaterials = {Material.BED_BLOCK, Material.BROWN_MUSHROOM, Material.CACTUS, Material.CROPS, Material.DEAD_BUSH,
 		Material.DETECTOR_RAIL, Material.DIODE_BLOCK_OFF, Material.DIODE_BLOCK_ON, Material.IRON_DOOR_BLOCK, Material.LEVER, Material.LONG_GRASS,
 		Material.POWERED_RAIL, Material.RAILS, Material.RED_MUSHROOM, Material.RED_ROSE, Material.REDSTONE, Material.REDSTONE_WIRE, Material.SAPLING,
 		Material.SIGN_POST, Material.SNOW, Material.STONE_PLATE, Material.SUGAR_CANE_BLOCK, Material.TORCH, Material.WOODEN_DOOR, Material.WOOD_PLATE,
 		Material.YELLOW_FLOWER, Material.LADDER, Material.PAINTING, Material.REDSTONE_TORCH_OFF, Material.REDSTONE_TORCH_ON, Material.TRAP_DOOR,
-		Material.WALL_SIGN, Material.WEB};
+		Material.WALL_SIGN, Material.WEB, Material.BREWING_STAND, Material.CAKE_BLOCK, Material.CAULDRON, Material.MELON_BLOCK, Material.PUMPKIN_STEM,
+		Material.STONE_BUTTON, Material.VINE, Material.WATER_LILY};
 	
 	public RMLog(RM plugin){
 		this.plugin = plugin;

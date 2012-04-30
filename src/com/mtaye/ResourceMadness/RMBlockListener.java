@@ -10,9 +10,11 @@ import java.util.List;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockBurnEvent;
-import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
@@ -24,15 +26,15 @@ import com.mtaye.ResourceMadness.Helper.RMHelper;
  *
  * @author M-Taye
  */
-public class RMBlockListener extends BlockListener{
+public class RMBlockListener implements Listener{
 	
 	private final RM plugin;
 	public RMBlockListener(RM plugin){
 		this.plugin = plugin;
 	}
 	
-	@Override
-	public void onBlockBreak(BlockBreakEvent e){
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void onBlockBreak(final BlockBreakEvent e){
 		if(RMGame.getGames().size()!=0){
 			Block b = e.getBlock();
 			Player p = e.getPlayer();
@@ -47,47 +49,31 @@ public class RMBlockListener extends BlockListener{
 					}
 				}
 				if(rmp.isIngame()){
-					RMGame rmGame = rmp.getTeam().getGame();
-					if(rmGame!=null){
-						switch(rmGame.getConfig().getState()){
-							case COUNTDOWN: case GAMEPLAY: case GAMEOVER:
-								if(plugin.config.getUseRestore()) rmGame.addLog(b.getState());
-								break;
-						}
-					}
+					if(plugin.config.getUseRestore()) rmp.getGame().addLog(b.getState());
 				}
 			}
 		}
 	}
 	
-	@Override
-	public void onBlockPlace(BlockPlaceEvent e){
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void onBlockPlace(final BlockPlaceEvent e){
 		if(RMGame.getGames().size()!=0){
 			Player p = e.getPlayer();
 			RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
 			if(rmp!=null){
 				if(rmp.isIngame()){
-					RMGame rmGame = rmp.getTeam().getGame();
-					if(rmGame!=null){
-						switch(rmGame.getConfig().getState()){
-							case SETUP:
-								break;
-							case COUNTDOWN: case GAMEPLAY: case GAMEOVER:
-								if(plugin.config.getUseRestore()) rmGame.addLog(e.getBlockReplacedState());
-								break;
-						}
-					}
+					if(plugin.config.getUseRestore()) rmp.getGame().addLog(e.getBlockReplacedState());
 				}
 			}
 		}
 	}
 	
-	@Override
-	public void onBlockBurn(BlockBurnEvent e){
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void onBlockBurn(final BlockBurnEvent e){
 		Block b = e.getBlock();
 		if(b.getType() == Material.WOOL){
 			for(RMGame game : RMGame.getGames().values()){
-				List<Block> woolBlocks = game.getConfig().getPartList().getWoolList();
+				List<Block> woolBlocks = game.getGameConfig().getPartList().getWoolList();
 				if(woolBlocks.contains(b)){
 					e.setCancelled(true);
 				}
@@ -95,11 +81,11 @@ public class RMBlockListener extends BlockListener{
 		}
 	}
 	
-	@Override
-	public void onBlockPistonExtend(BlockPistonExtendEvent e){
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void onBlockPistonExtend(final BlockPistonExtendEvent e){
 		List<Block> blocks = e.getBlocks();
 		for(RMGame game : RMGame.getGames().values()){
-			List<Block> gameBlocks = game.getConfig().getPartList().getList();
+			List<Block> gameBlocks = game.getGameConfig().getPartList().getList();
 			for(Block block : blocks){
 				if(gameBlocks.contains(block)){
 					e.setCancelled(true);
@@ -109,12 +95,12 @@ public class RMBlockListener extends BlockListener{
 		}
 	}
 	
-	@Override
-	public void onBlockPistonRetract(BlockPistonRetractEvent e){
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void onBlockPistonRetract(final BlockPistonRetractEvent e){
 		if(e.isSticky()){
 			Block b = e.getRetractLocation().getBlock();
 			for(RMGame game : RMGame.getGames().values()){
-				List<Block> gameBlocks = game.getConfig().getPartList().getList();
+				List<Block> gameBlocks = game.getGameConfig().getPartList().getList();
 				if(gameBlocks.contains(b)){
 					e.setCancelled(true);
 				}

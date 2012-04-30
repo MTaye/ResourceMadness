@@ -1,187 +1,94 @@
 package com.mtaye.ResourceMadness;
 
+import java.util.HashMap;
+
 /**
  * ResourceMadness for Bukkit
  *
  * @author M-Taye
  */
 public class RMStats {
-	private static int _serverWins = 0;
-	private static int _serverLosses = 0;
-	private static int _serverTimesPlayed = 0;
-	private static int _serverItemsFound = 0;
-	private static int _serverItemsFoundTotal = 0;
+	public enum RMStatServer {
+		WINS, LOSSES, TIMES_PLAYED, ITEMS_FOUND_TOTAL,
+		KICKED, BANNED, TEMP_BANNED;
+	}
 	
-	private int _wins = 0;
-	private int _losses = 0;
-	private int _timesPlayed = 0;
-	private int _itemsFound = 0;
-	private int _itemsFoundTotal = 0;
+	public enum RMStat {
+		WINS, LOSSES, TIMES_PLAYED, ITEMS_FOUND_TOTAL,
+		KICKED, BANNED, TEMP_BANNED;
+	}
+	
+	private static HashMap<RMStatServer, Integer> _statsServer = new HashMap<RMStatServer, Integer>();
+	private HashMap<RMStat, Integer> _stats = new HashMap<RMStat, Integer>();
 	
 	public RMStats(){
+		for(RMStat stat : RMStat.values()){
+			_stats.put(stat, 0);
+		}
+		for(RMStatServer stat : RMStatServer.values()){
+			_statsServer.put(stat, 0);
+		}
 	}
 	
 	//Get
-	public int getWins(){
-		return _wins;
+	public int get(RMStat stat){
+		return _stats.get(stat);
 	}
-	public int getLosses(){
-		return _losses;
-	}
-	public int getTimesPlayed(){
-		return _timesPlayed;
-	}
-	public int getItemsFound(){
-		return _itemsFound;
-	}
-	public int getItemsFoundTotal(){
-		return _itemsFoundTotal;
-	}
+	
 	//Get Ratio
 	public String getTextRatio(){
-		return getWins()+":"+getLosses();
+		return get(RMStat.WINS)+":"+get(RMStat.LOSSES);
 	}
 	
 	//Set
-	public void setWins(int value){
+	public void set(RMStat stat, int value){
 		if(value==-1) return;
-		_wins = value;
-	}
-	public void setLosses(int value){
-		if(value==-1) return;
-		_losses = value;
-	}
-	public void setTimesPlayed(int value){
-		if(value==-1) return;
-		_timesPlayed = value;
-	}
-	public void setItemsFound(int value){
-		if(value==-1) return;
-		_itemsFound = value;
-	}
-	public void setItemsFoundTotal(int value){
-		if(value==-1) return;
-		_itemsFoundTotal = value;
+		_stats.put(stat, value);
 	}
 	
 	//Add
-	public void addWins(){
-		_wins++;
+	public void add(RMStat stat){
+		add(stat, 1);
 	}
-	public void addLosses(){
-		_losses++;
-	}
-	public void addTimesPlayed(){
-		_timesPlayed++;
-	}
-	public void addItemsFound(){
-		_itemsFound++;
-	}
-	public void addItemsFoundTotal(){
-		_itemsFoundTotal++;
-	}
-	public void addItemsFoundTotal(int value){
+	public void add(RMStat stat, int value){
 		if(value<0) value = 0;
-		_itemsFoundTotal+=value;
+		_stats.put(stat, _stats.get(stat)+value);
 	}
 	
 	//Clear
-	public void clearWins(){
-		_wins = 0;
-	}
-	public void clearLosses(){
-		_losses = 0;
-	}
-	public void clearTimesPlayed(){
-		_timesPlayed = 0;
-	}
-	public void clearItemsFound(){
-		_itemsFound = 0;
-	}
-	public void clearItemsFoundTotal(){
-		_itemsFoundTotal = 0;
+	public void clear(RMStat stat){
+		_stats.put(stat, 0);
 	}
 	
 	//Static
 	
 	//Get
-	public static int getServerWins(){
-		return _serverWins;
+	public static int get(RMStatServer stat){
+		return _statsServer.get(stat);
 	}
-	public static int getServerLosses(){
-		return _serverLosses;
-	}
-	public static int getServerTimesPlayed(){
-		return _serverTimesPlayed;
-	}
-	public static int getServerItemsFound(){
-		return _serverItemsFound;
-	}
-	public static int getServerItemsFoundTotal(){
-		return _serverItemsFoundTotal;
-	}
+	
 	//Get Ratio
-	public String getServerTextRatio(){
-		return getServerWins()+":"+getServerLosses();
+	public static String getServerTextRatio(){
+		return get(RMStatServer.WINS)+":"+get(RMStatServer.LOSSES);
 	}
 	
 	//Set
-	public static void setServerWins(int value){
+	public static void set(RMStatServer stat, int value){
 		if(value==-1) return;
-		_serverWins = value;
-	}
-	public static void setServerLosses(int value){
-		if(value==-1) return;
-		_serverLosses = value;
-	}
-	public static void setServerTimesPlayed(int value){
-		if(value==-1) return;
-		_serverTimesPlayed = value;
-	}
-	public static void setServerItemsFound(int value){
-		if(value==-1) return;
-		_serverItemsFound = value;
-	}
-	public static void setServerItemsFoundTotal(int value){
-		if(value==-1) return;
-		_serverItemsFoundTotal = value;
+		_statsServer.put(stat, value);
 	}
 	
 	//Add
-	public static void addServerWins(){
-		_serverWins++;
+	public static void add(RMStatServer stat){
+		add(stat, 1);
 	}
-	public static void addServerLosses(){
-		_serverLosses++;
-	}
-	public static void addServerTimesPlayed(){
-		_serverTimesPlayed++;
-	}
-	public static void addServerItemsFound(){
-		_serverItemsFound++;
-	}
-	public static void addServerItemsFoundTotal(){
-		_serverItemsFoundTotal++;
-	}
-	public static void addServerItemsFoundTotal(int value){
+	public static void add(RMStatServer stat, int value){
 		if(value<0) value = 0;
-		_serverItemsFoundTotal++;
+		_statsServer.put(stat, _statsServer.get(stat)+value);
 	}
 	
 	//Clear
-	public static void clearServerWins(){
-		_serverWins = 0;
-	}
-	public static void clearServerLosses(){
-		_serverLosses = 0;
-	}
-	public static void clearServerTimesPlayed(){
-		_serverTimesPlayed = 0;
-	}
-	public static void clearServerItemsFound(){
-		_serverItemsFound = 0;
-	}
-	public static void clearServerItemsFoundTotal(){
-		_serverItemsFoundTotal = 0;
+	public static void clear(RMStatServer stat){
+		_statsServer.put(stat, 0);
 	}
 }

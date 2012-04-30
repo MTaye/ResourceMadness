@@ -1,14 +1,15 @@
 package com.mtaye.ResourceMadness;
 
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerRespawnEvent;
 
 import com.mtaye.ResourceMadness.RMGame.Setting;
@@ -20,31 +21,31 @@ import com.mtaye.ResourceMadness.Helper.RMHelper;
  *
  * @author M-Taye
  */
-public class RMPlayerListener extends PlayerListener{
+public class RMPlayerListener implements Listener{
 	
-	private final RM plugin;
+	//private final RM plugin;
 	public RMPlayerListener(RM plugin){
-		this.plugin = plugin;
+		//this.plugin = plugin;
 	}
 	
-	@Override
-	public void onPlayerInteract(PlayerInteractEvent e){
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void onPlayerInteract(final PlayerInteractEvent e){
 		Player p = e.getPlayer();
 		Block b = e.getClickedBlock();
 		if(e.getAction().equals(Action.RIGHT_CLICK_BLOCK)){
 			if(b.getType().isBlock()){
 				RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
 				if(rmp!=null){
-					if(RMHelper.isMaterial(b.getType(), RMGame.getMaterials())){
+					//if(RMHelper.isMaterial(b.getType(), RMGame.getMaterials())){
 						RMGame rmGame = RMGame.getGameByBlock(b);
 						if(rmGame!=null){
-							switch(rmGame.getConfig().getState()){
+							switch(rmGame.getGameConfig().getState()){
 								case SETUP:
-									if(rmp.hasOwnerPermission(rmGame.getConfig().getOwnerName())){
+									if(rmp.hasOwnerPermission(rmGame.getGameConfig().getOwnerName())){
 										if(rmp.getPlayer().isSneaking()){
 											if(b.getType()==Material.CHEST) e.setCancelled(true);
-											rmGame.handleRightClick(b, rmp);
 										}
+										rmGame.handleRightClick(b, rmp);
 									}
 									else if(b.getType()==Material.CHEST) e.setCancelled(true);
 									break;
@@ -52,17 +53,18 @@ public class RMPlayerListener extends PlayerListener{
 									 if(b.getType()==Material.CHEST) e.setCancelled(true);
 									break;
 								case GAMEPLAY: case GAMEOVER:
-									RMTeam rmTeam = rmGame.getPlayerTeam(rmp);
+									RMTeam rmTeam = rmGame.getTeamByPlayer(rmp);
 									if(rmTeam!=null){
-										if(b!=rmTeam.getChest().getChest().getBlock()){
+										if(!b.equals(rmTeam.getChest().getChest().getBlock())){
 											if(b.getType()==Material.CHEST) e.setCancelled(true);
 										}
 									}
 									else if(b.getType()==Material.CHEST) e.setCancelled(true);
 									break;
 							}
+							rmGame.updateSigns();
 						}
-					}
+					//}
 				}
 			}
 		}
@@ -72,6 +74,7 @@ public class RMPlayerListener extends PlayerListener{
 				if(rmp!=null){
 					PlayerAction action = rmp.getPlayerAction();
 					if(action != PlayerAction.NONE){
+						e.setCancelled(true);
 						if(RMHelper.isMaterial(b.getType(), RMGame.getMaterials())){
 							switch(action){
 							case ADD: RMGame.tryAddGame(b, rmp, null); break;
@@ -81,27 +84,30 @@ public class RMPlayerListener extends PlayerListener{
 								if(rmGame!=null){
 									switch(action){
 									case INFO:
-										rmGame = RMGame.getGameByBlock(b);
-										if(rmGame!=null) rmGame.sendInfo(rmp);
+										rmGame.sendInfo(rmp);
 										break;
 									case SETTINGS:
-										rmGame = RMGame.getGameByBlock(b);
-										if(rmGame!=null) rmGame.sendSettings(rmp, rmp.getRequestInt());
+										rmGame.sendSettings(rmp, rmp.getRequestInt());
+										rmp.clearRequestInt();
+										break;
+									case SETTINGS_RESET:
+										rmGame.resetSettings(rmp);
 										break;
 									case INFO_FOUND:
-										rmGame = RMGame.getGameByBlock(b);
-										if(rmGame!=null) rmGame.getInfoFound(rmp);
+										rmGame.getInfoFound(rmp);
 										break;
 									case MODE:
-										rmGame = RMGame.getGameByBlock(b);
-										if(rmGame!=null) rmGame.changeMode(rmp.getRequestInterface(), rmp);
+										rmGame.changeMode(rmp.getRequestInterface(), rmp);
 										break;
 									case MODE_CYCLE:
-										rmGame = RMGame.getGameByBlock(b);
-										if(rmGame!=null) rmGame.cycleMode(rmp);
+										rmGame.cycleMode(rmp);
 										break;
 									case JOIN:
 										rmGame.joinTeamByBlock(b, rmp);
+										if(rmp.getPlayerAction()==PlayerAction.JOIN_PASSWORD) return;
+										break;
+									case JOIN_PASSWORD:
+										rmp.sendMessage(RMText.getLabel("common.canceled"));
 										break;
 									case QUIT:
 										rmGame.quitTeamByBlock(b, rmp);
@@ -110,12 +116,14 @@ public class RMPlayerListener extends PlayerListener{
 										rmGame.startGame(rmp);
 										break;
 									case START_RANDOM:
-										rmGame.setRandomizeAmount(rmp, rmp.getRequestInt());
-										rmGame.startGame(rmp);
+										rmGame.startGameRandomize(rmp, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
+										/*
 									case RESTART:
 										rmGame.restartGame(rmp);
 										break;
+										*/
 									case STOP:
 										rmGame.stopGame(rmp, true);
 										break;
@@ -152,12 +160,19 @@ public class RMPlayerListener extends PlayerListener{
 									case TOOLS_INFO_STRING:
 										rmGame.sendToolsInfoString(rmp);
 										break;
+									case MONEY:
+										//rmGame.parseMoney(rmp, rmp.getRequestForceState(), rmp.getRequestInt());
+										break;
+									case MONEY_INFO:
+										//rmGame.moneyInfo();
+										break;
 									case TEMPLATE_SAVE:
 										rmGame.saveTemplate(rmp.getRequestString(), rmp);
 										rmp.clearRequestString();
 										break;
 									case TEMPLATE_LOAD:
 										rmGame.loadTemplate(rmp.loadTemplate(rmp.getRequestString()), rmp);
+										rmp.clearRequestString();
 										break;
 									case RESTORE:
 										rmGame.restoreWorld(rmp);
@@ -167,85 +182,143 @@ public class RMPlayerListener extends PlayerListener{
 										rmp.clearRequestItems();
 										break;
 									case CLAIM_FOUND_CHEST_SELECT:
-										rmp.setRequestInt(rmGame.getConfig().getId());
+										rmp.setRequestInt(rmGame.getGameConfig().getId());
 										rmp.setPlayerAction(PlayerAction.CLAIM_FOUND_CHEST);
-										rmp.sendMessage("Now left click a "+ChatColor.YELLOW+"chest "+ChatColor.WHITE+"to "+ChatColor.YELLOW+"store items"+ChatColor.WHITE+".");
+										rmp.sendMessage(RMText.getLabel("action.claim.found.chest.final"));
 										return;
 									case CLAIM_ITEMS_CHEST:
-										rmp.sendMessage(ChatColor.GRAY+"You are not allowed to claim items into game chests.");
+										rmp.sendMessage(RMText.getLabel("claim.chest.not_allowed"));
 										break;
 									case CLAIM_REWARD_CHEST:
-										rmp.sendMessage(ChatColor.GRAY+"You are not allowed to claim items into game chests.");
+										rmp.sendMessage(RMText.getLabel("claim.chest.not_allowed"));
 										break;
 									case CLAIM_TOOLS_CHEST:
-										rmp.sendMessage(ChatColor.GRAY+"You are not allowed to claim items into game chests.");
+										rmp.sendMessage(RMText.getLabel("claim.chest.not_allowed"));
+										break;
+									case KICK_PLAYER:
+										rmGame.kickPlayer(rmp, true, rmp.getRequestStringList());
+										rmp.clearRequestStringList();
+										break;
+									case KICK_TEAM:
+										rmGame.kickTeam(rmp, true, rmp.getRequestStringList());
+										rmp.clearRequestStringList();
+										break;
+									case KICK_ALL:
+										rmGame.kickAll(rmp, true);
+										break;
+									case BAN_PLAYER:
+										rmGame.banPlayer(rmp, true, rmp.getRequestStringList());
+										rmp.clearRequestStringList();
+										break;
+									case BAN_TEAM:
+										rmGame.banTeam(rmp, true, rmp.getRequestStringList());
+										rmp.clearRequestStringList();
+										break;
+									case BAN_ALL:
+										rmGame.banAll(rmp, true);
+										break;
+									case BAN_LIST:
+										rmGame.sendBanList(rmp, rmp.getRequestInt());
+										rmp.clearRequestInt();
+										break;
+									case UNBAN_PLAYER:
+										rmGame.unbanPlayer(rmp, true, rmp.getRequestStringList());
+										rmp.clearRequestStringList();
 										break;
 									case SET_MIN_PLAYERS:
 										rmGame.setSetting(rmp, Setting.minPlayers, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
 									case SET_MAX_PLAYERS:
 										rmGame.setSetting(rmp, Setting.maxPlayers, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
 									case SET_MIN_TEAM_PLAYERS:
 										rmGame.setSetting(rmp, Setting.minTeamPlayers, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
 									case SET_MAX_TEAM_PLAYERS:
 										rmGame.setSetting(rmp, Setting.maxTeamPlayers, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
 									case SET_MAX_ITEMS:
-										rmGame = RMGame.getGameByBlock(b);
-										if(rmGame!=null) rmGame.setSetting(rmp, Setting.maxItems, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.maxItems, rmp.getRequestInt());
+										rmp.clearRequestInt();
+										break;
+									case SET_SAFE_ZONE:
+										rmGame.setSetting(rmp, Setting.safeZone, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
 									case SET_TIME_LIMIT:
 										rmGame.setSetting(rmp, Setting.timeLimit, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
 									case SET_RANDOM:
 										rmGame.setSetting(rmp, Setting.autoRandomizeAmount, rmp.getRequestInt());
+										rmp.clearRequestInt();
+										break;
+									case SET_PASSWORD:
+										rmGame.setSetting(rmp, Setting.password, rmp.getRequestString());
+										rmp.clearRequestString();
 										break;
 									case SET_ADVERTISE:
 										rmGame.setSetting(rmp, Setting.advertise, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
 									case SET_RESTORE:
 										rmGame.setSetting(rmp, Setting.autoRestoreWorld, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
 									case SET_WARP:
 										rmGame.setSetting(rmp, Setting.warpToSafety, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
 									case SET_MIDGAME_JOIN:
 										rmGame.setSetting(rmp, Setting.allowMidgameJoin, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
 									case SET_HEAL_PLAYER:
 										rmGame.setSetting(rmp, Setting.healPlayer, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
 									case SET_CLEAR_INVENTORY:
 										rmGame.setSetting(rmp, Setting.clearPlayerInventory, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
 									case SET_FOUND_AS_REWARD:
 										rmGame.setSetting(rmp, Setting.foundAsReward, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
 									case SET_WARN_UNEQUAL:
 										rmGame.setSetting(rmp, Setting.warnUnequal, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
 									case SET_ALLOW_UNEQUAL:
 										rmGame.setSetting(rmp, Setting.allowUnequal, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
 									case SET_WARN_HACKED:
 										rmGame.setSetting(rmp, Setting.warnHackedItems, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
 									case SET_ALLOW_HACKED:
 										rmGame.setSetting(rmp, Setting.allowHackedItems, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
 									case SET_INFINITE_REWARD:
 										rmGame.setSetting(rmp, Setting.infiniteReward, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
 									case SET_INFINITE_TOOLS:
 										rmGame.setSetting(rmp, Setting.infiniteTools, rmp.getRequestInt());
+										rmp.clearRequestInt();
 										break;
 									default:
-										rmp.sendMessage(ChatColor.GRAY+"This is not a game block");
+										rmp.sendMessage(RMText.getLabel("action.not_a_game_block"));
 										rmp.setPlayerAction(PlayerAction.NONE);
 										break;
 									}
+									rmGame.updateSigns();
 								}
 								else{
 									switch(action){
@@ -255,21 +328,22 @@ public class RMPlayerListener extends PlayerListener{
 											game.claimFoundToChest(b, rmp, rmp.getRequestItems());
 											rmp.clearRequestItems();
 										}
+										rmp.clearRequestInt();
 										break;
 									case CLAIM_ITEMS_CHEST:
-										rmp.claimItemsToChest(b, false, rmp.getRequestItems());
+										rmp.claimItemsToChest(b, null, rmp.getRequestItems());
 										rmp.clearRequestItems();
 										break;
 									case CLAIM_REWARD_CHEST:
-										rmp.claimRewardToChest(b, false, rmp.getRequestItems());
+										rmp.claimRewardToChest(b, null, rmp.getRequestItems());
 										rmp.clearRequestItems();
 										break;
 									case CLAIM_TOOLS_CHEST:
-										rmp.claimToolsToChest(b, false, rmp.getRequestItems());
+										rmp.claimToolsToChest(b, null, rmp.getRequestItems());
 										rmp.clearRequestItems();
 										break;
 									default:
-										rmp.sendMessage(ChatColor.GRAY+"This is not a game block");
+										rmp.sendMessage(RMText.getLabel("action.not_a_game_block"));
 										rmp.setPlayerAction(PlayerAction.NONE);
 									}
 								}
@@ -278,32 +352,34 @@ public class RMPlayerListener extends PlayerListener{
 							rmp.setPlayerAction(PlayerAction.NONE);
 						}
 						else{
-							rmp.sendMessage(ChatColor.GRAY+"This is not a game block");
+							rmp.sendMessage(RMText.getLabel("action.not_a_game_block"));
 							rmp.setPlayerAction(PlayerAction.NONE);
 						}
 					}
 					else{
 						RMGame rmGame = RMGame.getGameByBlock(b);
 						if(rmGame!=null){
+							e.setCancelled(true);
 							if(RMHelper.isMaterial(b.getType(), RMGame.getMaterials())){
 								if(!rmp.hasPermission("resourcemadness")){
-									rmp.sendMessage(RMText.e_NoPermissionAction);
+									rmp.sendMessage(RMText.getLabel("msg.no_permission_action"));
 									return;
 								}
 								rmGame.handleLeftClick(b, rmp);
 							}
+							//rmGame.updateSigns();
 						}
 					}
 				}
 				else{
-					p.sendMessage(ChatColor.GRAY+"Not an User");
+					p.sendMessage(RMText.getLabel("action.not_an_user"));
 				}
 			}
 		}
 	}
 	
-	@Override
-	public void onPlayerJoin(PlayerJoinEvent e){
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void onPlayerJoin(final PlayerJoinEvent e){
 		Player p = e.getPlayer();
 		RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
 		if(rmp!=null){
@@ -321,8 +397,8 @@ public class RMPlayerListener extends PlayerListener{
 		}
 	}
 	*/
-	@Override
-	public void onPlayerRespawn(PlayerRespawnEvent e){
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void onPlayerRespawn(final PlayerRespawnEvent e){
 		Player p = e.getPlayer();
 		RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
 		if(rmp!=null){
@@ -332,8 +408,8 @@ public class RMPlayerListener extends PlayerListener{
 		}
 	}
 	
-	@Override
-	public void onPlayerChat(PlayerChatEvent e){
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void onPlayerChat(final PlayerChatEvent e){
 		Player p = e.getPlayer();
 		RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
 		if(rmp!=null){
@@ -342,6 +418,27 @@ public class RMPlayerListener extends PlayerListener{
 				if(message.length()!=0){
 					e.setCancelled(true);
 					rmp.chat(rmp.getChatMode(), message);
+				}
+			}
+			else if(rmp.getPlayerAction()==PlayerAction.JOIN_PASSWORD){
+				e.setCancelled(true);
+				rmp.setPlayerAction(PlayerAction.NONE);
+				RMGame game = RMGame.getGame(rmp.getRequestInt());
+				if(game!=null){
+					if(game.getGameConfig().getPassword().equalsIgnoreCase(e.getMessage())){
+						RMTeam team = game.getTeamByDye(rmp.getRequestString());
+						if(team!=null){
+							rmp.sendMessage(RMText.getLabel("join.password.success"));
+							rmp.setRequestString(e.getMessage());
+							team.addPlayer(rmp);
+							rmp.clearRequestString();
+							rmp.clearRequestInt();
+							return;
+						}
+					}
+					rmp.clearRequestString();
+					rmp.clearRequestInt();
+					rmp.sendMessage(RMText.getLabel("join.password.fail"));
 				}
 			}
 		}

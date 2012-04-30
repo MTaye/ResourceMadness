@@ -12,6 +12,7 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import com.mtaye.ResourceMadness.RM;
+import com.mtaye.ResourceMadness.RMDebug;
 import com.mtaye.ResourceMadness.RMGame.GameState;
 import com.mtaye.ResourceMadness.RMGame.InterfaceState;
 import com.mtaye.ResourceMadness.RMPlayer.ChatMode;
@@ -71,6 +72,16 @@ public final class RMHelper {
 			return -1;
 		}
 	}
+	public static Double getDoubleByString(String arg){
+		Double d = null;
+		try{
+			d = Double.valueOf(arg);
+			return d;
+		} catch(Exception e){
+			return null;
+		}
+	}
+	
 	public static int getIntByString(String arg){
 		int i = 0;
 		try{
@@ -113,7 +124,9 @@ public final class RMHelper {
 	public static List<Integer> getMaterialIdListByString(String arg){
 		List<Integer> list = new ArrayList<Integer>();
 		for(Material mat : Material.values()){
-			if(mat.name().contains(arg)) list.add(mat.getId());
+			if(mat.name().toLowerCase().contains(arg.toLowerCase())){
+				list.add(mat.getId());
+			}
 		}
 		return list;
 	}
@@ -194,7 +207,7 @@ public final class RMHelper {
 			case BLACK:
 				return ChatColor.BLACK;
 		}
-		return ChatColor.WHITE;
+		return null;
 	}
 	
 	//Is Material

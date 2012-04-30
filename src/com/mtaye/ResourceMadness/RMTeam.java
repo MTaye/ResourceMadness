@@ -14,6 +14,7 @@ import org.bukkit.block.Sign;
 
 import com.mtaye.ResourceMadness.RMGame.GameState;
 import com.mtaye.ResourceMadness.RMPlayer.ChatMode;
+import com.mtaye.ResourceMadness.RMPlayer.PlayerAction;
 import com.mtaye.ResourceMadness.Helper.RMHelper;
 import com.mtaye.ResourceMadness.Helper.RMTextHelper;
 
@@ -24,7 +25,7 @@ import com.mtaye.ResourceMadness.Helper.RMTextHelper;
  */
 public class RMTeam {
 
-	private final RM plugin;
+	//private final RM plugin;
 	private RMGame _game;
 	private DyeColor _teamColor;
 	private HashMap<String, RMPlayer> _players = new HashMap<String, RMPlayer>();
@@ -35,12 +36,12 @@ public class RMTeam {
 	private boolean _isDisqualified = false;
 	
 	public RMTeam(DyeColor color, Chest chest, RM plugin){
-		this.plugin = plugin;
+		//this.plugin = plugin;
 		init(color, chest, plugin);
 	}
 	
 	public RMTeam(DyeColor color, RMGame game, Chest chest, RM plugin){
-		this.plugin = plugin;
+		//this.plugin = plugin;
 		this._game = game;
 		init(color, chest, plugin);
 	}
@@ -88,6 +89,7 @@ public class RMTeam {
 	}
 	
 	public void addPlayerSilent(RMPlayer rmp){
+		//if(_game!=null) if(_game.getGameConfig().getBanList().isBanned(rmp.getName())) return;
 		rmp.setTeam(this);
 		_players.put(rmp.getName(), rmp);
 	}
@@ -96,7 +98,7 @@ public class RMTeam {
 	public void addRemovePlayer(RMPlayer rmp){
 		if(!_players.containsKey(rmp.getName())){
 			if(!rmp.hasPermission("resourcemadness.join")){
-				rmp.sendMessage(RMText.e_NoPermissionAction);
+				rmp.sendMessage(RMText.getLabel("msg.no_permission_action"));
 				return;
 			}
 			addPlayer(rmp);
@@ -104,7 +106,7 @@ public class RMTeam {
 		}
 		else{
 			if(!rmp.hasPermission("resourcemadness.quit")){
-				rmp.sendMessage(RMText.e_NoPermissionAction);
+				rmp.sendMessage(RMText.getLabel("msg.no_permission_action"));
 				return;
 			}
 			removePlayer(rmp);
@@ -112,55 +114,80 @@ public class RMTeam {
 		}
 	}
 	public void addPlayer(RMPlayer rmp){
-		for(RMGame game : RMGame.getGames().values()){
-			RMTeam rmTeam = game.getPlayerTeam(rmp);
-			if(rmTeam!=null){
-				if(rmTeam!=this){
-					rmp.sendMessage("You must quit the "+rmTeam.getTeamColorString()+ChatColor.WHITE+" team from game id "+ChatColor.YELLOW+game.getConfig().getId()+ChatColor.WHITE+" first.");
-					return;
-				}
+		if(!rmp.isIngame()){
+			if(!_game.getGameConfig().getPassword().equalsIgnoreCase(rmp.getRequestString())){
+				rmp.setRequestInt(_game.getGameConfig().getId());
+				rmp.setRequestString(getTeamColor().name());
+				rmp.setPlayerAction(PlayerAction.JOIN_PASSWORD);
+				rmp.sendMessage(RMText.getLabelArgs("join.password.type", ""+_game.getGameConfig().getId()));
+				return;
 			}
 		}
-		if((_game.getConfig().getState() == GameState.GAMEPLAY)&&(!_game.getConfig().getAllowMidgameJoin())){
-			rmp.sendMessage("You can't join a game while it's running.");
+		if(_game.getGameConfig().getBanList().isBanned(rmp.getName())){
+			rmp.sendMessage(RMText.getLabelArgs("join.banned", ""+_game.getGameConfig().getId()));
 			return;
 		}
-		if((_game.getConfig().getMaxTeamPlayers()==0)||(_players.size()<_game.getConfig().getMaxTeamPlayers())){
-			if((_game.getConfig().getMaxPlayers()==0)||(RMTeam.getAllPlayers().length<_game.getConfig().getMaxPlayers())){
-				rmp.setTeam(this);
-				_players.put(rmp.getName(), rmp);
-				rmp.setReady(false);
-				rmp.setChatMode(ChatMode.GAME);
-				if(rmp.getPlayer()!=null){
-					if(rmp.getRequestBool()){
-						rmp.setReturnLocation(rmp.getPlayer().getLocation());
-						rmp.setRequestBool(false);
+		switch(_game.getGameConfig().getState()){
+		case SETUP: case GAMEPLAY: case PAUSED:
+			for(RMGame game : RMGame.getGames().values()){
+				RMTeam rmTeam = game.getTeamByPlayer(rmp);
+				if(rmTeam!=null){
+					if(rmTeam!=this){
+						rmp.sendMessage(RMText.getLabelArgs("join.must_quit_other_game_team", rmTeam.getTeamColorString(), ""+game.getGameConfig().getId()));
+						return;
 					}
 				}
-				rmp.sendMessage(ChatColor.YELLOW+"Joined"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.");
-				_game.broadcastMessage(rmp.getName()+ChatColor.YELLOW+" joined"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.", rmp);
-				_game.updateSigns();
 			}
-			else rmp.sendMessage("All players slots in this game are already full.");
+			if((_game.getGameConfig().getState() == GameState.GAMEPLAY)&&(!_game.getGameConfig().getAllowMidgameJoin())){
+				rmp.sendMessage(RMText.getLabel("join.game_in_progress.not"));
+				return;
+			}
+			if((_game.getGameConfig().getMaxTeamPlayers()==0)||(_players.size()<_game.getGameConfig().getMaxTeamPlayers())){
+				if((_game.getGameConfig().getMaxPlayers()==0)||(RMTeam.getAllPlayers().length<_game.getGameConfig().getMaxPlayers())){
+					rmp.setTeam(this);
+					_players.put(rmp.getName(), rmp);
+					rmp.setReady(false);
+					rmp.setChatMode(ChatMode.GAME);
+					if(rmp.getPlayer()!=null){
+						if(rmp.getRequestBool()){
+							//rmp.setReturnLocation(rmp.getPlayer().getLocation());
+							//rmp.setRequestBool(false);
+						}
+					}
+					rmp.sendMessage(RMText.getLabelArgs("join", getTeamColorString()));
+					_game.broadcastMessage(RMText.getLabelArgs("join.broadcast", rmp.getName(), getTeamColorString()), rmp);
+					_game.updateSigns();
+				}
+				else rmp.sendMessage(RMText.getLabelArgs("join.game_full", ""+_game.getGameConfig().getId()));
+			}
+			else rmp.sendMessage(RMText.getLabelArgs("join.team_full", getTeamColorString()));
+			break;
+		default: rmp.sendMessage(RMText.getLabel("join.countdown")); break;
 		}
-		else rmp.sendMessage(getTeamColorString()+ChatColor.WHITE+" team is already full.");
-		return;
 	}
 	
 	public void removePlayer(RMPlayer rmp){
+		removePlayer(rmp, false);
+	}
+	
+	public void removePlayer(RMPlayer rmp, boolean kick){
 		if(_players.containsKey(rmp.getName())){
-			switch(_game.getConfig().getState()){
+			switch(_game.getGameConfig().getState()){
 			case SETUP: case GAMEPLAY: case PAUSED:
-				rmp.clearTeam();
-				rmp.setReady(false);
-				_players.remove(rmp.getName());
-				rmp.sendMessage(ChatColor.GRAY+"Quit"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.");
-				_game.broadcastMessage(rmp.getName()+ChatColor.GRAY+" quit"+ChatColor.WHITE+" the "+getTeamColorString()+ChatColor.WHITE+" team.", rmp);
-				_game.updateSigns();
-				rmp.onPlayerQuit(this);
+				if(!kick){
+					rmp.sendMessage(RMText.getLabelArgs("quit",getTeamColorString()));
+					_game.broadcastMessage(RMText.getLabelArgs("quit.broadcast", rmp.getName(), getTeamColorString()), rmp);
+				}
 				break;
-			default: rmp.sendMessage(ChatColor.GRAY+"You can't quit the game now.");
+			default:
+				rmp.sendMessage(RMText.getLabel("quit.countdown"));
+				return;
 			}
+			rmp.clearTeam();
+			rmp.setReady(false);
+			_players.remove(rmp.getName());
+			_game.updateSigns();
+			rmp.onPlayerQuit(this);
 		}
 	}
 	
@@ -174,6 +201,14 @@ public class RMTeam {
 			if(rmPlayer!=null) rmPlayers.add(rmPlayer);
 		}
 		return rmPlayers.toArray(new RMPlayer[rmPlayers.size()]);
+	}
+	
+	public String[] getPlayersNamesArray(){
+		List<String> rmPlayers = new ArrayList<String>();
+		for(RMPlayer rmPlayer : _players.values()){
+			if(rmPlayer!=null) rmPlayers.add(rmPlayer.getName());
+		}
+		return rmPlayers.toArray(new String[rmPlayers.size()]);
 	}
 
 	public String getPlayersNames(){
@@ -244,12 +279,12 @@ public class RMTeam {
 	public void teamMessage(String message, RMPlayer ignorePlayer){
 		RMPlayer[] players = getPlayers();
 		for(RMPlayer rmp : players){
-			if(rmp!=ignorePlayer) rmp.sendMessage(message);
+			if((ignorePlayer==null)||(rmp!=ignorePlayer)) rmp.sendMessage(message);
 		}
 	}
 	
 	public boolean hasMininumPlayers(){
-		if(getPlayers().length<getGame().getConfig().getMinTeamPlayers()) return false;
+		if(getPlayers().length<getGame().getGameConfig().getMinTeamPlayers()) return false;
 		return true;
 	}
 	public boolean isDisqualified(){

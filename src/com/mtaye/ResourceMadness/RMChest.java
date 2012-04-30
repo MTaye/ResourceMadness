@@ -92,7 +92,7 @@ public class RMChest{
 		}
 		else newAmount = item.getAmount();
 		
-		HashMap<Integer, RMItem> items = getTeam().getGame().getConfig().getItems().getItems();
+		HashMap<Integer, RMItem> items = getTeam().getGame().getGameConfig().getItems().getItems();
 		if(items.containsKey(id)) overflow = items.get(id).getAmount() - newAmount;
 
 		if(overflow<0){
@@ -139,7 +139,7 @@ public class RMChest{
 	}
 	public int getItemsLeftInt(){
 		int itemsLeft = 0;
-		HashMap<Integer, RMItem> items = getTeam().getGame().getConfig().getItems().getItems();
+		HashMap<Integer, RMItem> items = getTeam().getGame().getGameConfig().getItems().getItems();
 		for(Integer item : items.keySet()){
 			RMItem rmItem = items.get(item);
 			int amount = rmItem.getAmount();
@@ -150,7 +150,7 @@ public class RMChest{
 	}
 	public HashMap<Integer, RMItem> getItemsLeft(){
 		HashMap<Integer, RMItem> itemsLeft = new HashMap<Integer, RMItem>();
-		HashMap<Integer, RMItem> items = getTeam().getGame().getConfig().getItems().getItems();
+		HashMap<Integer, RMItem> items = getTeam().getGame().getGameConfig().getItems().getItems();
 		for(Integer item : items.keySet()){
 			RMItem rmItem = items.get(item);
 			int amount = rmItem.getAmount();
@@ -161,12 +161,12 @@ public class RMChest{
 	}
 	
 	public RMItem getItemLeft(Integer item){
-		HashMap<Integer, RMItem> items = getTeam().getGame().getConfig().getItems().getItems();
+		HashMap<Integer, RMItem> items = getTeam().getGame().getGameConfig().getItems().getItems();
 		return new RMItem(item, items.get(item).getAmount() - _items.get(item).getAmount());
 	}
 	
 	public int getTotalLeft(){
-		return getTeam().getGame().getConfig().getItems().getItemsTotal() - getItemsTotal();
+		return getTeam().getGame().getGameConfig().getItems().getItemsTotal() - getItemsTotal();
 	}
 	
 	//Stash
@@ -198,7 +198,7 @@ public class RMChest{
 			_stash.clear();
 			if(returnedItems.size()!=0){
 				RMGame rmGame = getTeam().getGame();
-				rmGame.getConfig().getFound().addItems(returnedItems.values().toArray(new ItemStack[returnedItems.values().size()]));
+				rmGame.getGameConfig().getFound().addItems(returnedItems.values().toArray(new ItemStack[returnedItems.values().size()]));
 			}
 		}
 	}

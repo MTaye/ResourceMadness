@@ -15,7 +15,6 @@ import com.mtaye.ResourceMadness.RMBlock;
 import com.mtaye.ResourceMadness.RMGame;
 import com.mtaye.ResourceMadness.RMGameConfig;
 import com.mtaye.ResourceMadness.RMLog;
-import com.mtaye.ResourceMadness.RMText;
 
 public class RMLogHelper {
 	public RM plugin;
@@ -82,7 +81,7 @@ public class RMLogHelper {
 	public void parseLoadedLogData(String[] strArgs, int lineNum){
 		RMGame rmGame = RMGame.getGame(lineNum);
 		if(rmGame!=null){
-			RMGameConfig config = rmGame.getConfig();
+			RMGameConfig config = rmGame.getGameConfig();
 			if((strArgs[0].length()>0)&&(strArgs[0]!="LOG")) config.getLog().setList(getLogDataByString(strArgs[0]));
 			if((strArgs[1].length()>0)&&(strArgs[1]!="LOG")) config.getLog().setItemList(getLogDataByString(strArgs[1]));
 			config.getLog().resetLocList();

@@ -1,0 +1,732 @@
+# ResourceMadness v0.1.4 System Language file
+
+# Messages encompassed by % characters are variables.
+# Example:
+#    key            value
+#    common.plugin: ResourceMadness
+# The value of this key can be reused by encompassing the key with % characters, making it a variable -> %common.plugin%
+# This file is read from top to bottom, so make sure that a key is initialized before you use it as a variable.
+
+# Colors are: %black%, %dark_blue%, %dark_green%, %dark_aqua%, %dark_red%, %dark_purple%, %gold%, %gray%, %dark_gray%,
+#             %blue%, %green%, %aqua%, %red%, %light_purple%, %yellow%, %white%
+# Keys that contain just these names are ignored.
+
+# Variables that contain the prefix 'arg' are reserved for context sensitive functionality inside the plugin. Don't delete them.
+# Currently these variables are: %arg%, %arg0%, %arg1%, %arg2%
+# Keys that start with the prefix 'arg' are ignored and won't be read at all.
+
+# Common
+common.language: English
+common.translator: M-Taye
+common.plugin: ResourceMadness
+common.rm: /rm
+common.id_nocaps: [id]
+common.id: Id
+common.owner: Owner
+common.filter: Filter
+common.reward: Reward
+common.tools: Tools
+common.total: Total
+common.timelimit: TimeLimit
+common.ingame: inGame
+common.inteam: inTeam
+common.players: Players
+common.teams: Teams
+common.page: page
+common.amount: amount
+common.password: password
+common.template: template
+common.chat_message: message
+common.examples: %gold%examples
+common.team(s): team(s)
+common.player(s): player(s)
+common.item(s): item(s)
+common.items_id: items(id)
+common.items_id_name: items(id/name)
+common.team_id_color: team(id/color)
+common.true: true
+common.false: false
+common.canceled: %gray%Canceled
+common.not_allowed: %red%Not allowed: %arg%
+common.no_limit: %gray%No limit
+common.disabled: %gray%Disabled
+common.added: %yellow%Added: %arg%
+common.modified: %yellow%Modified: %arg%
+common.removed: %gray%Removed: %arg%
+common.mtaye: MTaye
+
+# Commands
+# Warning! These are the default commands, not the aliases. If you want to translate everything, you might have to change them.
+cmd.add: add
+cmd.remove: remove
+cmd.list: list
+cmd.commands: commands
+cmd.info: info
+cmd.info.found: found
+cmd.info.claim: claim
+cmd.info.items: items
+cmd.info.reward: reward
+cmd.info.tools: tools
+cmd.settings: settings
+cmd.settings.reset: reset
+cmd.set: set
+cmd.set.minplayers: minplayers
+cmd.set.maxplayers: maxplayers
+cmd.set.minteamplayers: minteamplayers
+cmd.set.maxteamplayers: maxteamplayers
+cmd.set.safezone: safezone
+cmd.set.timelimit: timelimit
+cmd.set.random: random
+cmd.set.password: password
+cmd.set.advertise: advertise
+cmd.set.restore: restore
+cmd.set.warp: warp
+cmd.set.midgamejoin: midgamejoin
+cmd.set.healplayer: healplayer
+cmd.set.clearinventory: clearinventory
+cmd.set.foundasreward: foundasreward
+cmd.set.warnunequal: warnunequal
+cmd.set.allowunequal: allowunequal
+cmd.set.warnhacked: warnhacked
+cmd.set.allowhacked: allowhacked
+cmd.set.infinitereward: infinitereward
+cmd.set.infinitetools: infinitetools
+cmd.mode: mode
+cmd.mode.filter: filter
+cmd.mode.reward: reward
+cmd.mode.tools: tools
+cmd.filter: filter
+cmd.filter.random: random
+cmd.filter.info: info
+cmd.filter.info.string: string
+cmd.filter.add: add
+cmd.filter.subtract: subtract
+cmd.filter.clear: clear
+cmd.reward: reward
+cmd.tools: tools
+cmd.money: money
+cmd.template: template
+cmd.template.list: list
+cmd.template.load: load
+cmd.template.save: save
+cmd.template.remove: remove
+cmd.start: start
+cmd.stop: stop
+cmd.pause: pause
+cmd.resume: resume
+cmd.join: join
+cmd.quit: quit
+cmd.ready: ready
+cmd.time: time
+cmd.items: items
+cmd.item: item
+cmd.restore: restore
+cmd.chat: chat
+cmd.chat.world: world
+cmd.chat.game: game
+cmd.chat.team: team
+cmd.claim: claim
+cmd.claim.found: found
+cmd.claim.items: items
+cmd.claim.reward: reward
+cmd.claim.tools: tools
+cmd.claim.x.chest: chest
+cmd.kick: kick
+cmd.kick.team: team
+cmd.kick.all: all
+cmd.ban: ban
+cmd.ban.team: team
+cmd.ban.all: all
+cmd.ban.list: list
+cmd.unban: unban
+cmd.save: save
+
+# Filter/Reward/Tools
+# These are the filter/reward/tools parameters.
+filter.par.all: all
+filter.par.block: block
+filter.par.item: item
+filter.par.stack: stack
+
+# Filter
+filter.amount_stack: %blue%:[%common.amount%/%filter.par.stack%]
+filter.all_block_item: %yellow%/%filter.par.all%/%filter.par.block%/%filter.par.item%
+filter.configure: %white%Configure the %yellow%filtered items %white%first.
+filter.clear: %gray%%common.filter% cleared.
+filter.items: %yellow%Filtered items: %arg%
+filter.empty: %gray%No items in filter.
+filter.modify_owner: %red%Only the owner %yellow%%arg% %white%can modify the filter.
+filter.no_items_modified: %gray%No items modified.
+
+# Reward
+reward.clear: %gray%%common.reward% cleared.
+reward.items: %yellow%Reward: %arg%
+reward.empty: %gray%No reward added.
+reward.unequal: %gray%Unequal Reward distribution for: %white%%arg%
+reward.cannot_be_equal: %red%Reward cannot be distributed equally!
+reward.will_not_be_equal: %red%Reward won't be distributed equally!
+
+# Tools
+tools.clear: %gray%%common.tools% cleared.
+tools.items: %yellow%Tools: %arg%
+tools.empty: %gray%No tools added.
+tools.unequal: %gray%Unequal Tools distribution for: %white%%arg%
+tools.cannot_be_equal: %red%Tools cannot be distributed equally!
+tools.will_not_be_equal: %red%Tools won't be distributed equally!
+
+# Found
+found.clear: %gray%Found items cleared.
+found.items: %yellow%Found items: %arg%
+found.no_items: %gray%No found items.
+
+# Items
+items.left: %yellow%Items left: %arg%
+items.empty: %gray%No items left.
+
+# Game
+game.owner: %white%The owner is %yellow%%arg%.
+game.has_max_teams: %white%Game id %arg% has the maximum amount of teams!
+game.max_games_reached: %gray%You cannot create any more games.
+game.modified: %white%Game id %yellow%%arg% %white%has been %yellow%modified%white%.
+game.create: %white%Game id %yellow%%arg% %white%has been %yellow%created%white%.
+game.remove: %gray%Removed %white%game id %yellow%%arg%%white%.
+game.remove.game_in_progress: %red%Cannot remove game id %yellow%%arg% %white%while a game is in progress.
+game.teams_count: %white%Found %yellow%%arg% %white%teams.
+game.exists: %white%Game id %arg% already exists!
+game.missing_stone: %white%You're missing %arg% stone block(s).
+game.not_enough_teams: %white%You need at least %yellow%%arg% %white%%common.team(s)% to create a game.
+game.not_enough_players: %white%This match is set up for at least %yellow%%arg%%white% %common.player(s)%.
+game.not_enough_team_players: %white%Each team must have at least %yellow%%arg%%white%.
+game.countdown: %arg%
+game.countdown.wait_to_start: %gray%Please wait for the game to start.
+game.is_paused: %red%Game is paused. %white%Use %yellow%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.resume% %white%to resume it.
+game.prepare: %gold%Prepare yourselves...
+game.start_match: %gold%ResourceMadness!
+game.sudden_death: Sudden Death!
+game.players_not_found: %red%Found no %common.player(s)% by the name %green%%arg% %red%in game id %yellow%%arg1%%red%.
+game.teams_not_found: %red%Found no %common.team(s)% by the color %green%%arg% %red%in game id %yellow%%arg1%%red%.
+game.banned_not_found: %red%Found no banned %common.player(s)% by the name %green%%arg% %red%in game id %yellow%%arg1%%red%.
+game.empty: %gray%Game id %yellow%%arg% %gray%is empty.
+game.safe_zone: %red%PVP disabled in safe zone.
+
+# Team
+team.disqualified: %red%Your team was disqualified. %gray%It does not have enough players.
+team.disqualified.broadcast: %arg%%red% team was disqualified. %gray%It does not have enough players.
+team.win_match.broadcast: %arg%%white% team has won the match!
+team.items_left.broadcast: %arg0%%white% team has %yellow%%arg1%%white% %common.item(s)% (%yellow%%arg2%%white% total) left.
+team.empty: %arg% %gray%team is empty.
+
+# Player
+start.stop_game_first: %white%Please %gold%stop %white%the game first.
+stop.stopping_game: %red%Stopping game...
+pause.game_paused: %red%Game was paused.
+pause.game_already_paused: %gray%Game is already paused.
+pause.must_be_ingame: %white%You must be in a game to %red%pause %white%the game.
+resume.game_resumed: %green%Game was resumed.
+resume.game_not_paused: %gray%Game is not paused.
+resume.must_be_ingame: %white%You must be in a game to %green%resume %white%the game.
+ready: %green%Your body is ready.
+ready.broadcast: %arg%%green% is ready.
+ready.cannot_while_ingame: %gray%You cannot ready yourself while in a game.
+ready.not: %red%Your body is not ready.
+ready.not.broadcast: %arg%%red% is not ready.
+join: %yellow%Joined %white%the %arg% %white%team.
+join.broadcast: %arg0% %yellow%joined %white%the %arg1% %white%team.
+join.countdown: %gray%You cannot join the game right now.
+join.game_full: All players slots in game id %yellow%%arg% %white%are already full.
+join.team_full: %arg% %white%team is already full.
+join.game_in_progress.not: You cannot join a game in progress.
+join.must_quit_other_team: %white%You must quit the %arg% %white%team first.
+join.must_quit_other_game_team: You must quit the %arg0% %white%team from game id %yellow%%arg1% %white%first.
+join.game_in_progress: %white%To join a game in progress, use %common.rm% %yellow%%cmd.join%%white%.
+join.banned: %red%You were banned. %white%You are not allowed to join game id %yellow%%arg%%white%.
+
+join.password.type: %white%Type in the %green%password %white%to join game id %yellow%%arg%%white%.
+join.password.success: %white%The password you entered is %green%correct%white%.
+join.password.fail: %white%The password you entered is %red%incorrect%white%. %gray%Cannot join.
+quit.game_in_progress: %white%To quit a game in progress, use %common.rm% %yellow%%cmd.quit%%white%.
+quit: %gray%Quit %white%the %arg% %white%team.
+quit.broadcast: %arg0% %gray%quit %white%the %arg1% %white%team.
+quit.countdown: %gray%You cannot quit the game right now.
+quit.alt: %white%You quit the %arg% %white%team.
+quit.not_joined: %white%You are not on the %arg% %white%team.
+
+# Messages
+msg.no_permission_command: %red%You don't have permission to use this command.
+msg.no_permission_action: %red%You don't have permission to use this action.
+msg.no_change_locked: %red%This setting is locked. %gray%It cannot be changed.
+msg.no_owner_command:  %red%Only the owner can use this command.
+msg.no_owner_action:  %red%Only the owner can use this action.
+msg.team_does_not_exist: %gray%This team does not exist!
+msg.player_does_not_exist: %gray%This player does not exist!
+msg.did_not_join_any_team_yet: %white%You did not %yellow%join %white%any %yellow%team %white%yet.
+msg.must_be_ingame_command: %yellow%You must be in a game to use this command.
+msg.must_be_ingame_action: %yellow%You must be in a game to use this action.
+msg.no_game_in_progress: %gray%No game in progress.
+
+# Chat
+chat.world.already_active: %yellow%World %white%chat is already activated.
+chat.world.must_be_ingame: %white%You must be in a game to use %yellow%world %white%chat.
+chat.world.switched: %white%Switched to %yellow%world %white%chat.
+chat.game.already_active: %yellow%Game %white%chat is already activated.
+chat.game.must_be_ingame: %white%You must be in a game to use %yellow%game %white%chat.
+chat.game.switched: %white%Switched to %yellow%game %white%chat.
+chat.team.already_active: %yellow%Team %white%chat is already activated.
+chat.team.must_be_ingame: %white%You must be in a game to use %yellow%team %white%chat.
+chat.team.switched: %white%Switched to %yellow%team %white%chat.
+
+# Claim
+info.items: %white%Items: %arg%
+info.items.empty: %gray%No items found.
+info.reward: %white%Reward items: %arg%
+info.reward.empty: %gray%No reward found.
+info.tools: %white%Tools items: %arg%
+info.tools.empty: %gray%No tools found.
+info.claim.items: Items
+info.claim.reward: %common.reward%
+info.claim.tools: %common.tools%
+info.claim.total: %common.total%
+claim.inv_full: %red%Your Inventory is full.
+claim.chest_full: %red%The chest is full.
+claim.remaining:  %yellow%%arg% %white%%common.item(s)% remaining.
+claim.check_inv: %white%Check your inventory.
+claim.check_chest: %white%Check the chest.
+claim.chest.not_allowed: %gray%You are not allowed to claim items into game chests.
+claim.found.none: %gray%No found items to give.
+claim.found.success: %yellow%Found items were given.
+claim.found.chest: %yellow%Found items were put into chest.
+claim.found.fail: %gray%Cannot give found items.
+claim.found.cannot_while_ingame: %white%You cannot claim the game's %yellow%found items %white%while you're in a game.
+claim.items.none: %gray%No items to return.
+claim.items.success: %yellow%Items were given.
+claim.items.chest: %yellow%Items were put into chest.
+claim.items.fail: %gray%Cannot return items.
+claim.items.cannot_while_ingame: %white%You cannot claim your %yellow%items %white%while you're in a game.
+claim.reward.none: %gray%No reward to give.
+claim.reward.success: %yellow%Reward was given.
+claim.reward.chest: %yellow%Reward was put into chest.
+claim.reward.fail: %gray%Cannot give reward.
+claim.reward.cannot_while_ingame: %white%You cannot claim your %yellow%reward %white%while you're in a game.
+claim.tools.none: %gray%No tools to give.
+claim.tools.success: %yellow%Tools were given.
+claim.tools.chest: %yellow%Tools were put into chest.
+claim.tools.fail: %gray%Cannot give tools.
+
+# Template
+template.load: %white%Successfully %yellow%loaded %white%template %green%%arg%%white%.
+template.already_exists: %white%Template %green%%arg% %white%already exists.
+template.does_not_exist: %white%Template %green%%arg% %white%does not exist.
+template.save.empty: %red%Cannot save an empty template!
+template.save: %white%Successfully %yellow%saved %white%template %green%%arg%%white%.
+template.remove: %white%Successfully %yellow%removed %white%template %green%%arg%%white%.
+
+# Info
+info.id: %common.id%
+info.owner: %common.owner%
+info.players: %common.players%
+info.timelimit: %common.timelimit%
+info.ingame: %common.ingame%
+info.inteam: %common.inteam%
+info.teams: %common.teams%
+
+# Kick
+kick.player: %red%You have been kicked from the game id %yellow%%arg%%red%.
+kick.player.broadcast: %arg0% %red%has been kicked from the game id %yellow%%arg1%%red%.
+
+# Ban
+ban.player: %red%You have been banned from the game id %yellow%%arg%%red%.
+ban.player.broadcast: %arg0% %red%has been banned from the game id %yellow%%arg1%%red%.
+unban.player: %red%You have been unbanned from the game id %yellow%%arg%%red%.
+unban.player.broadcast: %arg0% %red%has been unbanned from the game id %yellow%%arg1%%red%.
+
+# Other
+restore.success: %yellow%World restored.
+restore.nothing: %gray%No world changes to restore.
+restore.game_in_progress: %gray%Cannot restore world changes while a game is in progress.
+minmax.ingame: %common.ingame%
+minmax.inteam: %common.inteam%
+settings.reset: %white%Settings have been %red%reset %white%to those in the %yellow%config file%white%.
+mode.change: %white%Interface mode changed to %yellow%%arg%%white%.
+items.found_match: %yellow%Found %green%%arg% %yellow%matches:
+items.found_none: %yellow%These items do not exist!
+
+# Description
+desc.page: %gray%(Page %arg0% of %arg1%)
+desc.gray_green_optional: %gray%Gray%white%/%green%green %white%text is optional.
+desc.add: %white%Create a new game.
+desc.remove: %white%Remove an existing game.
+desc.list: %white%List games.
+desc.commands: %white%List commands and aliases.
+desc.info: %white%Show %arg1%.
+desc.settings: %white%Show%arg1% settings.
+desc.set: %white%Set various game related settings.
+desc.mode: %white%Change filter mode.
+desc.filter: %white%Add items to filter.
+desc.reward: %white%Add reward items.
+desc.tools: %white%Add tools items.
+desc.template: %white%%arg1% templates.
+desc.template.list: %white%Show list of templates.
+desc.template.load: %white%Load a template.
+desc.template.save: %white%Save a template.
+desc.template.remove: %white%Remove a template.
+desc.start: %white%Start a game. Randomize with %green%%common.amount%%white%.
+desc.stop: %white%%arg1% a game.
+desc.pause: %white%%arg1% a game.
+desc.restore: %white%Restore game world changes.
+desc.join: %white%Join a team.
+desc.quit: %white%Quit a team.
+desc.ready: %white%Ready yourself.
+desc.chat: %white%%arg1% chat.
+desc.chat.world: %white%Regular world chat.
+desc.chat.game: %white%Chat with all teams in the game.
+desc.chat.team: %white%Chat with your team.
+desc.time: %white%Get time remaining.
+desc.items: %white%Get which items you need to gather.
+desc.item: %white%Get the item's name or id.
+desc.claim: %white%Claim %arg1% to inventory or chest.
+desc.example.chat.world: %white%Switch to world chat.
+desc.example.chat.world.message: %white%Message everyone on the server.
+desc.example.chat.game: %white%Switch to game chat.
+desc.example.chat.game.message: %white%Message all teams in the game.
+desc.example.chat.team: %white%Switch to team chat.
+desc.example.chat.team.message: %white%Message your team.
+desc.kick: %white%Kick players.
+desc.kick.player: %white%Kick %common.player(s)% from a game.
+desc.kick.team: %white%Kick all players from a team.
+desc.kick.all: %white%Kick all players from a game.
+desc.kick.example.player: %white%Kick player %green%%common.mtaye% %white%from the game.
+desc.kick.example.team: %white%Kick all players from the %red%red %white%team.
+desc.kick.example.all: %white%Kick all players from the game.
+desc.ban: %white%%arg1% players.
+desc.ban.player: %white%Ban %common.player(s)% from a game.
+desc.ban.team: %white%Ban all players from a team.
+desc.ban.all: %white%Ban all players from a game.
+desc.ban.example.player: %white%Ban player %green%%common.mtaye% %white%from the game.
+desc.ban.example.team: %white%Ban all players from the %red%red %white%team.
+desc.ban.example.all: %white%Ban all players from the game.
+desc.unban.player: %white%Unban %common.player(s)% from a game.
+desc.unban.example.player: %white%Unban player %green%%common.mtaye% %white%from the game.
+
+# Sign
+sign.clear_reward: %white%Click sign to %gray%clear all reward items%white%.
+sign.clear_tools: %white%Click sign to %gray%clear all tools%white%.
+sign.clear_items: %white%Click sign to %gray%clear all items%white%.
+sign.filter: Filter
+sign.reward: Reward
+sign.tools: Tools
+sign.items_left: Items left
+sign.total: %common.total%
+sign.ingame: %common.ingame%
+sign.inteam: %common.inteam%
+sign.clear0: Click sign to
+sign.clear1: CLEAR ALL ITEMS
+sign.clear2: or chest to
+sign.clear3: CANCEL
+sign.countdown0:
+sign.countdown1: Prepare!
+sign.countdown2: %arg%
+sign.countdown3:
+sign.team_disqualified0:
+sign.team_disqualified1: TEAM
+sign.team_disqualified2: DISQUALIFIED
+sign.team_disqualified3:
+sign.game_paused0:
+sign.game_paused1: GAME
+sign.game_paused2: PAUSED
+sign.game_paused3:
+
+# List
+list: %gold%%common.rm% %cmd.list% %desc.page%
+list.id: %common.id%
+list.owner: %common.owner%
+list.players: %common.players%
+list.timelimit: %common.timelimit%
+list.ingame: %common.ingame%
+list.inteam: %common.inteam%
+list.teams: %common.teams%
+list.no_games_yet: %gray%No games yet.
+commandslist: %gold%%common.rm% %cmd.commands% %desc.page%
+commandslist.no_aliases_yet: %gray%No aliases yet.
+templatelist: %gold%%common.rm% %cmd.template% %desc.page%
+templatelist.filter: %common.filter%
+templatelist.reward: %common.reward%
+templatelist.tools: %common.tools%
+templatelist.total: %common.total%
+templatelist.no_templates_yet: %gray%No templates yet.
+banlist: %gold%%common.rm% %cmd.ban% %cmd.ban.list% %desc.page%
+banlist.empty: %gray%No one banned yet.
+
+# Time
+time.no_time_limit: %gray%No time limit.
+time.remaining: %aqua%%arg% remaining.
+time.seconds: second(s)
+time.minutes: minute(s)
+time.hours: hour(s)
+time.days: day(s)
+
+# Save
+save.saving: %red%Saving...
+save.success: %green%Data was saved successfully.
+save.fail: %red%Data was not saved properly!
+save.no_data: %gray%No data to save.!
+
+# Settings
+setting.max_games: %white%Max games
+setting.max_games_per_player: %white%Max games per player
+setting.minplayers: %white%Min players
+setting.maxplayers: %white%Max players
+setting.minteamplayers: %white%Min team players
+setting.maxteamplayers: %white%Max team players
+setting.safezone: %white%Safe zone radius
+setting.timelimit: %white%Match time limit
+setting.random: %white%Randomly pick %green%amount %white%of items every match
+setting.password: %white%Set game password
+setting.advertise: %white%Advertise game in list
+setting.restore: %white%Auto restore world changes after match
+setting.warp: %white%Teleport players before and after match
+setting.midgamejoin: %white%Allow players to join mid-game
+setting.healplayer: %white%Heal players at game start
+setting.clearinventory: %white%Clear/return players items at game start/finish
+setting.foundasreward: %white%Use the game's found items as reward
+setting.warnunequal: %white%Warn when reward/tools cannot be distributed equally
+setting.allowunequal: %white%Allow reward/tools to be distributed unequally
+setting.warnhacked: %white%Warn when hacked items are added
+setting.allowhacked: %white%Allow the use of hacked items
+setting.infinitereward: %white%Use infinite reward
+setting.infinitetools: %white%Use infinite tools
+
+# Action
+action.not_an_user: %gray%Not an User.
+action.not_a_game_block: %gray%This is not a game block.
+action.left_click: %white%Left click a game block to
+action.add: %action.left_click% %yellow%add %white%a new game.
+action.remove: %action.left_click% %gray%remove %white%a game.
+action.info: %action.left_click% get %yellow%info%white%.
+action.info.found: %action.left_click% get %yellow%info %white%about the game's %yellow%found items%white%.
+action.settings: %action.left_click% get %yellow%settings%white%.
+action.settings.reset: %action.left_click% %yellow%reset %white%settings.
+action.mode.filter: %action.left_click% change the %yellow%interface mode %white%to %yellow%filter%white%.
+action.mode.reward: %action.left_click% change the %yellow%interface mode %white%to %yellow%reward%white%.
+action.mode.tools: %action.left_click% change the %yellow%interface mode %white%to %yellow%tools%white%.
+action.mode.cycle: %action.left_click% %yellow%cycle %white%the %yellow%interface mode%white%.
+action.kick.player: %action.left_click% %yellow%kick %white%%green%%arg0% %white%from the game.
+action.kick.team: %action.left_click% %yellow%kick %white%all players from the %green%%arg% %white%team.
+action.kick.all: %action.left_click% %yellow%kick %white%all players from the game.
+action.ban.player: %action.left_click% %yellow%ban %green%%arg0% %white%from the game.
+action.ban.team: %action.left_click% %yellow%ban %white%all players from %green%%arg% %white%team.
+action.ban.all: %action.left_click% %yellow%ban %white%all players from the game.
+action.ban.list: %action.left_click% show %yellow%banned %white%players.
+action.unban.player: %action.left_click% %yellow%unban %green%%arg0% %white%from the game.
+action.join: %white%Left click a team block to %yellow%join %white%the team.
+action.start: %action.left_click% %yellow%start %white%the game.
+action.start.random: %action.left_click% %yellow%start %white%the game with %green%%arg% random %common.item(s)%%white%.
+action.restart: %action.left_click% %gold%restart %white%the game.
+action.stop: %action.left_click% %red%stop %white%the game.
+action.pause: %action.left_click% %red%pause %white%the game.
+action.resume: %action.left_click% %green%resume %white%the game.
+action.restore: %action.left_click% %yellow%restore world changes%white%.
+action.filter: %action.left_click% %yellow%modify %white%the %yellow%filter%white%.
+action.filter.info: %action.left_click% get %yellow%info %white%about the game's %yellow%filter%white%.
+action.filter.info.string: %action.left_click% get the game's %yellow%filter %white%as a %yellow%string%white%.
+action.reward: %action.left_click% %yellow%modify %white%the %yellow%reward%white%.
+action.reward.info.string: %action.left_click% get the game's %yellow%reward %white%as a %yellow%string%white%.
+action.reward.info: %action.left_click% get %yellow%info %white%about the game's %yellow%reward%white%.
+action.tools: %action.left_click% %yellow%modify %white%the %yellow%tools%white%.
+action.tools.info.string: %action.left_click% get the game's %yellow%tools %white%as a %yellow%string%white%.
+action.tools.info: %action.left_click% get %yellow%info %white%about the game's %yellow%tools%white%.
+action.template.load: %action.left_click% %yellow%load %white%template %green%%arg%%white%.
+action.template.save: %action.left_click% %yellow%save %white%template %green%%arg%%white%.
+action.claim.found: %action.left_click% %yellow%claim found items%white%.
+action.claim.found.chest: %white%Left click a %yellow%chest %white%to %yellow%store items%white%.
+action.claim.found.chest.final: Now left click a %yellow%chest %white%to %yellow%store found items%white%.
+action.claim.found.chest.select: %action.left_click% %yellow%claim found items %white%to %yellow%chest%white%.
+action.claim.items.chest: %white%Left click a %yellow%chest %white%to %yellow%store items%white%.
+action.claim.reward.chest: %white%Left click a %yellow%chest %white%to %yellow%store reward%white%.
+action.claim.tools.chest: %white%Left click a %yellow%chest %white%to %yellow%store tools%white%.
+action.set.minplayers: %action.left_click% %yellow%set min players%white%.
+action.set.maxplayers: %action.left_click% %yellow%set max players%white%.
+action.set.minteamplayers: %action.left_click% %yellow%set min team players%white%.
+action.set.maxteamplayers: %action.left_click% %yellow%set max team players%white%.
+action.set.safezone: %action.left_click% %yellow%set safe zone radius%white%.
+action.set.timelimit: %action.left_click% %yellow%set match time limit%white%.
+action.set.random: %action.left_click% %yellow%set auto randomize items%white%.
+action.set.password: %action.left_click% %yellow%set password%white%.
+action.set.advertise: %action.left_click% %yellow%set advertise%white%.
+action.set.restore: %action.left_click% %yellow%set auto restore world%white%.
+action.set.warp: %action.left_click% %yellow%set teleport players%white%.
+action.set.midgame.join: %action.left_click% %yellow%set allow midgame join%white%.
+action.set.healplayer: %action.left_click% %yellow%set heal player%white%.
+action.set.clearinventory: %action.left_click% %yellow%set clear player inventory%white%.
+action.set.foundasreward: %action.left_click% %yellow%set use found as reward%white%.
+action.set.warnunequal: %action.left_click% %yellow%set warn unequal items%white%.
+action.set.allowUnequal: %action.left_click% %yellow%set allow unequal items%white%.
+action.set.warnhacked: %action.left_click% %yellow%set warn hacked items%white%.
+action.set.allowhacked: %action.left_click% %yellow%set allow hacked items%white%.
+action.set.infinitereward: %action.left_click% %yellow%set infinite reward%white%.
+action.set.infinitetools: %action.left_click% %yellow%set infinite tools%white%.
+
+# Help
+help: %gold%%common.plugin% %desc.page%
+help.add: %white%%common.rm% %yellow%%cmd.add% %white%%desc.add%
+help.remove: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.remove% %desc.remove%
+help.list: %white%%common.rm% %yellow%%cmd.list% %green%[%common.page%] %desc.list%
+help.commands: %white%%common.rm% %yellow%%cmd.commands% %green%[%common.page%] %desc.commands%
+help.info: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.info% %green%%arg0% %desc.info%
+help.set: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.set% %desc.set%
+help.settings: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.settings% %green%%arg0% %desc.settings%
+help.mode: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.mode% %green%%arg0% %desc.mode%
+help.filter: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.filter% %green%%arg0% %desc.filter%
+help.reward: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.reward% %green%%arg0% %desc.reward%
+help.tools: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.tools% %green%%arg0% %desc.tools%
+help.template: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.template% %arg0% %desc.template%
+help.start: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.start% %green%[%common.amount%] %desc.start%
+help.stop: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%arg0% %desc.stop%
+help.pause: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%arg0% %desc.pause%
+help.restore: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.restore% %desc.restore%
+help.join: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.join% %green%[%common.team_id_color%] %desc.join%
+help.quit: %white%%common.rm% %yellow%%cmd.quit% %desc.quit%
+help.ready: %white%%common.rm% %yellow%%cmd.ready% %desc.ready%
+help.chat: %white%%common.rm% %yellow%%cmd.chat% %arg0% %desc.chat%
+help.time %white%%common.rm% %yellow%%cmd.time% %arg0% %desc.time%
+help.items: %white%%common.rm% %yellow%%cmd.items% %desc.items%
+help.item: %white%%common.rm% %yellow%%cmd.item% %aqua%[%common.items_id_name%] %desc.item%
+help.claim: %white%%common.rm% %yellow%%cmd.claim% %yellow%%arg0% %desc.claim%
+help.kick: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.kick% %desc.kick%
+help.ban: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%arg0% %desc.ban%
+
+# Settings Info
+help_settings: %gold%%common.rm% %cmd.settings% %desc.page%
+
+# Set Info
+help_set: %gold%%common.rm% %cmd.set% %desc.page%
+help_set.minplayers: %yellow%%cmd.set.minplayers% %aqua%[%common.amount%] %white%%setting.minplayers%.
+help_set.maxplayers: %yellow%%cmd.set.maxplayers% %aqua%[%common.amount%] %white%%setting.maxplayers%.
+help_set.minteamplayers: %yellow%%cmd.set.minteamplayers% %aqua%[%common.amount%] %white%%setting.minteamplayers%.
+help_set.maxteamplayers: %yellow%%cmd.set.maxteamplayers% %aqua%[%common.amount%] %white%%setting.maxteamplayers%.
+help_set.safezone: %yellow%%cmd.set.safezone% %aqua%[%common.amount%] %white%%setting.safezone%.
+help_set.timelimit: %yellow%%cmd.set.timelimit% %aqua%[%common.amount%] %white%%setting.timelimit%.
+help_set.random: %yellow%%cmd.set.random% %aqua%[%common.amount%] %white%%setting.random%.
+help_set.password: %yellow%%cmd.set.password% %aqua%[%common.password%] %white%%setting.password%.
+help_set.advertise: %yellow%%cmd.set.advertise% %green%[%common.true%/%common.false%] %white%%setting.advertise%.
+help_set.restore: %yellow%%cmd.set.restore% %green%[%common.true%/%common.false%] %white%%setting.restore%.
+help_set.warp: %yellow%%cmd.set.warp% %green%[%common.true%/%common.false%] %white%%setting.warp%.
+help_set.midgamejoin: %yellow%%cmd.set.midgamejoin% %green%[%common.true%/%common.false%] %white%%setting.midgamejoin%.
+help_set.healplayer: %yellow%%cmd.set.healplayer% %green%[%common.true%/%common.false%] %white%%setting.healplayer%.
+help_set.clearinventory: %yellow%%cmd.set.clearinventory% %green%[%common.true%/%common.false%] %white%%setting.clearinventory%.
+help_set.foundasreward: %yellow%%cmd.set.foundasreward% %green%[%common.true%/%common.false%] %white%%setting.foundasreward%.
+help_set.warnunequal: %yellow%%cmd.set.warnunequal% %green%[%common.true%/%common.false%] %white%%setting.warnunequal%.
+help_set.allowunequal: %yellow%%cmd.set.allowunequal% %green%[%common.true%/%common.false%] %white%%setting.allowunequal%.
+help_set.warnhacked: %yellow%%cmd.set.warnhacked% %green%[%common.true%/%common.false%] %white%%setting.warnhacked%.
+help_set.allowhacked: %yellow%%cmd.set.allowhacked% %green%[%common.true%/%common.false%] %white%%setting.allowhacked%.
+help_set.infinitereward: %yellow%%cmd.set.infinitereward% %green%[%common.true%/%common.false%] %white%%setting.infinitereward%.
+help_set.infinitetools: %yellow%%cmd.set.infinitetools% %green%[%common.true%/%common.false%] %white%%setting.infinitetools%.
+
+# Filter Info
+help_filter: %gold%%common.rm% %cmd.filter%
+help_filter.set: %aqua%[%common.items_id_name%]%filter.all_block_item%%filter.amount_stack%
+help_filter.random: %yellow%%cmd.filter.random% %green%[%common.amount%] %aqua%[%common.items_id_name%]%filter.all_block_item%%filter.amount_stack%
+help_filter.add: %yellow%%cmd.filter.add% %aqua%[%common.items_id_name%]%filter.all_block_item%%filter.amount_stack%
+help_filter.subtract: %yellow%%cmd.filter.subtract% %aqua%[%common.items_id_name%]%filter.all_block_item%%filter.amount_stack%
+help_filter.clear: %yellow%%cmd.filter.clear% %aqua%[%common.items_id_name%]%filter.all_block_item%
+help_filter.example.info: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.filter% %yellow%%cmd.filter.info%
+help_filter.example.set: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.filter% %aqua%1-5 6-9%blue%:32 %aqua%10-20,22,24%blue%:%filter.par.stack% %aqua%27-35%blue%:8-32
+help_filter.example.random: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.filter% %yellow%%cmd.filter.random% %green%20 %yellow%%filter.par.all%%blue%:100-200
+help_filter.example.add: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.filter% %yellow%%cmd.filter.add% %aqua%20-40,1,3%blue%:20
+help_filter.example.subtract: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.filter% %yellow%%cmd.filter.subtract% %aqua%1-10,20,288
+help_filter.example.clear1: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.filter% %yellow%%cmd.filter.clear% %aqua%1-100%blue%:%filter.par.stack%
+help_filter.example.clear2: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.filter% %yellow%%cmd.filter.clear%
+
+# Reward Info
+help_reward: %gold%%common.rm% %cmd.reward%
+help_reward.set: %aqua%[%common.items_id_name%]%filter.all_block_item%%filter.amount_stack%
+help_reward.add: %yellow%%cmd.filter.add% %aqua%[%common.items_id_name%]%filter.all_block_item%%filter.amount_stack%
+help_reward.subtract: %yellow%%cmd.filter.subtract% %aqua%[%common.items_id_name%]%filter.all_block_item%%filter.amount_stack%
+help_reward.clear: %yellow%%cmd.filter.clear% %aqua%[%common.items_id_name%]%filter.all_block_item%
+help_reward.example.info: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.reward% %yellow%%cmd.filter.info%
+help_reward.example.set: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.reward% %aqua%1-5 6-9%blue%:32 %aqua%10-20,22,24%blue%:%filter.par.stack% %aqua%27-35%blue%:8-32
+help_reward.example.add: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.reward% %yellow%%cmd.filter.add% %aqua%20-40,1,3%blue%:20
+help_reward.example.subtract: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.reward% %yellow%%cmd.filter.subtract% %aqua%1-10,20,288
+help_reward.example.clear1: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.reward% %yellow%%cmd.filter.clear% %aqua%1-100%blue%:%filter.par.stack%
+help_reward.example.clear2: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.reward% %yellow%%cmd.filter.clear%
+
+# Tools Info
+help_tools: %gold%%common.rm% %cmd.tools%
+help_tools.set: %aqua%[%common.items_id_name%]%filter.all_block_item%%filter.amount_stack%
+help_tools.add: %yellow%%cmd.filter.add% %aqua%[%common.items_id_name%]%filter.all_block_item%%filter.amount_stack%
+help_tools.subtract: %yellow%%cmd.filter.subtract% %aqua%[%common.items_id_name%]%filter.all_block_item%%filter.amount_stack%
+help_tools.clear: %yellow%%cmd.filter.clear% %aqua%[%common.items_id_name%]%filter.all_block_item%
+help_tools.example.info: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.tools% %yellow%%cmd.filter.info%
+help_tools.example.set: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.tools% %aqua%1-5 6-9%blue%:32 %aqua%10-20,22,24%blue%:%filter.par.stack% %aqua%27-35%blue%:8-32
+help_tools.example.add: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.tools% %yellow%%cmd.filter.add% %aqua%20-40,1,3%blue%:20
+help_tools.example.subtract: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.tools% %yellow%%cmd.filter.subtract% %aqua%1-10,20,288
+help_tools.example.clear1: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.tools% %yellow%%cmd.filter.clear% %aqua%1-100%blue%:%filter.par.stack%
+help_tools.example.clear2: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.tools% %yellow%%cmd.filter.clear%
+
+# Template Info
+help_template: %gold%%common.rm% %cmd.template%
+help_template.list: %yellow%%cmd.template.list% %green%[%common.page%] %desc.template.list%
+help_template.load: %yellow%%cmd.template.load% %aqua%[%common.template%] %desc.template.load%
+help_template.save: %yellow%%cmd.template.save% %aqua%[%common.template%] %desc.template.save%
+help_template.remove: %yellow%%cmd.template.remove% %aqua%[%common.template%] %desc.template.remove%
+help_template.example.list: %white%%common.rm% %yellow%%cmd.template% %yellow%%cmd.template.list% %green%3
+help_template.example.load: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.template% %yellow%%cmd.template.load% %aqua%3v3_fast
+help_template.example.save: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.template% %yellow%%cmd.template.save% %aqua%1v1v1v1_match
+help_template.example.remove: %white%%common.rm% %yellow%%cmd.template% %yellow%%cmd.template.remove% %aqua%projectd
+
+# Claim Info
+help_claim: %gold%%common.rm% %cmd.claim%
+help_claim.found: %yellow%%cmd.claim.found% %green%%cmd.claim.x.chest% %aqua%[%common.items_id_name%]%filter.all_block_item%%filter.amount_stack%
+help_claim.items: %yellow%%cmd.claim.items% %green%%cmd.claim.x.chest% %aqua%[%common.items_id_name%]%filter.all_block_item%%filter.amount_stack%
+help_claim.reward: %yellow%%cmd.claim.reward% %green%%cmd.claim.x.chest% %aqua%[%common.items_id_name%]%filter.all_block_item%%filter.amount_stack%
+help_claim.tools: %yellow%%cmd.claim.tools% %green%%cmd.claim.x.chest% %aqua%[%common.items_id_name%]%filter.all_block_item%%filter.amount_stack%
+help_claim.example.found: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.claim% %cmd.claim.found%
+help_claim.example.found.chest: %white%%common.rm% %gray%%common.id_nocaps% %yellow%%cmd.claim% %cmd.claim.found% %green%%cmd.claim.x.chest%
+help_claim.example.items: %white%%common.rm% %yellow%%cmd.claim% %cmd.claim.items% %yellow%%filter.par.block%%blue%:64
+help_claim.example.items.chest: %white%%common.rm% %yellow%%cmd.claim% %cmd.claim.items% %green%%cmd.claim.x.chest%
+help_claim.example.reward: %white%%common.rm% %yellow%%cmd.claim% %cmd.claim.reward%
+help_claim.example.reward.chest: %white%%common.rm% %yellow%%cmd.claim% %cmd.claim.reward% %green%%cmd.claim.x.chest%
+help_claim.example.tools: %white%%common.rm% %yellow%%cmd.claim% %cmd.claim.tools% %aqua%1-10,20,288%blue%:%filter.par.stack%
+help_claim.example.tools.chest: %white%%common.rm% %yellow%%cmd.claim% %cmd.claim.tools% %green%%cmd.claim.x.chest%
+
+# Chat Info
+help_chat: %gold%%common.rm% %cmd.chat%
+help_chat.world: %yellow%%cmd.chat.world% %green%%common.chat_message% %desc.chat.world%
+help_chat.game: %yellow%%cmd.chat.game% %green%%common.chat_message% %desc.chat.game%
+help_chat.team: %yellow%%cmd.chat.team% %green%%common.chat_message% %desc.chat.team%
+help_chat.example.world: %white%%common.rm% %yellow%%cmd.chat% %cmd.chat.world% %desc.example.chat.world%
+help_chat.example.world.message: %white%%common.rm% %yellow%%cmd.chat% %cmd.chat.world% %green%%common.chat_message% %desc.example.chat.world.message%
+help_chat.example.game: %white%%common.rm% %yellow%%cmd.chat% %cmd.chat.game% %desc.example.chat.game%
+help_chat.example.game.message: %white%%common.rm% %yellow%%cmd.chat% %cmd.chat.game% %green%%common.chat_message% %desc.example.chat.game.message%
+help_chat.example.team: %white%%common.rm% %yellow%%cmd.chat% %cmd.chat.team% %desc.example.chat.team%
+help_chat.example.team.message: %white%%common.rm% %yellow%%cmd.chat% %cmd.chat.team% %green%%common.chat_message% %desc.example.chat.team.message%
+
+# Kick Info
+help_kick: %gold%%common.rm% %cmd.kick%
+help_kick.player: %aqua%[player] %desc.kick.player%
+help_kick.team: %yellow%%cmd.kick.team% %aqua%[%common.team_id_color%] %desc.kick.team%
+help_kick.all: %yellow%%cmd.kick.all% %desc.kick.all%
+help_kick.example.player: %white%%common.rm% %yellow%%cmd.kick% %aqua%%common.mtaye% %desc.kick.example.player%
+help_kick.example.team: %white%%common.rm% %yellow%%cmd.kick% %cmd.kick.team% %aqua%red %desc.kick.example.team%
+help_kick.example.all: %white%%common.rm% %yellow%%cmd.kick% %cmd.kick.all% %desc.kick.example.all%
+
+# Ban Info
+help_ban: %gold%%common.rm% %cmd.ban%
+help_ban.player: %aqua%[player] %desc.ban.player%
+help_ban.team: %yellow%%cmd.ban.team% %aqua%[%common.team_id_color%] %desc.ban.team%
+help_ban.all: %yellow%%cmd.ban.all%  %desc.ban.all%
+help_ban.example.player: %white%%common.rm% %yellow%%cmd.ban% %aqua%%common.mtaye% %desc.ban.example.player%
+help_ban.example.team: %white%%common.rm% %yellow%%cmd.ban% %cmd.ban.team% %aqua%red %desc.ban.example.team%
+help_ban.example.all: %white%%common.rm% %yellow%%cmd.ban% %cmd.ban.all% %desc.ban.example.all%
+
+# Unban Info
+help_unban: %gold%%common.rm% %cmd.unban%
+help_unban.player: %aqua%[player] %desc.unban.player%
+help_unban.example.player: %white%%common.rm% %yellow%%cmd.unban% %aqua%%common.mtaye% %desc.unban.example.player%
+
+# Item Info
+help_item: %gold%%common.rm% %cmd.item%
+help_item.item: %aqua%[%common.items_id_name%]
+help_item.example1: %white%%common.rm% %yellow%%cmd.item% %aqua%1-10 263
+help_item.example2: %white%%common.rm% %yellow%%cmd.item% %aqua%lava diamond
+help_item.example3: %white%%common.rm% %yellow%%cmd.item% %aqua%pickaxe chest 20
+help_item.example4: %white%%common.rm% %yellow%%cmd.item% %aqua%pickaxe,chest,20

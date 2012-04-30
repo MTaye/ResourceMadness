@@ -151,9 +151,7 @@ public class RMPartList {
 					if((facings.get(i).getType()==Material.WALL_SIGN)&&(RMDir.getDirByData(facings.get(i).getData()).getOpposite()==RMDir.values()[i])){
 						blocks.add(facings.get(i));
 					}
-					else if(!trim){
-						blocks.add(null);
-					}
+					else if(!trim) blocks.add(null);
 				}
 		}
 		else{
@@ -161,9 +159,7 @@ public class RMPartList {
 				if(facings.get(i).getType() == mat){
 					blocks.add(facings.get(i));
 				}
-				else if(!trim){
-					blocks.add(null);
-				}
+				else if(!trim) blocks.add(null);
 			}
 		}
 		return blocks;
@@ -326,7 +322,7 @@ public class RMPartList {
 	public static Boolean matchSimpleBlockList(List<Block> blocks1, List<Block> blocks2){
 		if(blocks1.size()!=blocks2.size()) return false;
 		for(int i=0; i<blocks1.size(); i++){
-			if(blocks1.get(i)!=blocks2.get(i)) return false;
+			if(!blocks1.get(i).equals(blocks2.get(i))) return false;
 		}
 		return true;
 	}

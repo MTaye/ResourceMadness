@@ -68,7 +68,7 @@ public class RMStash {
 			if(!added.containsKey(id)) added.put(id, amount);
 			else added.put(id, map.getValue()+amount);
 		}
-		if(added.size()!=0) rmp.sendMessage(ChatColor.YELLOW+"Added: "+getChangedString(added));
+		if(added.size()!=0) rmp.sendMessage(RMText.getLabelArgs("common.added", getChangedString(added)));
 		clearAdded();
 	}
 	public void showModified(RMPlayer rmp){
@@ -79,7 +79,7 @@ public class RMStash {
 			if(!modified.containsKey(id)) modified.put(id, amount);
 			else modified.put(id, map.getValue()+amount);
 		}
-		if(modified.size()!=0) rmp.sendMessage(ChatColor.YELLOW+"Modified: "+getChangedString(modified));
+		if(modified.size()!=0) rmp.sendMessage(RMText.getLabelArgs("common.modified", getChangedString(modified)));
 		clearModified();
 	}
 	public void showRemoved(RMPlayer rmp){
@@ -97,19 +97,19 @@ public class RMStash {
 				else if(_removed.containsKey(id)) removed.put(id, removed.get(id)+_removed.get(id));
 			}
 		}
-		if(modified.size()!=0) rmp.sendMessage(ChatColor.YELLOW+"Modified: "+getChangedString(modified));
-		if(removed.size()!=0) rmp.sendMessage(ChatColor.GRAY+"Removed: "+getChangedString(removed));
+		if(modified.size()!=0) rmp.sendMessage(RMText.getLabelArgs("common.modified", getChangedString(modified)));
+		if(removed.size()!=0) rmp.sendMessage(RMText.getLabelArgs("common.removed", getChangedString(removed)));
 		clearRemoved();
 	}
 	
 	public void showAddedRelative(RMPlayer rmp){
-		if(_added.size()!=0) rmp.sendMessage(ChatColor.YELLOW+"Added: "+getChangedString(_added));
+		if(_added.size()!=0) rmp.sendMessage(RMText.getLabelArgs("common.added", getChangedString(_added)));
 	}
 	public void showModifiedRelative(RMPlayer rmp){
-		if(_modified.size()!=0) rmp.sendMessage(ChatColor.YELLOW+"Modified: "+getChangedString(_modified));
+		if(_modified.size()!=0) rmp.sendMessage(RMText.getLabelArgs("common.modified", getChangedString(_modified)));
 	}
 	public void showRemovedRelative(RMPlayer rmp){
-		if(_removed.size()!=0) rmp.sendMessage(ChatColor.GRAY+"Removed: "+getChangedString(_removed));
+		if(_removed.size()!=0) rmp.sendMessage(RMText.getLabelArgs("common.removed", getChangedString(_removed)));
 	}
 	
 	public void addItemToChanged(HashMap<Integer, Integer> changed, int id, int newAmount){
@@ -578,7 +578,7 @@ public class RMStash {
 			}
 		}
 		if(addItems.size()!=0) addItems(addItems);
-		if(claimItems.size()!=0) rmp.claimToInventory(this, inv, false, false, claimType, claimItems.toArray(new ItemStack[claimItems.size()]));
+		if(claimItems.size()!=0) rmp.claimToInventory(this, inv, null, false, claimType, claimItems.toArray(new ItemStack[claimItems.size()]));
 	}
 	
 	

@@ -1,7 +1,6 @@
 package com.mtaye.ResourceMadness;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import com.mtaye.ResourceMadness.RMGame.Setting;
@@ -15,11 +14,12 @@ public class RMConfig {
 
 	private int _typeLimit = 50;
 	
-	public enum PermissionType { P3, PEX, BUKKIT, FALSE };
+	public enum PermissionType { P3, PEX, BUKKIT, AUTO, FALSE };
 	
 	public List<Setting> _lock = new ArrayList<Setting>();
-	private int _autoSave = 10;
-	private PermissionType _permissionType = PermissionType.FALSE;
+	private String _language = "";
+	private int _autosave = 10;
+	private PermissionType _permissionType = PermissionType.AUTO;
 	private boolean _useRestore = true;
 	private int _maxGames = 0;
 	private int _maxGamesPerPlayer = 0;
@@ -27,6 +27,7 @@ public class RMConfig {
 	private int _maxPlayers = 0;
 	private int _minTeamPlayers = 1;
 	private int _maxTeamPlayers = 0;
+	private int _safeZone = 0;
 	private int _timeLimit = 0;
 	private int _autoRandomizeAmount = 0;
 	private boolean _advertise = false;
@@ -54,6 +55,7 @@ public class RMConfig {
 		setTypeLimit(config.getTypeLimit());
 		setLock(config.getLock());
 		setAutoSave(config.getAutoSave());
+		setLanguage(config.getLanguage());
 		setPermissionType(config.getPermissionType());
 		setUseRestore(config.getUseRestore());
 		setMaxGames(config.getMaxGames());
@@ -62,6 +64,7 @@ public class RMConfig {
 		setSetting(Setting.maxPlayers, config.getMaxPlayers(), config.getLock().contains(Setting.maxPlayers));
 		setSetting(Setting.minTeamPlayers, config.getMinTeamPlayers(), config.getLock().contains(Setting.minTeamPlayers));
 		setSetting(Setting.maxTeamPlayers, config.getMaxTeamPlayers(), config.getLock().contains(Setting.maxTeamPlayers));
+		setSetting(Setting.safeZone, config.getSafeZone(), config.getLock().contains(Setting.safeZone));
 		setSetting(Setting.timeLimit, config.getTimeLimit(), config.getLock().contains(Setting.timeLimit));
 		setSetting(Setting.autoRandomizeAmount, config.getAutoRandomizeAmount(), config.getLock().contains(Setting.autoRandomizeAmount));
 		setSetting(Setting.advertise, config.getAdvertise(), config.getLock().contains(Setting.advertise));
@@ -83,7 +86,8 @@ public class RMConfig {
 	//Get
 	public int getTypeLimit() { return _typeLimit; }
 	public List<Setting> getLock() { return _lock; }
-	public int getAutoSave() { return _autoSave; }
+	public String getLanguage() { return _language; }
+	public int getAutoSave() { return _autosave; }
 	public PermissionType getPermissionType() { return _permissionType; }
 	public boolean getUseRestore() { return _useRestore; }
 	public int getMaxGames() { return _maxGames; }
@@ -92,6 +96,7 @@ public class RMConfig {
 	public int getMaxPlayers() { return _maxPlayers; }
 	public int getMinTeamPlayers() { return _minTeamPlayers; }
 	public int getMaxTeamPlayers() { return _maxTeamPlayers; }
+	public int getSafeZone() { return _safeZone; }
 	public int getTimeLimit() { return _timeLimit; }
 	public int getAutoRandomizeAmount() { return _autoRandomizeAmount; }
 	public boolean getAdvertise() { return _advertise; }
@@ -115,12 +120,17 @@ public class RMConfig {
 		if(_typeLimit<10) _typeLimit = 10;
 	}
 	public void setLock(List<Setting> locked) { _lock = locked; }
-	public void setAutoSave(int value) { _autoSave = value<0?0:value; }
+	public void setLanguage(String language){
+		if(language==null) language = "";
+		_language = language.trim().replace(".lng", "").toLowerCase();
+	}
+	public void setAutoSave(int value) { _autosave = value<0?0:value; }
 	public void setPermissionType(PermissionType permissionType) { _permissionType = permissionType; }
 	public void setPermissionTypeByString(String arg){
 		if((arg.equalsIgnoreCase("p3"))||(arg.equalsIgnoreCase("perm3"))||(arg.equalsIgnoreCase("permissions3"))) setPermissionType(PermissionType.P3);
 		else if((arg.equalsIgnoreCase("pex"))||(arg.equalsIgnoreCase("permex"))||(arg.equalsIgnoreCase("permissionsex"))) setPermissionType(PermissionType.PEX);
 		else if(arg.equalsIgnoreCase("bukkit")) setPermissionType(PermissionType.BUKKIT);
+		else if(arg.equalsIgnoreCase("auto")) setPermissionType(PermissionType.AUTO);
 		else setPermissionType(PermissionType.FALSE);
 		return;
 	}

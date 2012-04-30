@@ -1,6 +1,6 @@
 name: ResourceMadness
 main: com.mtaye.ResourceMadness.RM
-version: 0.1.3
+version: 0.1.4
 author: M-Taye
 description: Competitive team-based resource gathering
 commands:
@@ -8,3 +8,362 @@ commands:
         description: Access to ResourceMadness commands
         aliases:
             - rm
+permissions:
+    resourcemadness.*:
+        default: op
+        description: Access to all games and all commands.
+        children:
+            resourcemadness.admin: true
+            resourcemadness.save: true
+    resourcemadness.admin:
+        description: Access to all games and all commands except /rm save.
+        default: op
+        children:
+            resourcemadness.owner: true
+    resourcemadness.owner:
+        description: Access to all commands except /rm save.
+        default: true
+        children:
+            resourcemadness: true
+            resourcemadness.add: true
+            resourcemadness.remove: true
+            resourcemadness.list: true
+            resourcemadness.commands: true
+            resourcemadness.info.*: true
+            resourcemadness.settings.*: true
+            resourcemadness.set.*: true
+            resourcemadness.mode.*: true
+            resourcemadness.filter.*: true
+            resourcemadness.reward.*: true
+            resourcemadness.tools.*: true
+            resourcemadness.template.*: true
+            resourcemadness.start.*: true
+            resourcemadness.stop: true
+            resourcemadness.pause: true
+            resourcemadness.restore: true
+            resourcemadness.join: true
+            resourcemadness.quit: true
+            resourcemadness.ready: true
+            resourcemadness.time: true
+            resourcemadness.items: true
+            resourcemadness.item: true
+            resourcemadness.claim.*: true
+            resourcemadness.kick.*: true
+            resourcemadness.ban.*: true
+            resourcemadness.unban: true
+    resourcemadness:
+        description: Get the right to use ResourceMadness.
+    resourcemadness.add:
+        description: Access to /rm add.
+    resourcemadness.remove:
+        description: Access to /rm remove.
+    resourcemadness.list:
+        description: Access to /rm list.
+    resourcemadness.commands:
+        description: Access to /rm commands.
+    resourcemadness.info.*:
+        description: Access to /rm info.
+        children:
+            resourcemadness.info: true
+            resourcemadness.info.found: true
+            resourcemadness.info.items: true
+            resourcemadness.info.reward: true
+            resourcemadness.info.tools: true
+            resourcemadness.info.claim: true
+    resourcemadness.info:
+        description: Access to /rm info.
+    resourcemadness.info.found:
+        description: Access to /rm info found.
+    resourcemadness.info.items:
+        description: Access to /rm info items.
+    resourcemadness.info.reward:
+        description: Access to /rm info reward.
+    resourcemadness.info.tools:
+        description: Access to /rm info tools.
+    resourcemadness.info.claim:
+        description: Access to /rm info claim.
+    resourcemadness.settings.*:
+        description: Access to /rm settings
+        children:
+            resourcemadness.settings: true
+            resourcemadness.settings.reset: true
+    resourcemadness.settings:
+        description: Access to /rm settings.
+    resourcemadness.settings.reset:
+        description: Access to /rm settings reset.
+    resourcemadness.set.*:
+        description: Access to /rm set
+        children:
+            resourcemadness.set: true
+            resourcemadness.set.minplayers: true
+            resourcemadness.set.maxplayers: true
+            resourcemadness.set.minteamplayers: true
+            resourcemadness.set.maxteamplayers: true
+            resourcemadness.set.safezone: true
+            resourcemadness.set.timelimit: true
+            resourcemadness.set.random: true
+            resourcemadness.set.advertise: true
+            resourcemadness.set.restore: true
+            resourcemadness.set.warp: true
+            resourcemadness.set.midgamejoin: true
+            resourcemadness.set.healplayer: true
+            resourcemadness.set.clearinventory: true
+            resourcemadness.set.foundasreward: true
+            resourcemadness.set.warnunequal: true
+            resourcemadness.set.allowunequal: true
+            resourcemadness.set.warnhacked: true
+            resourcemadness.set.allowhacked: true
+            resourcemadness.set.infinitereward: true
+            resourcemadness.set.infinitetools: true
+    resourcemadness.set:
+        description: Access to /rm set.
+    resourcemadness.set.minplayers:
+        description: Access to /rm set minplayers.
+    resourcemadness.set.maxplayers:
+        description: Access to /rm set maxplayers.
+    resourcemadness.set.minteamplayers:
+        description: Access to /rm set minteamplayers.
+    resourcemadness.set.maxteamplayers:
+        description: Access to /rm set maxteamplayers.
+    resourcemadness.set.safezone:
+        description: Access to /rm set safezone.
+    resourcemadness.set.timelimit:
+        description: Access to /rm set timelimit.
+    resourcemadness.set.random:
+        description: Access to /rm set random.
+    resourcemadness.set.advertise:
+        description: Access to /rm set advertise.
+    resourcemadness.set.restore:
+        description: Access to /rm set restore.
+    resourcemadness.set.warp:
+        description: Access to /rm set warp.
+    resourcemadness.set.midgamejoin:
+        description: Access to /rm set midgamejoin.
+    resourcemadness.set.healplayer:
+        description: Access to /rm set healplayer.
+    resourcemadness.set.clearinventory:
+        description: Access to /rm set clearinventory.
+    resourcemadness.set.foundasreward:
+        description: Access to /rm set foundasreward.
+    resourcemadness.set.warnunequal:
+        description: Access to /rm set warnunequal.
+    resourcemadness.set.allowunequal:
+        description: Access to /rm set allowunequal.
+    resourcemadness.set.warnhacked:
+        description: Access to /rm set warnhacked.
+    resourcemadness.set.allowhacked:
+        description: Access to /rm set allowhacked.
+    resourcemadness.set.infinitereward:
+        description: Access to /rm set infinitereward.
+    resourcemadness.set.infinitetools:
+        description: Access to /rm set infinitetools.
+    resourcemadness.mode.*:
+        description: Access to /rm mode and right to change filter mode.
+        children:
+            resourcemadness.mode: true
+            resourcemadness.mode.filter: true
+            resourcemadness.mode.reward: true
+            resourcemadness.mode.tools: true
+    resourcemadness.mode:
+        description: Access to /rm mode and right to change filter mode.
+    resourcemadness.mode.filter:
+        description: Access to /rm mode filter and right to change filter mode to filter.
+    resourcemadness.mode.reward:
+        description: Access to /rm mode reward and right to change filter mode to reward.
+    resourcemadness.mode.tools:
+        description: Access to /rm mode tools and right to change filter mode to tools.
+    resourcemadness.filter.*:
+        description: Access to /rm filter and the right to set filter items by chest.
+        children:
+            resourcemadness.filter: true
+            resourcemadness.filter.info: true
+            resourcemadness.filter.byhand: true
+            resourcemadness.filter.random: true
+            resourcemadness.filter.add: true
+            resourcemadness.filter.subtract: true
+            resourcemadness.filter.clear: true
+    resourcemadness.filter:
+        description: Access to /rm filter and the right to set filter items by chest.
+    resourcemadness.filter.info:
+        description: Access to /rm filter info.
+    resourcemadness.filter.byhand:
+        description: Get the right to add items to filter by hand.
+    resourcemadness.filter.random:
+        description: Access to /rm filter random.
+    resourcemadness.filter.add:
+        description: Access to /rm filter add and the right to add items to filter by chest.
+    resourcemadness.filter.subtract:
+        description: Access to /rm filter subtract and the right to subtract items from filter by chest.
+    resourcemadness.filter.clear:
+        description: Access to /rm filter clear and the right to clear items from filter by chest.
+    resourcemadness.reward.*:
+        description: Access to /rm reward and the right to set reward by chest.
+        children:
+            resourcemadness.reward: true
+            resourcemadness.reward.info: true
+            resourcemadness.reward.byhand: true
+            resourcemadness.reward.add: true
+            resourcemadness.reward.subtract: true
+            resourcemadness.reward.clear: true
+    resourcemadness.reward:
+        description: Access to /rm reward and the right to set reward by chest.
+    resourcemadness.reward.info:
+        description: Access to /rm reward info.
+    resourcemadness.reward.byhand:
+        description: Get the right to add items to reward by hand.
+    resourcemadness.reward.add:
+        description: Access to /rm reward add and the right to add items to reward by chest.
+    resourcemadness.reward.subtract:
+        description: Access to /rm reward subtract and the right to subtract items from reward by chest.
+    resourcemadness.reward.clear:
+        description: Access to /rm reward clear and the right to clear items from reward by chest.
+    resourcemadness.tools.*:
+        description: Access to /rm tools and the right to set tools by chest.
+        children:
+            resourcemadness.tools: true
+            resourcemadness.tools.info: true
+            resourcemadness.tools.byhand: true
+            resourcemadness.tools.add: true
+            resourcemadness.tools.subtract: true
+            resourcemadness.tools.clear: true
+    resourcemadness.tools:
+        description: Access to /rm tools and the right to set tools by chest.
+    resourcemadness.tools.info:
+        description: Access to /rm tools info.
+    resourcemadness.tools.byhand:
+        description: Get the right to add items to tools by hand.
+    resourcemadness.tools.add:
+        description: Access to /rm tools add and the right to add items to tools by chest.
+    resourcemadness.tools.subtract:
+        description: Access to /rm tools subtract and the right to subtract items from tools by chest.
+    resourcemadness.tools.clear:
+        description: Access to /rm tools clear and the right to clear items from tools by chest.
+    resourcemadness.template.*:
+        description: Access to /rm template.
+        children:
+            resourcemadness.template: true
+            resourcemadness.template.list: true
+            resourcemadness.template.load: true
+            resourcemadness.template.save: true
+            resourcemadness.template.remove: true
+    resourcemadness.template:
+        description: Access to /rm template.
+    resourcemadness.template.list:
+        description: Access to /rm template list.
+    resourcemadness.template.load:
+        description: Access to /rm template load.
+    resourcemadness.template.save:
+        description: Access to /rm template save.
+    resourcemadness.template.remove:
+        description: Access to /rm template remove.
+    resourcemadness.start.*:
+        description: Access to /rm start.
+        children:
+            resourcemadness.start: true
+            resourcemadness.start.random: true
+    resourcemadness.start:
+        description: Access to /rm start.
+    resourcemadness.start.random:
+        description: Access to /rm start random.
+    resourcemadness.stop:
+        description: Access to /rm stop.
+    resourcemadness.pause:
+        description: Access to /rm pause and /rm resume.
+    resourcemadness.restore:
+        description: Access to /rm restore.
+    resourcemadness.join:
+        description: Access to /rm join.
+    resourcemadness.quit:
+        description: Access to /rm quit.
+    resourcemadness.ready:
+        description: Access to /rm ready.
+    resourcemadness.time:
+        description: Access to /rm time.
+    resourcemadness.items:
+        description: Access to /rm items.
+    resourcemadness.item:
+        description: Access to /rm item.
+    resourcemadness.chat.*:
+        description: Access to /rm chat.
+        children:
+            resourcemadness.chat: true
+            resourcemadness.chat.world: true
+            resourcemadness.chat.game: true
+            resourcemadness.chat.team: true
+    resourcemadness.chat:
+        description: Access to /rm chat.
+    resourcemadness.chat.world:
+        description: Access to /rm chat world.
+    resourcemadness.chat.game:
+        description: Access to /rm chat game.
+    resourcemadness.chat.team:
+        description: Access to /rm chat team.
+    resourcemadness.claim.*:
+        description: Access to /rm claim.
+        children:
+            resourcemadness.claim: true
+            resourcemadness.claim.found: true
+            resourcemadness.claim.found.chest: true
+            resourcemadness.claim.items: true
+            resourcemadness.claim.items.chest: true
+            resourcemadness.claim.reward: true
+            resourcemadness.claim.reward.chest: true
+            resourcemadness.claim.tools: true
+            resourcemadness.claim.tools.chest: true
+    resourcemadness.claim:
+        description: Access to /rm claim.
+    resourcemadness.claim.found:
+        description: Access to /rm claim found.
+    resourcemadness.claim.found.chest:
+        description: Access to /rm claim found chest.
+    resourcemadness.claim.items:
+        description: Access to /rm claim items.
+    resourcemadness.claim.items.chest:
+        description: Access to /rm claim items chest.
+    resourcemadness.claim.reward:
+        description: Access to /rm claim reward.
+    resourcemadness.claim.reward.chest:
+        description: Access to /rm claim reward chest.
+    resourcemadness.claim.tools:
+        description: Access to /rm claim tools.
+    resourcemadness.claim.tools.chest:
+        description: Access to /rm claim tools chest.
+    resourcemadness.kick.*:
+        description: Access to /rm kick.
+        children:
+            resourcemadness.kick: true
+            resourcemadness.kick.player: true
+            resourcemadness.kick.team: true
+            resourcemadness.kick.all: true
+    resourcemadness.kick:
+        description: Access to /rm kick.
+    resourcemadness.kick.player:
+        description: Access to /rm kick player.
+    resourcemadness.kick.team:
+        description: Access to /rm kick team.
+    resourcemadness.kick.all:
+        description: Access to /rm kick all.
+    resourcemadness.ban.*:
+        description: Access to /rm ban and /rm unban.
+        children:
+            resourcemadness.ban: true
+            resourcemadness.ban.player: true
+            resourcemadness.ban.team: true
+            resourcemadness.ban.all: true
+            resourcemadness.ban.list: true
+            resourcemadness.unban: true
+            resourcemadness.unban.player: true
+    resourcemadness.ban:
+        description: Access to /rm ban.
+    resourcemadness.ban.player:
+        description: Access to /rm ban player.
+    resourcemadness.ban.team:
+        description: Access to /rm ban team.
+    resourcemadness.ban.all:
+        description: Access to /rm ban all.
+    resourcemadness.ban.list:
+        description: Access to /rm ban list.
+    resourcemadness.unban:
+        description: Access to /rm unban.
+    resourcemadness.unban.player:
+        description: Access to /rm unban player.

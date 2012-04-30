@@ -15,7 +15,7 @@ public final class RMDebug {
 	public static void disable(){
 		_enabled = false;
 	}
-	public static boolean getEnabled(){
+	public static boolean isEnabled(){
 		return _enabled;
 	}
 	public static void setEnabled(boolean enabled){
