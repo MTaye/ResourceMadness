@@ -46,7 +46,6 @@ import com.mtaye.ResourceMadness.RMGame.FilterState;
 import com.mtaye.ResourceMadness.RMGame.FilterType;
 import com.mtaye.ResourceMadness.RMGame.GameState;
 import com.mtaye.ResourceMadness.RMGame.InterfaceState;
-import com.mtaye.ResourceMadness.RMGame.Setting;
 import com.mtaye.ResourceMadness.RMPlayer.ChatMode;
 import com.mtaye.ResourceMadness.RMPlayer.PlayerAction;
 import com.mtaye.ResourceMadness.RMStats.RMStat;
@@ -55,6 +54,12 @@ import com.mtaye.ResourceMadness.Helper.RMHelper;
 import com.mtaye.ResourceMadness.Helper.RMInventoryHelper;
 import com.mtaye.ResourceMadness.Helper.RMLogHelper;
 import com.mtaye.ResourceMadness.Helper.RMTextHelper;
+import com.mtaye.ResourceMadness.setting.Setting;
+import com.mtaye.ResourceMadness.setting.SettingBool;
+import com.mtaye.ResourceMadness.setting.SettingInt;
+import com.mtaye.ResourceMadness.setting.SettingLibrary;
+import com.mtaye.ResourceMadness.setting.SettingPrototype;
+import com.mtaye.ResourceMadness.setting.SettingStr;
 import com.nijiko.permissions.PermissionHandler;
 import com.ning.compress.lzf.LZFInputStream;
 import com.ning.compress.lzf.LZFOutputStream;
@@ -94,11 +99,12 @@ public class RM extends JavaPlugin {
 	@Override
 	public void onEnable(){
 		pdfFile = this.getDescription();
-		RMPlayer.plugin = this;
-		RMGame.plugin = this;
-		RMText.plugin = this;
-		RMTextHelper.plugin = this;
-		RMDebug.plugin = this;
+		RMPlayer.rm = this;
+		RMDebug.rm = this;
+		RMGame.rm = this;
+		RMText.rm = this;
+		RMTextHelper.rm = this;
+		RMHelper.rm = this;
 		
 		log = getServer().getLogger();
 		log.log(Level.INFO, pdfFile.getName() + " v" + pdfFile.getVersion() + " enabled!" );
@@ -280,7 +286,7 @@ public class RM extends JavaPlugin {
 	}
 	
 	@Override
-	public boolean onCommand(CommandSender sender, Command cmd, String label, String args[]){
+	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args){
 		Player p = null;
 		if(sender.getClass().getName().contains("Player")){
 			p = (Player)sender;
@@ -1127,14 +1133,13 @@ public class RM extends JavaPlugin {
 										if(amount>-1){
 											if(rmGame!=null){
 												switch(action){
-													case SET_MIN_PLAYERS: rmGame.setSetting(rmp, Setting.minPlayers, amount); break;
-													case SET_MAX_PLAYERS: rmGame.setSetting(rmp, Setting.maxPlayers, amount); break;
-													case SET_MIN_TEAM_PLAYERS: rmGame.setSetting(rmp, Setting.minTeamPlayers, amount); break;
-													case SET_MAX_TEAM_PLAYERS: rmGame.setSetting(rmp, Setting.maxPlayers, amount); break;
-													//case SET_MAX_ITEMS: rmGame.setSetting(rmp, Setting.maxItems, amount); break;
-													case SET_SAFE_ZONE: rmGame.setSetting(rmp, Setting.safeZone, amount); break;
-													case SET_TIME_LIMIT: rmGame.setSetting(rmp, Setting.timeLimit, amount); break;
-													case SET_RANDOM: rmGame.setSetting(rmp, Setting.autoRandomizeAmount, amount); break;
+													case SET_MIN_PLAYERS: rmGame.setSetting(rmp, Setting.minplayers, amount); break;
+													case SET_MAX_PLAYERS: rmGame.setSetting(rmp, Setting.maxplayers, amount); break;
+													case SET_MIN_TEAM_PLAYERS: rmGame.setSetting(rmp, Setting.minteamplayers, amount); break;
+													case SET_MAX_TEAM_PLAYERS: rmGame.setSetting(rmp, Setting.maxplayers, amount); break;
+													case SET_SAFE_ZONE: rmGame.setSetting(rmp, Setting.safezone, amount); break;
+													case SET_TIME_LIMIT: rmGame.setSetting(rmp, Setting.timelimit, amount); break;
+													case SET_RANDOM: rmGame.setSetting(rmp, Setting.random, amount); break;
 												}
 												return true;
 											}
@@ -1146,9 +1151,6 @@ public class RM extends JavaPlugin {
 													case SET_MAX_PLAYERS: rmp.sendMessage(RMText.getLabel("action.set.maxplayers")); break;
 													case SET_MIN_TEAM_PLAYERS: rmp.sendMessage(RMText.getLabel("action.set.minteamplayers")); break;
 													case SET_MAX_TEAM_PLAYERS: rmp.sendMessage(RMText.getLabel("action.set.maxteamplayers")); break;
-													/*
-													case SET_MAX_ITEMS: rmp.sendMessage(RMText.a_SetMaxItems); break;
-													*/
 													case SET_SAFE_ZONE: rmp.sendMessage(RMText.getLabel("action.set.safezone")); break;
 													case SET_TIME_LIMIT: rmp.sendMessage(RMText.getLabel("action.set.timelimit")); break;
 													case SET_RANDOM: rmp.sendMessage(RMText.getLabel("action.set.random")); break;
@@ -1238,18 +1240,18 @@ public class RM extends JavaPlugin {
 									if(rmGame!=null){
 										switch(action){
 											case SET_ADVERTISE: rmGame.setSetting(rmp, Setting.advertise, i); break;
-											case SET_RESTORE: rmGame.setSetting(rmp, Setting.autoRestoreWorld, i); break;
-											case SET_WARP: rmGame.setSetting(rmp, Setting.warpToSafety, i); break;
-											case SET_MIDGAME_JOIN: rmGame.setSetting(rmp, Setting.allowMidgameJoin, i); break;
-											case SET_HEAL_PLAYER: rmGame.setSetting(rmp, Setting.healPlayer, i); break;
-											case SET_CLEAR_INVENTORY: rmGame.setSetting(rmp, Setting.clearPlayerInventory, i); break;
-											case SET_FOUND_AS_REWARD: rmGame.setSetting(rmp, Setting.foundAsReward, i); break;
-											case SET_WARN_UNEQUAL: rmGame.setSetting(rmp, Setting.warnUnequal, i); break;
-											case SET_ALLOW_UNEQUAL: rmGame.setSetting(rmp, Setting.allowUnequal, i); break;
-											case SET_WARN_HACKED: rmGame.setSetting(rmp, Setting.warnHackedItems, i); break;
-											case SET_ALLOW_HACKED: rmGame.setSetting(rmp, Setting.allowHackedItems, i); break;
-											case SET_INFINITE_REWARD: rmGame.setSetting(rmp, Setting.infiniteReward, i); break;
-											case SET_INFINITE_TOOLS: rmGame.setSetting(rmp, Setting.infiniteTools, i); break;
+											case SET_RESTORE: rmGame.setSetting(rmp, Setting.restore, i); break;
+											case SET_WARP: rmGame.setSetting(rmp, Setting.warp, i); break;
+											case SET_MIDGAME_JOIN: rmGame.setSetting(rmp, Setting.midgamejoin, i); break;
+											case SET_HEAL_PLAYER: rmGame.setSetting(rmp, Setting.healplayer, i); break;
+											case SET_CLEAR_INVENTORY: rmGame.setSetting(rmp, Setting.clearinventory, i); break;
+											case SET_FOUND_AS_REWARD: rmGame.setSetting(rmp, Setting.foundasreward, i); break;
+											case SET_WARN_UNEQUAL: rmGame.setSetting(rmp, Setting.warnunequal, i); break;
+											case SET_ALLOW_UNEQUAL: rmGame.setSetting(rmp, Setting.allowunequal, i); break;
+											case SET_WARN_HACKED: rmGame.setSetting(rmp, Setting.warnhacked, i); break;
+											case SET_ALLOW_HACKED: rmGame.setSetting(rmp, Setting.allowhacked, i); break;
+											case SET_INFINITE_REWARD: rmGame.setSetting(rmp, Setting.infinitereward, i); break;
+											case SET_INFINITE_TOOLS: rmGame.setSetting(rmp, Setting.infinitetools, i); break;
 										}
 									}
 									else{
@@ -1602,27 +1604,11 @@ public class RM extends JavaPlugin {
 						setProperty(yml, root+"timeelapsed",config.getTimer().getTimeElapsed());
 						//Settings
 						root = id+".settings.";
-						setProperty(yml, root+"minplayers", config.getMinPlayers());
-						setProperty(yml, root+"maxplayers", config.getMaxPlayers());
-						setProperty(yml, root+"minteamplayers", config.getMinTeamPlayers());
-						setProperty(yml, root+"maxteamplayers", config.getMaxTeamPlayers());
-						setProperty(yml, root+"safezone", config.getSafeZone());
-						setProperty(yml, root+"timelimit", config.getTimer().getTimeLimit());
-						setProperty(yml, root+"autorandomizeamount", config.getAutoRandomizeAmount());
-						setProperty(yml, root+"password", config.getPassword());
-						setProperty(yml, root+"advertise", config.getAdvertise());
-						setProperty(yml, root+"autorestoreworld", config.getAutoRestoreWorld());
-						setProperty(yml, root+"warptosafety", config.getWarpToSafety());
-						setProperty(yml, root+"allowmidgamejoin", config.getAllowMidgameJoin());
-						setProperty(yml, root+"healplayer", config.getHealPlayer());
-						setProperty(yml, root+"clearplayerinventory", config.getClearPlayerInventory());
-						setProperty(yml, root+"foundasreward", config.getFoundAsReward());
-						setProperty(yml, root+"warnunequal", config.getWarnUnequal());
-						setProperty(yml, root+"allowunequal", config.getAllowUnequal());
-						setProperty(yml, root+"warnhackeditems", config.getWarnHackedItems());
-						setProperty(yml, root+"allowhackeditems", config.getAllowHackedItems());
-						setProperty(yml, root+"infinitereward", config.getInfiniteReward());
-						setProperty(yml, root+"infinitetools", config.getInfiniteTools());
+						
+						for(Setting setting : Setting.values()){
+							SettingPrototype s = config.getSettingLibrary().get(setting);
+							setProperty(yml, root+s.name(), s.toString());
+						}
 						//Stats
 						root = id+".stats.";
 						RMStats stats = config.getStats();
@@ -1741,77 +1727,26 @@ public class RM extends JavaPlugin {
 					line+=RMText.getLabel("config.autosave")+"\n";
 					line+="autosave="+config.getAutoSave()+"\n\n";
 					line+=RMText.getLabel("config.use_permissions")+"\n";
-					line+="usePermissions="+config.getPermissionType().name().toLowerCase()+"\n\n";
+					line+="usepermissions="+config.getPermissionType().name().toLowerCase()+"\n\n";
 					line+=RMText.getLabel("config.use_restore")+"\n";
-					line+="useRestore="+config.getUseRestore()+"\n\n";
+					line+="userestore="+config.getUseRestore()+"\n\n";
 					line+=RMText.getLabel("config.server_wide")+"\n\n";
 					//Max games
 					line+=RMText.getLabel("config.max_games")+"\n";
-					line+="maxGames="+config.getMaxGames()+"\n\n";
+					line+="maxgames="+config.getMaxGames()+"\n\n";
 					//Max games per player
 					line+=RMText.getLabel("config.max_games_per_player")+"\n";
-					line+="maxGamesPerPlayer="+config.getMaxGamesPerPlayer()+"\n\n";
+					line+="maxgamesperplayer="+config.getMaxGamesPerPlayer()+"\n\n";
 					//Default game settings
 					line+=RMText.getLabel("config.default_settings1")+"\n\n";
-					//Min players per game
-					line+=RMText.getLabel("config.minplayers")+"\n";
-					line+="minPlayers="+config.getMinPlayers()+(config.isLocked(Setting.minPlayers)?":lock":"")+"\n\n";
-					//Max player per game
-					line+=RMText.getLabel("config.maxplayers")+"\n";
-					line+="maxPlayers="+config.getMaxPlayers()+(config.isLocked(Setting.maxPlayers)?":lock":"")+"\n\n";
-					//Min players per team
-					line+=RMText.getLabel("config.minteamplayers")+"\n";
-					line+="minTeamPlayers="+config.getMinTeamPlayers()+(config.isLocked(Setting.minTeamPlayers)?":lock":"")+"\n\n";
-					//Max players per team
-					line+=RMText.getLabel("config.maxteamplayers")+"\n";
-					line+="maxTeamPlayers="+config.getMaxTeamPlayers()+(config.isLocked(Setting.maxTeamPlayers)?":lock":"")+"\n\n";
-					//Safe zone radius
-					line+=RMText.getLabel("config.safezone")+"\n";
-					line+="safeZone="+config.getSafeZone()+(config.isLocked(Setting.safeZone)?":lock":"")+"\n\n";
-					//Match time limit
-					line+=RMText.getLabel("config.timelimit")+"\n";
-					line+="timeLimit="+config.getTimeLimit()+(config.isLocked(Setting.timeLimit)?":lock":"")+"\n\n";
-					//Default game settings true/false
-					line+=RMText.getLabel("config.default_settings2")+"\n\n";
-					//Advertise game in search
-					line+=RMText.getLabel("config.advertise")+"\n";
-					line+="advertise="+config.getAdvertise()+(config.isLocked(Setting.advertise)?":lock":"")+"\n\n";
-					//Auto restore world
-					line+=RMText.getLabel("config.restore")+"\n";
-					line+="autoRestoreWorld="+config.getAutoRestoreWorld()+(config.isLocked(Setting.autoRestoreWorld)?":lock":"")+"\n\n";
-					//Warp to safety
-					line+=RMText.getLabel("config.warp")+"\n";
-					line+="warpToSafety="+config.getWarpToSafety()+(config.isLocked(Setting.warpToSafety)?":lock":"")+"\n\n";
-					//Allow players to join a game in progress
-					line+=RMText.getLabel("config.midgamejoin")+"\n";
-					line+="allowMidgameJoin="+config.getAllowMidgameJoin()+(config.isLocked(Setting.allowMidgameJoin)?":lock":"")+"\n\n";
-					//Heal players at game start
-					line+=RMText.getLabel("config.healplayer")+"\n";
-					line+="healPlayer="+config.getHealPlayer()+(config.isLocked(Setting.healPlayer)?":lock":"")+"\n\n";
-					//Clear/return player's items at game start/finish
-					line+=RMText.getLabel("config.clearinventory")+"\n";
-					line+="clearPlayerInventory="+config.getClearPlayerInventory()+(config.isLocked(Setting.clearPlayerInventory)?":lock":"")+"\n\n";
-					//Use the game's found items as reward
-					line+=RMText.getLabel("config.foundasreward")+"\n";
-					line+="foundAsReward="+config.getFoundAsReward()+(config.isLocked(Setting.foundAsReward)?":lock":"")+"\n\n";
-					//Warn when reward/tools can't be distributed equally
-					line+=RMText.getLabel("config.warnunequal")+"\n";
-					line+="warnunequal="+config.getWarnUnequal()+(config.isLocked(Setting.warnUnequal)?":lock":"")+"\n\n";
-					//Allow reward/tools to be distributed unequally
-					line+=RMText.getLabel("config.allowunequal")+"\n";
-					line+="allowunequal="+config.getAllowUnequal()+(config.isLocked(Setting.allowUnequal)?":lock":"")+"\n\n";
-					//Warn when hacked items are added
-					line+=RMText.getLabel("config.warnhacked")+"\n";
-					line+="warnHackedItems="+config.getWarnHackedItems()+(config.isLocked(Setting.warnHackedItems)?":lock":"")+"\n\n";
-					//Allow the use of hacked items
-					line+=RMText.getLabel("config.allowhacked")+"\n";
-					line+="allowHackedItems="+config.getAllowHackedItems()+(config.isLocked(Setting.allowHackedItems)?":lock":"")+"\n\n";
-					//Use infinite reward
-					line+=RMText.getLabel("config.infinitereward")+"\n";
-					line+="infiniteReward="+config.getInfiniteReward()+(config.isLocked(Setting.infiniteReward)?":lock":"")+"\n\n";
-					//Use infinite tools
-					line+=RMText.getLabel("config.infinitetools")+"\n";
-					line+="infiniteTools="+config.getInfiniteTools()+(config.isLocked(Setting.infiniteTools)?":lock":"");
+					
+					for(Setting setting : Setting.values()){
+						SettingPrototype s = config.getSettingLibrary().get(setting);
+						if(setting==Setting.advertise) line+=RMText.getLabel("config.default_settings2")+"\n\n";
+						line+=RMText.getLabel("config."+s.name())+"\n";
+						line+=s.name()+"="+s.toString()+(s.isLocked()?":lock":"")+"\n\n";
+					}
+
 					bw.write(line);
 					break;
 				case ALIASES:
@@ -1895,26 +1830,10 @@ public class RM extends JavaPlugin {
 						line += config.getTimer().getTimeElapsed();
 						line += ";";
 						//Settings
-						line += config.getMinPlayers()+",";
-						line += config.getMaxPlayers()+",";
-						line += config.getMinTeamPlayers()+",";
-						line += config.getMaxTeamPlayers()+",";
-						line += config.getSafeZone()+",";
-						line += config.getTimer().getTimeLimit()+",";
-						line += config.getAutoRandomizeAmount()+",";
-						line += config.getAdvertise()+",";
-						line += config.getAutoRestoreWorld()+",";
-						line += config.getWarpToSafety()+",";
-						line += config.getAllowMidgameJoin()+",";
-						line += config.getHealPlayer()+",";
-						line += config.getClearPlayerInventory()+",";
-						line += config.getFoundAsReward();
-						line += config.getWarnUnequal()+",";
-						line += config.getAllowUnequal()+",";
-						line += config.getWarnHackedItems()+",";
-						line += config.getAllowHackedItems()+",";
-						line += config.getInfiniteReward()+",";
-						line += config.getInfiniteTools()+",";
+						for(Setting setting : Setting.values()){
+							SettingPrototype s = config.getSettingLibrary().get(setting);
+							line+=s.toString()+",";
+						}
 						line += ";";
 						//Stats
 						RMStats stats = config.getStats();
@@ -2146,7 +2065,7 @@ public class RM extends JavaPlugin {
 						if(world==null) RMDebug.warning("WORLD IS NULL");
 						Block b = world.getBlockAt(xLoc, yLoc, zLoc);
 
-						RMGameConfig config = new RMGameConfig(this);
+						RMGameConfig config = new RMGameConfig();
 						RMPartList partList = new RMPartList(b, this);
 						if(partList.getMainBlock()==null) continue;
 						if((partList.getStoneList()==null)||(partList.getStoneList().size()!=2)) continue;
@@ -2165,27 +2084,13 @@ public class RM extends JavaPlugin {
 						//minPlayers,maxPlayers,minTeamPlayers,maxTeamPlayers,safeZone,timeLimit,autoRandomizeAmount
 						//warpToSafety,autoRestoreWorld,warnHackedItems,allowHackedItems,allowPlayerLeave
 						root = id+".settings.";
-						config.setMinPlayers(yml.getInt(root+"minplayers", -1));
-						config.setMaxPlayers(yml.getInt(root+"maxplayers", -1));
-						config.setMinTeamPlayers(yml.getInt(root+"minteamplayers", -1));
-						config.setMaxTeamPlayers(yml.getInt(root+"maxteamplayers", -1));
-						config.setSafeZone(yml.getInt(root+"safezone", -1));
-						config.getTimer().setTimeLimit(yml.getInt(root+"timelimit", -1));
-						config.setAutoRandomizeAmount(yml.getInt(root+"autorandomizeamount", -1));
-						config.setPassword(yml.getString(root+"password"));
-						config.setAdvertise(yml.getBoolean(root+"advertise", this.config.getAdvertise()));
-						config.setAutoRestoreWorld(yml.getBoolean(root+"autorestoreworld", this.config.getAutoRestoreWorld()));
-						config.setWarpToSafety(yml.getBoolean(root+"warptosafety", this.config.getWarpToSafety()));
-						config.setAllowMidgameJoin(yml.getBoolean(root+"allowmidgamejoin", this.config.getAllowMidgameJoin()));
-						config.setHealPlayer(yml.getBoolean(root+"healplayer", this.config.getHealPlayer()));
-						config.setClearPlayerInventory(yml.getBoolean(root+"clearplayerinventory", this.config.getClearPlayerInventory()));
-						config.setFoundAsReward(yml.getBoolean(root+"foundasreward", this.config.getFoundAsReward()));
-						config.setWarnUnequal(yml.getBoolean(root+"warnunequal", this.config.getWarnUnequal()));
-						config.setAllowUnequal(yml.getBoolean(root+"allowunequal", this.config.getAllowUnequal()));
-						config.setWarnHackedItems(yml.getBoolean(root+"warnhackeditems", this.config.getWarnHackedItems()));
-						config.setAllowHackedItems(yml.getBoolean(root+"allowhackeditems", this.config.getAllowHackedItems()));
-						config.setInfiniteReward(yml.getBoolean(root+"infinitereward", this.config.getInfiniteReward()));
-						config.setInfiniteTools(yml.getBoolean(root+"infinitetools", this.config.getInfiniteTools()));
+						
+						for(Setting setting : Setting.values()){
+							SettingPrototype s = config.getSettingLibrary().get(setting);
+							if(s instanceof SettingInt) config.setSetting(s.setting(), yml.getInt(root+"minplayers", -1));
+							if(s instanceof SettingBool) config.setSetting(s.setting(), yml.getBoolean(root+"minplayers", config.getSettingBool(s.setting())));
+							if(s instanceof SettingStr) config.setSetting(s.setting(), yml.getString(root+"minplayers"));
+						}
 
 						//wins,losses,timesPlayed,itemsFound,itemsFoundTotal
 						root = id+".stats.";
@@ -2357,26 +2262,15 @@ public class RM extends JavaPlugin {
 								else if(args[0].equalsIgnoreCase("maxGamesPerPlayer")) config.setMaxGamesPerPlayer(RMHelper.getIntByString(args[1]));
 								else{
 									boolean lockArg = args[1].substring(args[1].indexOf(":")+1).equalsIgnoreCase("lock")?true:false;
-									if(args[0].equalsIgnoreCase("minPlayers")) config.setSetting(Setting.minPlayers, RMHelper.getIntByString(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("maxPlayers")) config.setSetting(Setting.maxPlayers, RMHelper.getIntByString(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("minTeamPlayers")) config.setSetting(Setting.minTeamPlayers, RMHelper.getIntByString(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("maxTeamPlayers")) config.setSetting(Setting.maxTeamPlayers, RMHelper.getIntByString(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("safeZone")) config.setSetting(Setting.safeZone, RMHelper.getIntByString(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("timeLimit")) config.setSetting(Setting.timeLimit, RMHelper.getIntByString(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("autoRandomizeAmount")) config.setSetting(Setting.autoRandomizeAmount, RMHelper.getIntByString(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("advertise")) config.setSetting(Setting.advertise, Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("autoRestoreWorld")) config.setSetting(Setting.autoRestoreWorld, Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("warpToSafety")) config.setSetting(Setting.warpToSafety, Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("allowMidgameJoin")) config.setSetting(Setting.allowMidgameJoin, Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("healPlayer")) config.setSetting(Setting.healPlayer, Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("clearPlayerInventory")) config.setSetting(Setting.clearPlayerInventory, Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("foundAsReward")) config.setSetting(Setting.foundAsReward, Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("warnUnequal")) config.setSetting(Setting.warnUnequal, Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("allowUnequal")) config.setSetting(Setting.allowUnequal, Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("warnHackedItems")) config.setSetting(Setting.warnHackedItems, Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("allowHackedItems")) config.setSetting(Setting.allowHackedItems, Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("infiniteReward")) config.setSetting(Setting.infiniteReward, Boolean.parseBoolean(args[1]), lockArg);
-									else if(args[0].equalsIgnoreCase("infiniteTools")) config.setSetting(Setting.infiniteTools, Boolean.parseBoolean(args[1]), lockArg);
+									
+									for(Setting setting : Setting.values()){
+										SettingPrototype s = config.getSettingLibrary().get(setting);
+										if(args[0].equalsIgnoreCase(s.name())){
+											if(s instanceof SettingInt) config.setSetting(s.setting(), RMHelper.getIntByString(args[1]), lockArg);
+											if(s instanceof SettingBool) config.setSetting(s.setting(), Boolean.parseBoolean(args[1]), lockArg);
+											if(s instanceof SettingStr) config.setSetting(s.setting(), args[1], lockArg);
+										}
+									}
 								}
 							}
 							break;
@@ -2595,7 +2489,7 @@ public class RM extends JavaPlugin {
 		World world = getServer().getWorld(args[3]);
 		Block b = world.getBlockAt(xLoc, yLoc, zLoc);
 
-		RMGameConfig config = new RMGameConfig(this);
+		RMGameConfig config = new RMGameConfig();
 		RMPartList partList = new RMPartList(b, this);
 		if(partList.getMainBlock()==null) return;
 		config.setPartList(partList);
@@ -2608,26 +2502,15 @@ public class RM extends JavaPlugin {
 		//minPlayers,maxPlayers,minTeamPlayers,maxTeamPlayers,safeZone,timeLimit,autoRandomizeAmount
 		//warpToSafety,autoRestoreWorld,warnHackedItems,allowHackedItems,allowPlayerLeave
 		args = strArgs[1].split(",");
-		config.setMinPlayers(RMHelper.getIntByString(args[0]));
-		config.setMaxPlayers(RMHelper.getIntByString(args[1]));
-		config.setMinTeamPlayers(RMHelper.getIntByString(args[2]));
-		config.setMaxTeamPlayers(RMHelper.getIntByString(args[3]));
-		config.setSafeZone(RMHelper.getIntByString(args[4]));
-		config.getTimer().setTimeLimit(RMHelper.getIntByString(args[5]));
-		config.setAutoRandomizeAmount(RMHelper.getIntByString(args[6]));
-		config.setAdvertise(Boolean.parseBoolean(args[7]));
-		config.setAutoRestoreWorld(Boolean.parseBoolean(args[8]));
-		config.setWarpToSafety(Boolean.parseBoolean(args[9]));
-		config.setAllowMidgameJoin(Boolean.parseBoolean(args[10]));
-		config.setHealPlayer(Boolean.parseBoolean(args[11]));
-		config.setClearPlayerInventory(Boolean.parseBoolean(args[12]));
-		config.setFoundAsReward(Boolean.parseBoolean(args[13]));
-		config.setWarnUnequal(Boolean.parseBoolean(args[14]));
-		config.setAllowUnequal(Boolean.parseBoolean(args[15]));
-		config.setWarnHackedItems(Boolean.parseBoolean(args[16]));
-		config.setAllowHackedItems(Boolean.parseBoolean(args[17]));
-		config.setInfiniteReward(Boolean.parseBoolean(args[18]));
-		config.setInfiniteTools(Boolean.parseBoolean(args[19]));
+		
+		for(Setting setting : Setting.values()){
+			SettingPrototype s = config.getSettingLibrary().get(setting);
+			if(args[0].equalsIgnoreCase(s.name())){
+				if(s instanceof SettingInt) config.setSetting(s.setting(), RMHelper.getIntByString(args[1]));
+				if(s instanceof SettingBool) config.setSetting(s.setting(), Boolean.parseBoolean(args[1]));
+				if(s instanceof SettingStr) config.setSetting(s.setting(), args[1]);
+			}
+		}
 
 		//wins,losses,timesPlayed,itemsFound,itemsFoundTotal
 		args = strArgs[2].split(",");
@@ -3122,10 +3005,10 @@ public class RM extends JavaPlugin {
 			rmp.sendMessage(ChatColor.AQUA+RMTextHelper.firstLetterToUpperCase(rmGame.getGameConfig().getWorldName())+ChatColor.WHITE+
 					" "+RMTextHelper.firstLetterToUpperCase(RMText.getLabel("list.id"))+": "+ChatColor.YELLOW+rmGame.getGameConfig().getId()+ChatColor.WHITE+
 					" "+RMTextHelper.firstLetterToUpperCase(RMText.getLabel("list.owner"))+": "+ChatColor.YELLOW+rmGame.getGameConfig().getOwnerName()+ChatColor.WHITE+
-					" "+RMTextHelper.firstLetterToUpperCase(RMText.getLabel("list.timelimit"))+": "+rmGame.getText(Setting.timeLimit));
+					" "+RMTextHelper.firstLetterToUpperCase(RMText.getLabel("list.timelimit"))+": "+rmGame.getText(rmp, Setting.timelimit));
 			rmp.sendMessage(RMText.getLabel("list.players")+": "+ChatColor.GREEN+rmGame.getTeamPlayers().length+ChatColor.WHITE+
-					" "+RMText.getLabel("list.ingame")+": "+rmGame.getText(Setting.minPlayers)+ChatColor.WHITE+"-"+rmGame.getText(Setting.maxPlayers)+ChatColor.WHITE+
-					" "+RMText.getLabel("list.inteam")+": "+rmGame.getText(Setting.minTeamPlayers)+ChatColor.WHITE+"-"+rmGame.getText(Setting.maxTeamPlayers));
+					" "+RMText.getLabel("list.ingame")+": "+rmGame.getText(rmp, Setting.minplayers)+ChatColor.WHITE+"-"+rmGame.getText(rmp, Setting.maxplayers)+ChatColor.WHITE+
+					" "+RMText.getLabel("list.inteam")+": "+rmGame.getText(rmp, Setting.minteamplayers)+ChatColor.WHITE+"-"+rmGame.getText(rmp, Setting.maxteamplayers));
 			rmp.sendMessage(RMText.getLabel("list.teams")+": "+rmGame.getTextTeamColors());
 		}
 	}
@@ -3230,31 +3113,29 @@ public class RM extends JavaPlugin {
 			int pages = 2;
 			if(page<=0) page = 1;
 			if(page>pages) page = pages;
-			rmp.sendMessage(RMText.getLabelArgs("help_set", ""+page, ""+pages));
+			
+			Setting[] settings = Setting.values();
+			SettingLibrary settingLib = config.getSettingLibrary();
+			
+			int i = 0;
+			int iEnd = 0;
+			
 			if(page==1){
-				if(rmp.hasPermission("resourcemadness.set.minplayers")) if(!config.getLock().contains(Setting.minPlayers)) rmp.sendMessage(RMText.getLabel("help_set.minplayers"));
-				if(rmp.hasPermission("resourcemadness.set.maxplayers")) if(!config.getLock().contains(Setting.maxPlayers)) rmp.sendMessage(RMText.getLabel("help_set.maxplayers"));
-				if(rmp.hasPermission("resourcemadness.set.minteamplayers")) if(!config.getLock().contains(Setting.minTeamPlayers)) rmp.sendMessage(RMText.getLabel("help_set.minteamplayers"));
-				if(rmp.hasPermission("resourcemadness.set.maxteamplayers")) if(!config.getLock().contains(Setting.maxTeamPlayers)) rmp.sendMessage(RMText.getLabel("help_set.maxteamplayers"));
-				if(rmp.hasPermission("resourcemadness.set.safezone")) if(!config.getLock().contains(Setting.safeZone)) rmp.sendMessage(RMText.getLabel("help_set.safezone"));
-				if(rmp.hasPermission("resourcemadness.set.timelimit")) if(!config.getLock().contains(Setting.timeLimit)) rmp.sendMessage(RMText.getLabel("help_set.timelimit"));
-				if(rmp.hasPermission("resourcemadness.set.random")) if(!config.getLock().contains(Setting.autoRandomizeAmount)) rmp.sendMessage(RMText.getLabel("help_set.random"));
-				if(rmp.hasPermission("resourcemadness.set.password")) if(!config.getLock().contains(Setting.password)) rmp.sendMessage(RMText.getLabel("help_set.password"));
-				if(rmp.hasPermission("resourcemadness.set.advertise")) if(!config.getLock().contains(Setting.advertise)) rmp.sendMessage(RMText.getLabel("help_set.advertise"));
-				if(rmp.hasPermission("resourcemadness.set.restore")) if(!config.getLock().contains(Setting.autoRestoreWorld)) rmp.sendMessage(RMText.getLabel("help_set.restore"));
-				if(rmp.hasPermission("resourcemadness.set.warp")) if(!config.getLock().contains(Setting.warpToSafety)) rmp.sendMessage(RMText.getLabel("help_set.warp"));
-				if(rmp.hasPermission("resourcemadness.set.midgamejoin")) if(!config.getLock().contains(Setting.allowMidgameJoin)) rmp.sendMessage(RMText.getLabel("help_set.midgamejoin"));
-				if(rmp.hasPermission("resourcemadness.set.healplayer")) if(!config.getLock().contains(Setting.healPlayer)) rmp.sendMessage(RMText.getLabel("help_set.healplayer"));
-				if(rmp.hasPermission("resourcemadness.set.clearinventory")) if(!config.getLock().contains(Setting.clearPlayerInventory)) rmp.sendMessage(RMText.getLabel("help_set.clearinventory"));
-				if(rmp.hasPermission("resourcemadness.set.foundasreward")) if(!config.getLock().contains(Setting.foundAsReward)) rmp.sendMessage(RMText.getLabel("help_set.foundasreward"));
+				i = 0;
+				iEnd = Setting.warnunequal.ordinal();
 			}
 			else if(page==2){
-				if(rmp.hasPermission("resourcemadness.set.warnunequal")) if(!config.getLock().contains(Setting.warnUnequal)) rmp.sendMessage(RMText.getLabel("help_set.warnunequal"));
-				if(rmp.hasPermission("resourcemadness.set.allowunequal")) if(!config.getLock().contains(Setting.allowUnequal)) rmp.sendMessage(RMText.getLabel("help_set.allowunequal"));
-				if(rmp.hasPermission("resourcemadness.set.warnhacked")) if(!config.getLock().contains(Setting.warnHackedItems)) rmp.sendMessage(RMText.getLabel("help_set.warnhacked"));
-				if(rmp.hasPermission("resourcemadness.set.allowhacked")) if(!config.getLock().contains(Setting.allowHackedItems)) rmp.sendMessage(RMText.getLabel("help_set.allowhacked"));
-				if(rmp.hasPermission("resourcemadness.set.infinitereward")) if(!config.getLock().contains(Setting.infiniteReward)) rmp.sendMessage(RMText.getLabel("help_set.infinitereward"));
-				if(rmp.hasPermission("resourcemadness.set.infinitetools")) if(!config.getLock().contains(Setting.infiniteTools)) rmp.sendMessage(RMText.getLabel("help_set.infinitetools"));
+				i = Setting.warnunequal.ordinal();
+				iEnd = Setting.values().length;
+			}
+			
+			rmp.sendMessage(RMText.getLabelArgs("help_set", ""+page, ""+pages));
+			
+			while(i<iEnd){
+				Setting set = settings[i];
+				SettingPrototype s = settingLib.get(set);
+				if(rmp.hasPermission("resourcemadness.set."+s.name())) if(!s.isLocked()) rmp.sendMessage(RMText.getLabel("help_set."+s.name()));
+				i++;
 			}
 		}
 	}

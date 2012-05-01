@@ -15,6 +15,7 @@ import org.bukkit.block.Sign;
 import com.mtaye.ResourceMadness.RMGame.GameState;
 import com.mtaye.ResourceMadness.RMPlayer.ChatMode;
 import com.mtaye.ResourceMadness.RMPlayer.PlayerAction;
+import com.mtaye.ResourceMadness.setting.Setting;
 import com.mtaye.ResourceMadness.Helper.RMHelper;
 import com.mtaye.ResourceMadness.Helper.RMTextHelper;
 
@@ -48,7 +49,7 @@ public class RMTeam {
 	
 	public void init(DyeColor color, Chest chest, RM plugin){
 		this._teamColor = color;
-		_chest = new RMChest(chest, this, plugin);
+		_chest = new RMChest(chest, this);
 		_sign = (Sign)chest.getBlock().getRelative(BlockFace.UP).getState();
 		_warpLocation = findWarpLocation(_sign.getBlock());
 		if(!_teams.contains(this))_teams.add(this);
@@ -115,7 +116,7 @@ public class RMTeam {
 	}
 	public void addPlayer(RMPlayer rmp){
 		if(!rmp.isIngame()){
-			if(!_game.getGameConfig().getPassword().equalsIgnoreCase(rmp.getRequestString())){
+			if(!_game.getGameConfig().getSettingStr(Setting.password).equalsIgnoreCase(rmp.getRequestString())){
 				rmp.setRequestInt(_game.getGameConfig().getId());
 				rmp.setRequestString(getTeamColor().name());
 				rmp.setPlayerAction(PlayerAction.JOIN_PASSWORD);
@@ -138,12 +139,12 @@ public class RMTeam {
 					}
 				}
 			}
-			if((_game.getGameConfig().getState() == GameState.GAMEPLAY)&&(!_game.getGameConfig().getAllowMidgameJoin())){
+			if((_game.getGameConfig().getState() == GameState.GAMEPLAY)&&(!_game.getGameConfig().getSettingBool(Setting.midgamejoin))){
 				rmp.sendMessage(RMText.getLabel("join.game_in_progress.not"));
 				return;
 			}
-			if((_game.getGameConfig().getMaxTeamPlayers()==0)||(_players.size()<_game.getGameConfig().getMaxTeamPlayers())){
-				if((_game.getGameConfig().getMaxPlayers()==0)||(RMTeam.getAllPlayers().length<_game.getGameConfig().getMaxPlayers())){
+			if((_game.getGameConfig().getSettingInt(Setting.maxteamplayers)==0)||(_players.size()<_game.getGameConfig().getSettingInt(Setting.maxteamplayers))){
+				if((_game.getGameConfig().getSettingInt(Setting.maxplayers)==0)||(RMTeam.getAllPlayers().length<_game.getGameConfig().getSettingInt(Setting.maxplayers))){
 					rmp.setTeam(this);
 					_players.put(rmp.getName(), rmp);
 					rmp.setReady(false);
@@ -284,7 +285,7 @@ public class RMTeam {
 	}
 	
 	public boolean hasMininumPlayers(){
-		if(getPlayers().length<getGame().getGameConfig().getMinTeamPlayers()) return false;
+		if(getPlayers().length<getGame().getGameConfig().getSettingInt(Setting.minteamplayers)) return false;
 		return true;
 	}
 	public boolean isDisqualified(){

@@ -18,6 +18,7 @@ import com.mtaye.ResourceMadness.RMGame.FilterItemType;
 import com.mtaye.ResourceMadness.RMGame.FilterState;
 import com.mtaye.ResourceMadness.RMGame.FilterType;
 import com.mtaye.ResourceMadness.RMGame.InterfaceState;
+import com.mtaye.ResourceMadness.setting.Setting;
 import com.mtaye.ResourceMadness.Helper.RMTextHelper;
 
 /**
@@ -80,7 +81,7 @@ public class RMPlayer {
 	public void chat(ChatMode chatMode, String message){
 		if(message.length()==0) return;
 		switch(chatMode){
-		case WORLD: plugin.getServer().broadcastMessage(message); break;
+		case WORLD: rm.getServer().broadcastMessage(message); break;
 		case GAME: getGameInProgress().teamBroadcastMessage(message); break;
 		case TEAM: getTeam().teamMessage(message); break;
 		}
@@ -545,7 +546,7 @@ public class RMPlayer {
 		_filterType = FilterType.NONE;
 	}
 	
-	public static RM plugin;
+	public static RM rm;
 	private static HashMap<String, RMPlayer> _players = new HashMap<String, RMPlayer>();
 	
 	private PlayerAction _playerAction = PlayerAction.NONE;
@@ -625,7 +626,7 @@ public class RMPlayer {
 	}
 	
 	public Player getPlayer(){
-		return plugin.getServer().getPlayer(_name);
+		return rm.getServer().getPlayer(_name);
 	}
 	private void setPlayer(String player){
 		_name = player;
@@ -640,7 +641,7 @@ public class RMPlayer {
 				return _players.get(player);
 			}
 		}
-		Player p = plugin.getServer().getPlayer(name);
+		Player p = rm.getServer().getPlayer(name);
 		if(p!=null){
 			RMPlayer rmp = new RMPlayer(p.getName());
 			_players.put(name, rmp);
@@ -806,7 +807,7 @@ public class RMPlayer {
 	public boolean inSafeZone(){
 		RMGame rmGame = getGame();
 		if(rmGame!=null){
-			int safeZone = rmGame.getGameConfig().getSafeZone();
+			int safeZone = rmGame.getGameConfig().getSettingInt(Setting.safezone);
 			Block mainBlock = rmGame.getMainBlock();
 			Location loc = getPlayer().getLocation();
 			if(Math.abs(mainBlock.getX()-loc.getBlockX())>safeZone) return false;
@@ -835,8 +836,8 @@ public class RMPlayer {
 	public boolean hasOpPermission(String node){
 		Player p = getPlayer();
 		if(p!=null){
-			if(plugin.isPermissionEnabled()){
-				return (plugin.hasPermission(p, node));
+			if(rm.isPermissionEnabled()){
+				return (rm.hasPermission(p, node));
 			}
 			else if(p.isOp()) return true;
 		}
@@ -846,10 +847,10 @@ public class RMPlayer {
 	public boolean hasOwnerPermission(String ownerName){
 		Player p = getPlayer();
 		if(p!=null){
-			if(plugin.isPermissionEnabled()){
+			if(rm.isPermissionEnabled()){
 				if(ownerName.equalsIgnoreCase(p.getName())) return true;
 				else if(p.isOp()) return true;
-				else return (plugin.hasPermission(p, "resourcemadness.admin"));
+				else return (rm.hasPermission(p, "resourcemadness.admin"));
 			}
 			else if(ownerName.equalsIgnoreCase(p.getName())) return true;
 			else if(p.isOp()) return true;
@@ -859,7 +860,7 @@ public class RMPlayer {
 	
 	public boolean hasPermission(String node){
 		Player p = getPlayer();
-		if(p!=null) return (plugin.hasPermission(p, node));
+		if(p!=null) return (rm.hasPermission(p, node));
 		return false;
 	}
 	

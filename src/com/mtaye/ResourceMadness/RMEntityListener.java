@@ -21,9 +21,9 @@ import org.bukkit.event.entity.EntityExplodeEvent;
  */
 public class RMEntityListener implements Listener{
 	
-	//private final RM plugin;
+	private final RM rm;
 	public RMEntityListener(RM plugin){
-		//this.plugin = plugin;
+		rm = plugin;
 	}
 	
 	@EventHandler(priority = EventPriority.NORMAL)

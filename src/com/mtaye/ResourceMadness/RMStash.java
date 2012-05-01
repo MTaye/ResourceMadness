@@ -18,7 +18,6 @@ import com.mtaye.ResourceMadness.RMGame.HandleState;
 import com.mtaye.ResourceMadness.Helper.RMTextHelper;
 
 public class RMStash {
-	public static RM plugin;
 	private HashMap<Integer, Integer> _added = new HashMap<Integer, Integer>();
 	private HashMap<Integer, Integer> _modified = new HashMap<Integer, Integer>();
 	private HashMap<Integer, Integer> _removed = new HashMap<Integer, Integer>();

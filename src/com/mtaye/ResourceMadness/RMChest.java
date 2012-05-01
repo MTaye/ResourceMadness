@@ -17,19 +17,16 @@ import com.mtaye.ResourceMadness.Helper.RMHelper;
  * @author M-Taye
  */
 public class RMChest{
-	public RM plugin;
 	private Chest _chest;
 	private HashMap<Integer, RMItem> _items = new HashMap<Integer, RMItem>();
 	private RMTeam _team;
 	private RMStash _stash = new RMStash();
 	
 	//Constructor
-	public RMChest(Chest chest, RM plugin){
-		this.plugin = plugin;
+	public RMChest(Chest chest){
 		_chest = chest;
 	}
-	public RMChest(Chest chest, RMTeam team, RM plugin){
-		this.plugin = plugin;
+	public RMChest(Chest chest, RMTeam team){
 		_chest = chest;
 		_team = team;
 	}

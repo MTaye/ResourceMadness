@@ -11,14 +11,14 @@ config.use_restore: # Change this to false if you don't want the games to use th
 config.server_wide: # These are server wide settings.
 config.max_games: # The maximum number of games allowed on server. (0 = unlimited)
 config.max_games_per_player: # The maximum number of games allowed per player. (0 = unlimited)
-config.default_settings1: # All settings from here on out are the game defaults.|# Using :lock after a setting locks it for all games. e.g. minPlayersPerTeam=2:lock
+config.default_settings1: # All settings from here on out are the game defaults.|# Using :lock after a setting locks it for all games. e.g. minteamplayers=2:lock
 config.minplayers: # The minimum number of players allowed per game. The Lowest number is 1 player.|# Only numbers higher than the amount of teams in a game will be evaluated.
 config.maxplayers: # The maximum number of players allowed per game. (0 = unlimited)
 config.minteamplayers: # The minimum number of players allowed per team. The lowest number is 1 player.
 config.maxteamplayers: # The maximum number of players allowed per team. (0 = unlimited)
 config.safezone: # Safe zone radius. (0 = disabled)
 config.timelimit: # Match time limit. (0 = no time limit)
-config.default_settings2: # The following settings can be true or false.|# Using :lock after true/false locks the setting for all games. e.g. allowHacked=false:lock
+config.default_settings2: # The following settings can be true or false.|# Using :lock after true/false locks the setting for all games. e.g. allowhacked=false:lock
 config.advertise: # Advertise game in list.
 config.restore: # Auto restore world changes after match.
 config.warp: # Teleport players before and after match.

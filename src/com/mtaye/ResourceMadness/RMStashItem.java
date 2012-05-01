@@ -11,8 +11,6 @@ import org.bukkit.inventory.ItemStack;
 import com.mtaye.ResourceMadness.RMGame.HandleState;
 
 public class RMStashItem {
-	public static RM plugin;
-	
 	HashMap<String, ItemStack> _items = new HashMap<String, ItemStack>();
 	public int _id = -1; 
 	

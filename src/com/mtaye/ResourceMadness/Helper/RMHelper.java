@@ -18,9 +18,8 @@ import com.mtaye.ResourceMadness.RMGame.InterfaceState;
 import com.mtaye.ResourceMadness.RMPlayer.ChatMode;
 
 public final class RMHelper {
-	public RM plugin;
-	public RMHelper(RM plugin){
-		this.plugin = plugin;
+	public static RM rm;
+	public RMHelper(){
 	}
 	
 	public static boolean copyFile(File inputFile, File outputFile){

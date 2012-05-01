@@ -3,7 +3,7 @@ package com.mtaye.ResourceMadness;
 import java.util.logging.Level;
 
 public final class RMDebug {
-	public static RM plugin;
+	public static RM rm;
 	private static boolean _enabled = false;
 	public RMDebug(){
 	}
@@ -23,13 +23,13 @@ public final class RMDebug {
 	}
 	
 	public static void log(Level level, String message){
-		if(_enabled) plugin.log.log(level, message);
+		if(_enabled) rm.log.log(level, message);
 	}
 	public static void warning(String message){
-		if(_enabled) plugin.log.log(Level.WARNING, message);
+		if(_enabled) rm.log.log(Level.WARNING, message);
 	}
 	public static void severe(String message){
-		if(_enabled) plugin.log.log(Level.SEVERE, message);
+		if(_enabled) rm.log.log(Level.SEVERE, message);
 	}
 	
 }

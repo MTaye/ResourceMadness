@@ -6,8 +6,6 @@ import java.util.List;
 
 public class RMCommands {
 	
-	public RM plugin;
-	
 	public enum RMCommand {
 		ADD,
 		REMOVE,

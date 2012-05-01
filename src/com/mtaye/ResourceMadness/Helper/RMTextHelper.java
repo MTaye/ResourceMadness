@@ -15,7 +15,7 @@ import com.mtaye.ResourceMadness.RMDebug;
 import com.mtaye.ResourceMadness.RMItem;
 
 public class RMTextHelper {
-	public static RM plugin;
+	public static RM rm;
 	
 	private RMTextHelper(){
 	}
@@ -169,7 +169,7 @@ public class RMTextHelper {
 	
 	//Get Sorted Items from ItemStack Array
 	public static String getStringSortedItems(List<ItemStack> items){
-		return getStringSortedItems(items, plugin.config.getTypeLimit());
+		return getStringSortedItems(items, rm.config.getTypeLimit());
 	}
 	public static String getStringSortedItems(List<ItemStack> items, int typeLimit){
 		String strItems = "";

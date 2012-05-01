@@ -18,8 +18,8 @@ import com.mtaye.ResourceMadness.Helper.RMTextHelper;
  *
  * @author M-Taye
  */
-public class RMText {
-	public static RM plugin;
+public final class RMText {
+	public static RM rm;
 	public static String preLog = "ResourceMadness: ";
 
 	public static RMLabelBundle _labels = new RMLabelBundle();
@@ -126,7 +126,7 @@ public class RMText {
 	
 	//Alias
 	public static String alias(RMCommand cmd){
-		List<String> aliases = plugin.getRMConfig().getCommands().getAliasMap().get(cmd);
+		List<String> aliases = rm.getRMConfig().getCommands().getAliasMap().get(cmd);
 		if(aliases != null) if(aliases.size()>0) return aliases.get(0);
 		return cmd.name().toLowerCase().replace("_", " ");
 	}

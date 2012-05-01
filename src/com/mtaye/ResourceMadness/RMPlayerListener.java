@@ -12,9 +12,9 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 
-import com.mtaye.ResourceMadness.RMGame.Setting;
 import com.mtaye.ResourceMadness.RMPlayer.PlayerAction;
 import com.mtaye.ResourceMadness.Helper.RMHelper;
+import com.mtaye.ResourceMadness.setting.Setting;
 
 /**
  * ResourceMadness for Bukkit
@@ -23,9 +23,9 @@ import com.mtaye.ResourceMadness.Helper.RMHelper;
  */
 public class RMPlayerListener implements Listener{
 	
-	//private final RM plugin;
+	private final RM rm;
 	public RMPlayerListener(RM plugin){
-		//this.plugin = plugin;
+		rm = plugin;
 	}
 	
 	@EventHandler(priority = EventPriority.NORMAL)
@@ -226,35 +226,31 @@ public class RMPlayerListener implements Listener{
 										rmp.clearRequestStringList();
 										break;
 									case SET_MIN_PLAYERS:
-										rmGame.setSetting(rmp, Setting.minPlayers, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.minplayers, rmp.getRequestInt());
 										rmp.clearRequestInt();
 										break;
 									case SET_MAX_PLAYERS:
-										rmGame.setSetting(rmp, Setting.maxPlayers, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.maxplayers, rmp.getRequestInt());
 										rmp.clearRequestInt();
 										break;
 									case SET_MIN_TEAM_PLAYERS:
-										rmGame.setSetting(rmp, Setting.minTeamPlayers, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.minteamplayers, rmp.getRequestInt());
 										rmp.clearRequestInt();
 										break;
 									case SET_MAX_TEAM_PLAYERS:
-										rmGame.setSetting(rmp, Setting.maxTeamPlayers, rmp.getRequestInt());
-										rmp.clearRequestInt();
-										break;
-									case SET_MAX_ITEMS:
-										rmGame.setSetting(rmp, Setting.maxItems, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.maxteamplayers, rmp.getRequestInt());
 										rmp.clearRequestInt();
 										break;
 									case SET_SAFE_ZONE:
-										rmGame.setSetting(rmp, Setting.safeZone, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.safezone, rmp.getRequestInt());
 										rmp.clearRequestInt();
 										break;
 									case SET_TIME_LIMIT:
-										rmGame.setSetting(rmp, Setting.timeLimit, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.timelimit, rmp.getRequestInt());
 										rmp.clearRequestInt();
 										break;
 									case SET_RANDOM:
-										rmGame.setSetting(rmp, Setting.autoRandomizeAmount, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.random, rmp.getRequestInt());
 										rmp.clearRequestInt();
 										break;
 									case SET_PASSWORD:
@@ -266,51 +262,51 @@ public class RMPlayerListener implements Listener{
 										rmp.clearRequestInt();
 										break;
 									case SET_RESTORE:
-										rmGame.setSetting(rmp, Setting.autoRestoreWorld, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.restore, rmp.getRequestInt());
 										rmp.clearRequestInt();
 										break;
 									case SET_WARP:
-										rmGame.setSetting(rmp, Setting.warpToSafety, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.warp, rmp.getRequestInt());
 										rmp.clearRequestInt();
 										break;
 									case SET_MIDGAME_JOIN:
-										rmGame.setSetting(rmp, Setting.allowMidgameJoin, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.midgamejoin, rmp.getRequestInt());
 										rmp.clearRequestInt();
 										break;
 									case SET_HEAL_PLAYER:
-										rmGame.setSetting(rmp, Setting.healPlayer, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.healplayer, rmp.getRequestInt());
 										rmp.clearRequestInt();
 										break;
 									case SET_CLEAR_INVENTORY:
-										rmGame.setSetting(rmp, Setting.clearPlayerInventory, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.clearinventory, rmp.getRequestInt());
 										rmp.clearRequestInt();
 										break;
 									case SET_FOUND_AS_REWARD:
-										rmGame.setSetting(rmp, Setting.foundAsReward, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.foundasreward, rmp.getRequestInt());
 										rmp.clearRequestInt();
 										break;
 									case SET_WARN_UNEQUAL:
-										rmGame.setSetting(rmp, Setting.warnUnequal, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.warnunequal, rmp.getRequestInt());
 										rmp.clearRequestInt();
 										break;
 									case SET_ALLOW_UNEQUAL:
-										rmGame.setSetting(rmp, Setting.allowUnequal, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.allowunequal, rmp.getRequestInt());
 										rmp.clearRequestInt();
 										break;
 									case SET_WARN_HACKED:
-										rmGame.setSetting(rmp, Setting.warnHackedItems, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.warnhacked, rmp.getRequestInt());
 										rmp.clearRequestInt();
 										break;
 									case SET_ALLOW_HACKED:
-										rmGame.setSetting(rmp, Setting.allowHackedItems, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.allowhacked, rmp.getRequestInt());
 										rmp.clearRequestInt();
 										break;
 									case SET_INFINITE_REWARD:
-										rmGame.setSetting(rmp, Setting.infiniteReward, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.infinitereward, rmp.getRequestInt());
 										rmp.clearRequestInt();
 										break;
 									case SET_INFINITE_TOOLS:
-										rmGame.setSetting(rmp, Setting.infiniteTools, rmp.getRequestInt());
+										rmGame.setSetting(rmp, Setting.infinitetools, rmp.getRequestInt());
 										rmp.clearRequestInt();
 										break;
 									default:
@@ -425,7 +421,7 @@ public class RMPlayerListener implements Listener{
 				rmp.setPlayerAction(PlayerAction.NONE);
 				RMGame game = RMGame.getGame(rmp.getRequestInt());
 				if(game!=null){
-					if(game.getGameConfig().getPassword().equalsIgnoreCase(e.getMessage())){
+					if(game.getGameConfig().getSettingStr(Setting.password).equalsIgnoreCase(e.getMessage())){
 						RMTeam team = game.getTeamByDye(rmp.getRequestString());
 						if(team!=null){
 							rmp.sendMessage(RMText.getLabel("join.password.success"));

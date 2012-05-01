@@ -30,8 +30,7 @@ public class RMLog {
 		Material.WALL_SIGN, Material.WEB, Material.BREWING_STAND, Material.CAKE_BLOCK, Material.CAULDRON, Material.MELON_BLOCK, Material.PUMPKIN_STEM,
 		Material.STONE_BUTTON, Material.VINE, Material.WATER_LILY};
 	
-	public RMLog(RM plugin){
-		this.plugin = plugin;
+	public RMLog(){
 	}
 	
 	//LOG WORLD

@@ -28,9 +28,9 @@ import com.mtaye.ResourceMadness.Helper.RMHelper;
  */
 public class RMBlockListener implements Listener{
 	
-	private final RM plugin;
+	private final RM rm;
 	public RMBlockListener(RM plugin){
-		this.plugin = plugin;
+		rm = plugin;
 	}
 	
 	@EventHandler(priority = EventPriority.NORMAL)
@@ -49,7 +49,7 @@ public class RMBlockListener implements Listener{
 					}
 				}
 				if(rmp.isIngame()){
-					if(plugin.config.getUseRestore()) rmp.getGame().addLog(b.getState());
+					if(rm.config.getUseRestore()) rmp.getGame().addLog(b.getState());
 				}
 			}
 		}
@@ -62,7 +62,7 @@ public class RMBlockListener implements Listener{
 			RMPlayer rmp = RMPlayer.getPlayerByName(p.getName());
 			if(rmp!=null){
 				if(rmp.isIngame()){
-					if(plugin.config.getUseRestore()) rmp.getGame().addLog(e.getBlockReplacedState());
+					if(rm.config.getUseRestore()) rmp.getGame().addLog(e.getBlockReplacedState());
 				}
 			}
 		}

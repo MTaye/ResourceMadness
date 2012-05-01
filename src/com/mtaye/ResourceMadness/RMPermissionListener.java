@@ -16,36 +16,36 @@ import com.mtaye.ResourceMadness.RMConfig.PermissionType;
 import com.nijikokun.bukkit.Permissions.Permissions;
 
 public class RMPermissionListener implements Listener{
-	public RM plugin;
+	public RM rm;
 	public RMPermissionListener(RM plugin){
-		this.plugin = plugin;
+		this.rm = plugin;
 	}
 	
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void onPluginDisable(final PluginDisableEvent event){
-		PluginManager pm = plugin.getServer().getPluginManager();
+		PluginManager pm = rm.getServer().getPluginManager();
         Plugin p = pm.getPlugin("Permissions");
-        if((p==null)&&(plugin.permissions!=null)){
-        	plugin.permissions = null;
-        	plugin.log.info(RMText.preLog+"Un-hooked from Permissions 3.");
+        if((p==null)&&(rm.permissions!=null)){
+        	rm.permissions = null;
+        	rm.log.info(RMText.preLog+"Un-hooked from Permissions 3.");
         }
         p = pm.getPlugin("PermissionsEx");
-        if((p==null)&&(plugin.permissionsEx!=null)){
-        	plugin.permissionsEx = null;
-        	plugin.log.info(RMText.preLog+"Un-hooked from PermissionsEx.");
+        if((p==null)&&(rm.permissionsEx!=null)){
+        	rm.permissionsEx = null;
+        	rm.log.info(RMText.preLog+"Un-hooked from PermissionsEx.");
         }
    	}
 	
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void onPluginEnable(final PluginEnableEvent event){
-		switch(plugin.config.getPermissionType()){
+		switch(rm.config.getPermissionType()){
 		default: setupPermissions(); break;
 		case AUTO:
-			PluginManager pm = plugin.getServer().getPluginManager();
+			PluginManager pm = rm.getServer().getPluginManager();
 			Plugin p = pm.getPlugin("Permissions");
 			if(p!=null){
 				if(p.isEnabled()){
-					plugin.config.setPermissionType(PermissionType.P3);
+					rm.config.setPermissionType(PermissionType.P3);
 					setupPermissions();
 					return;
 				}
@@ -53,12 +53,12 @@ public class RMPermissionListener implements Listener{
 			p = pm.getPlugin("PermissionsEx");
 			if(p!=null){
 				if(p.isEnabled()){
-				   	plugin.config.setPermissionType(PermissionType.PEX);
+				   	rm.config.setPermissionType(PermissionType.PEX);
 				   	setupPermissions();
 					return;
 				}
 			}
-			//plugin.config.setPermissionType(PermissionType.BUKKIT);
+			//rm.config.setPermissionType(PermissionType.BUKKIT);
 			//setupPermissions();
 			break;
 		case FALSE:
@@ -67,52 +67,52 @@ public class RMPermissionListener implements Listener{
 	}
 	
 	public void setupPermissions(){
-		PluginManager pm = plugin.getServer().getPluginManager();
-		switch(plugin.config.getPermissionType()){
+		PluginManager pm = rm.getServer().getPluginManager();
+		switch(rm.config.getPermissionType()){
 		case P3:
-			if(plugin.permissions==null){
+			if(rm.permissions==null){
 				try{
 					Plugin p = pm.getPlugin("Permissions");
-					if(plugin.permissions == null){
+					if(rm.permissions == null){
 						try{
-							plugin.permissions = ((Permissions)p).getHandler();
-							plugin.log.log(Level.INFO, RMText.preLog+"Found Permissions 3.");
+							rm.permissions = ((Permissions)p).getHandler();
+							rm.log.log(Level.INFO, RMText.preLog+"Found Permissions 3.");
 						}
 						catch (Exception e){
-							plugin.permissions = null;
-							plugin.log.log(Level.WARNING, RMText.preLog+"Permissions 3 is not enabled!");
+							rm.permissions = null;
+							rm.log.log(Level.WARNING, RMText.preLog+"Permissions 3 is not enabled!");
 						}
 					}
 				}
 				catch (java.lang.NoClassDefFoundError e){
-					plugin.permissions = null;
-					plugin.log.log(Level.WARNING, RMText.preLog+"Permissions 3 plugin not found!");
+					rm.permissions = null;
+					rm.log.log(Level.WARNING, RMText.preLog+"Permissions 3 plugin not found!");
 				}
 			}
 			break;
 		case PEX:
-			if(plugin.permissionsEx==null){
+			if(rm.permissionsEx==null){
 				try{
 					if(pm.isPluginEnabled("PermissionsEx")){
-					    plugin.permissionsEx = PermissionsEx.getPermissionManager();
-					    if(plugin.permissionsEx==null) plugin.log.log(Level.WARNING, RMText.preLog+"PermissionsEx is not enabled!");
-					    plugin.log.log(Level.INFO, RMText.preLog+"Found PermissionsEx.");
+					    rm.permissionsEx = PermissionsEx.getPermissionManager();
+					    if(rm.permissionsEx==null) rm.log.log(Level.WARNING, RMText.preLog+"PermissionsEx is not enabled!");
+					    rm.log.log(Level.INFO, RMText.preLog+"Found PermissionsEx.");
 					}
-					else plugin.log.log(Level.WARNING, RMText.preLog+"PermissionsEx not found.");
+					else rm.log.log(Level.WARNING, RMText.preLog+"PermissionsEx not found.");
 				}
 				catch (Exception e){
-					plugin.permissionsEx = null;
-					plugin.log.log(Level.WARNING, RMText.preLog+"PermissionsEx not found!");
+					rm.permissionsEx = null;
+					rm.log.log(Level.WARNING, RMText.preLog+"PermissionsEx not found!");
 				}
 			}
 			break;
 		case BUKKIT:
-			if(!plugin.permissionBukkit){
-				plugin.permissionBukkit = true;
-				plugin.log.log(Level.INFO, RMText.preLog+"Using Bukkit permissions.");
+			if(!rm.permissionBukkit){
+				rm.permissionBukkit = true;
+				rm.log.log(Level.INFO, RMText.preLog+"Using Bukkit permissions.");
 			}
 			break;
 		}
-		if((plugin.permissions == null)&&(plugin.permissionsEx == null)&&(!plugin.permissionBukkit)) plugin.config.setPermissionType(PermissionType.FALSE);
+		if((rm.permissions == null)&&(rm.permissionsEx == null)&&(!rm.permissionBukkit)) rm.config.setPermissionType(PermissionType.FALSE);
 	}
 }
