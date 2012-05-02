@@ -2801,6 +2801,7 @@ public class RMGame {
 				rmp.sendMessage(RMText.getLabel("setting."+setting.name())+": "+getText(rmp, setting));
 				break;
 			case timelimit:
+				_config.setSetting(setting, value);
 				RMGameTimer timer = _config.getTimer();
 				timer.setTimeLimit(value*60);
 				timer.reset();

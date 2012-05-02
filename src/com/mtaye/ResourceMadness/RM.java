@@ -1505,6 +1505,7 @@ public class RM extends JavaPlugin {
 		//decision.add(save(DataType.GAME, false, new File(folder.getAbsolutePath()+File.separator+"gamedata.txt")));
 		decision.add(saveYaml(DataType.GAME, new File(folder.getAbsolutePath()+File.separator+"gamedata.yml"), true));
 		decision.add(save(DataType.LOG, true, new File(folder.getAbsolutePath()+File.separator+"gamelogdata.txt"), true));
+		decision.add(save(DataType.LOG, false, new File(folder.getAbsolutePath()+File.separator+"gamelogdataun.txt"), true));
 		if(decision.contains(false)) return DataSave.FAIL;
 		return DataSave.SUCCESS;
 	}
@@ -1607,7 +1608,9 @@ public class RM extends JavaPlugin {
 						
 						for(Setting setting : Setting.values()){
 							SettingPrototype s = config.getSettingLibrary().get(setting);
-							setProperty(yml, root+s.name(), s.toString());
+							if(s instanceof SettingInt) setProperty(yml, root+s.name(), ((SettingInt) s).get());
+							else if(s instanceof SettingBool) setProperty(yml, root+s.name(), ((SettingBool) s).get());
+							else if(s instanceof SettingStr) setProperty(yml, root+s.name(), ((SettingStr) s).get());
 						}
 						//Stats
 						root = id+".stats.";
@@ -2087,9 +2090,26 @@ public class RM extends JavaPlugin {
 						
 						for(Setting setting : Setting.values()){
 							SettingPrototype s = config.getSettingLibrary().get(setting);
-							if(s instanceof SettingInt) config.setSetting(s.setting(), yml.getInt(root+"minplayers", -1));
-							if(s instanceof SettingBool) config.setSetting(s.setting(), yml.getBoolean(root+"minplayers", config.getSettingBool(s.setting())));
-							if(s instanceof SettingStr) config.setSetting(s.setting(), yml.getString(root+"minplayers"));
+							RMDebug.warning("Setting: "+s.name());
+							if(s instanceof SettingInt){
+								RMDebug.warning("SettingInt!");
+								RMDebug.warning("root: "+root+s.name());
+								RMDebug.warning("root2: '"+root+s.name()+"'");
+								RMDebug.warning("yml.get: "+yml.getInt(root+s.name()));
+								config.setSetting(s.setting(), yml.getInt(root+s.name()));
+							}
+							if(s instanceof SettingBool){
+								RMDebug.warning("SettingBool!");
+								RMDebug.warning("root: "+root+s.name());
+								RMDebug.warning("yml.get: "+yml.getBoolean(root+s.name(), config.getSettingBool(s.setting())));
+								config.setSetting(s.setting(), yml.getBoolean(root+s.name(), config.getSettingBool(s.setting())));
+							}
+							if(s instanceof SettingStr){
+								RMDebug.warning("SettingStr!");
+								RMDebug.warning("root: "+root+s.name());
+								RMDebug.warning("yml.get: "+yml.getString(root+s.name()));
+								config.setSetting(s.setting(), yml.getString(root+s.name()));
+							}
 						}
 
 						//wins,losses,timesPlayed,itemsFound,itemsFoundTotal
