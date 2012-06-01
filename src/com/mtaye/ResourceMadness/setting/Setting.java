@@ -5,21 +5,38 @@ public enum Setting{
 	maxplayers,
 	minteamplayers,
 	maxteamplayers,
-	safezone,
 	timelimit,
+	safezone,
+	playarea,
+	playareatime,
+	enemyradar,
+	keepondeath,
+	multiplier,
 	random,
 	password,
 	advertise,
 	restore,
-	warp,
-	midgamejoin,
+	allowpvp,
+	delaypvp,
+	friendlyfire,
 	healplayer,
+	autoreturn,
+	midgamejoin,
+	showitemsleft,
 	clearinventory,
+	scrapfound,
 	foundasreward,
+	keepoverflow,
 	warnunequal,
 	allowunequal,
 	warnhacked,
 	allowhacked,
 	infinitereward,
-	infinitetools;
+	infinitetools,
+	dividereward,
+	dividetools;
+	
+	public static int calculatePages(int entries){
+		return (int)Math.ceil(values().length/(double)entries);
+	}
 }

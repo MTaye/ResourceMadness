@@ -36,11 +36,6 @@ public class SettingStr extends SettingPrototype{
 	
 	@Override
 	public SettingStr clone(){
-		SettingStr result = null;
-		try{
-			result = (SettingStr)super.clone();
-		}
-		catch(Exception e){}
-	    return result;
+		return new SettingStr(setting(), _str);
 	}
 }

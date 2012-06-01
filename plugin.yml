@@ -1,6 +1,6 @@
 name: ResourceMadness
 main: com.mtaye.ResourceMadness.RM
-version: 0.1.4
+version: 0.1.6
 author: M-Taye
 description: Competitive team-based resource gathering
 commands:

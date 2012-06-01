@@ -40,11 +40,6 @@ public class SettingBool extends SettingPrototype{
 	
 	@Override
 	public SettingBool clone(){
-		SettingBool result = null;
-		try{
-			result = (SettingBool)super.clone();
-		}
-		catch(Exception e){}
-	    return result;
+		return new SettingBool(setting(), _bool);
 	}
 }

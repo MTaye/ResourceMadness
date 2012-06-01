@@ -16,22 +16,37 @@ config.minplayers: # The minimum number of players allowed per game. The Lowest 
 config.maxplayers: # The maximum number of players allowed per game. (0 = unlimited)
 config.minteamplayers: # The minimum number of players allowed per team. The lowest number is 1 player.
 config.maxteamplayers: # The maximum number of players allowed per team. (0 = unlimited)
-config.safezone: # Safe zone radius. (0 = disabled)
 config.timelimit: # Match time limit. (0 = no time limit)
+config.safezone: # Safe zone radius. (0 = disabled)
+config.playarea: # Play area radius. (0 = disabled)
+config.playareatime: # Play area return time. (0 = disabled)
+config.enemyradar: # Enemy detection radius. (0 = disabled)
+config.keepondeath: # Percentage of items to keep on death. (0 = disabled)
+config.multiplier: # Multiply each filter item's amount by this.
+config.random: # Amount of items to pick randomly every match. (0 = disabled)
+config.password: # Set game password. (leave blank for no password)
 config.default_settings2: # The following settings can be true or false.|# Using :lock after true/false locks the setting for all games. e.g. allowhacked=false:lock
 config.advertise: # Advertise game in list.
 config.restore: # Auto restore world changes after match.
-config.warp: # Teleport players before and after match.
-config.midgamejoin: # Allow players to join mid-game.
+config.allowpvp: # Allow combat.
+config.delaypvp: # Amount of time to delay pvp at game start.
+config.friendlyfire: # Allow teammates to hurt each other.
 config.healplayer: # Heal players at game start.
+config.autoreturn: # Return player to marked location after match.
+config.midgamejoin: # Allow players to join mid-game.
+config.showitemsleft: # Show how many items the other team has left.
 config.clearinventory: # Clear/return players items at game start/finish.
+config.scrapfound: # Scrap the game's found items.
 config.foundasreward: # Use the game's found items as reward.
+config.keepoverflow: # Allow players to keep overflow items.
 config.warnunequal: # Warn when reward/tools can't be distributed equally.
 config.allowunequal: # Allow reward/tools to be distributed unequally.
 config.warnhacked: # Warn when hacked items are added. Only the game's owner gets a warning.
 config.allowhacked: # Allow the use of hacked items.
 config.infinitereward: # Use infinite reward.
 config.infinitetools: # Use infinite tools.
+config.dividereward: # Divide reward among team.
+config.dividetools: # Divide tools among players.
 config.aliases: # You can use aliases for most commands.|
 config.aliases: # Usage:|
 config.aliases: #    command: alias||
