@@ -4,9 +4,7 @@ import java.util.HashMap;
 
 import org.bukkit.ChatColor;
 
-import com.mtaye.ResourceMadness.Game;
 import com.mtaye.ResourceMadness.Text;
-import com.mtaye.ResourceMadness.helper.Helper;
 
 public class PvpTimer extends Timer {
 	

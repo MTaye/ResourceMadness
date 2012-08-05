@@ -14,10 +14,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.PluginManager;
@@ -813,7 +810,7 @@ public class RM extends JavaPlugin {
 						}
 						//STATS
 						else if(args[0].equalsIgnoreCase(Text.getLabel("cmd.stats"))){
-							if(!rmp.hasPermission("resourcemadness.team")) return rmp.sendMessage(Text.getLabel("msg.no_permission_command"));
+							if(!rmp.hasPermission("resourcemadness.stats")) return rmp.sendMessage(Text.getLabel("msg.no_permission_command"));
 							if(args.length==2){
 								rmp.getPlayerInfo(args[1]); 
 							}
@@ -1161,8 +1158,8 @@ public class RM extends JavaPlugin {
 									SettingPrototype sp = settingLib.get(setting);
 									if(sp instanceof SettingInt){
 										if(args.length==3){
-											int amount = Helper.getIntByString(args[2]);
-											if(amount>-1){
+											int amount = Helper.getIntByString(args[2], -2);
+											if(amount>-2){
 												if(rmGame!=null){
 													rmGame.setSetting(rmp, setting, amount);
 												}
@@ -1432,7 +1429,7 @@ public class RM extends JavaPlugin {
 		//decision.add(save(DataType.GAME, false, new File(folder.getAbsolutePath()+File.separator+"gamedata.txt")));
 		decision.add(saveYaml(DataType.GAME, new File(folder.getAbsolutePath()+File.separator+"gamedata.yml"), true));
 		decision.add(save(DataType.LOG, true, new File(folder.getAbsolutePath()+File.separator+"gamelogdata.txt"), true));
-		//decision.add(save(DataType.LOG, false, new File(folder.getAbsolutePath()+File.separator+"gamelogdataun.txt"), true));
+		decision.add(save(DataType.LOG, false, new File(folder.getAbsolutePath()+File.separator+"gamelogdataun.txt"), true));
 		if(decision.contains(false)) return DataSave.FAIL;
 		return DataSave.SUCCESS;
 	}

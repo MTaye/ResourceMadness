@@ -1,7 +1,6 @@
 package com.mtaye.ResourceMadness;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -12,7 +11,6 @@ import org.bukkit.inventory.ItemStack;
 import com.mtaye.ResourceMadness.Game.GameState;
 import com.mtaye.ResourceMadness.Game.InterfaceState;
 import com.mtaye.ResourceMadness.setting.Setting;
-import com.mtaye.ResourceMadness.setting.SettingLibrary;
 
 /**
  * ResourceMadness for Bukkit

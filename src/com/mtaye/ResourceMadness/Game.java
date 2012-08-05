@@ -11,11 +11,13 @@ import java.util.TreeMap;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
+import org.bukkit.entity.Creature;
 import org.bukkit.entity.Entity;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -30,7 +32,6 @@ import com.mtaye.ResourceMadness.helper.TextHelper;
 import com.mtaye.ResourceMadness.setting.Setting;
 import com.mtaye.ResourceMadness.setting.SettingBool;
 import com.mtaye.ResourceMadness.setting.SettingInt;
-import com.mtaye.ResourceMadness.setting.SettingIntRange;
 import com.mtaye.ResourceMadness.setting.SettingLibrary;
 import com.mtaye.ResourceMadness.setting.SettingPrototype;
 import com.mtaye.ResourceMadness.setting.SettingStr;
@@ -74,7 +75,6 @@ public class Game {
 	public static enum FilterType { SET, ADD, SUBTRACT, CLEAR, RANDOMIZE, NONE};
 	public static enum FilterItemType { ALL, BLOCK, ITEM, FOOD, RAW, CRAFTED};
 	
-	private int _forceRandom = 0;
 	private final int _cdTimerLimit = 30; //3 seconds
 	private int _cdTimer = _cdTimerLimit;
 	
@@ -2897,11 +2897,15 @@ public class Game {
 	}
 	
 	//LOG WORLD
-	public void addLog(BlockState bState){
-		_config.getLog().add(bState);
+	public void addLog(BlockState... bStates){
+		_config.getLog().add(bStates);
 	}
-	public void addLog(List<Block> blocks){
-		_config.getLog().addList(blocks);
+	public void addLog(Block... blocks){
+		_config.getLog().add(blocks);
+	}
+	//LOG ENTITY
+	public void addLog(Creature... creatures){
+		_config.getLog().add(creatures);
 	}
 	
 	//Clear Log
@@ -2910,7 +2914,15 @@ public class Game {
 	}
 	
 	public void restoreLog(){
-		if(_config.getSettingBool(Setting.restore)) if(_config.getLog().restore()) broadcastMessage(Text.getLabel("restore.success"));
+		if(_config.getSettingBool(Setting.restore)){
+			if(_config.getLog().restore()) broadcastMessage(Text.getLabel("restore.success"));
+			List<GameCreature> creatures = _config.getLog().getCreatureList();
+			for(GameCreature creature : creatures){
+				World w = this.getMainBlock().getWorld();
+				w.spawnCreature(creature.getLocation(), creature.getType());
+			}
+			_config.getLog().clear();
+		}
 	}
 	
 	//Restore World
@@ -2922,7 +2934,7 @@ public class Game {
 		switch(_config.getState()){
 		case SETUP:
 			Log log = _config.getLog();
-			if(log.getList().size()+log.getItemList().size()!=0) restoreLog();
+			if(log.getList().size()+log.getItemList().size()+log.getCreatureList().size()!=0) restoreLog();
 			else rmp.sendMessage(Text.getLabel("restore.nothing"));
 			break;
 		default: rmp.sendMessage(Text.getLabel("restore.game_in_progress"));
@@ -2991,6 +3003,9 @@ public class Game {
 					rmPlayer.getPlayAreaTimer().reset();
 				}
 				break;
+			case timeofday:
+				_config.setSetting(setting, value);
+				rmp.sendMessage(Text.getLabel("setting."+setting.name())+": "+getText(rmp, setting));
 			default:
 				if(value==-1) _config.toggleSetting(setting);
 				else _config.setSetting(setting, value>0?true:false);
@@ -3063,10 +3078,13 @@ public class Game {
 			str = ""+(range.hasLow()?""+ChatColor.GREEN+range.getLow():"")+(range.hasHigh()?ChatColor.WHITE+"-"+ChatColor.GREEN+range.getHigh():"");
 			break;
 		case random:
-			str = ChatColor.AQUA + (settingLib.getInt(set)>0?(ChatColor.GREEN+""+str+" "+Text.getLabel("common.item(s)")):(Text.getLabel("common.disabled")));
+			str = (settingLib.getInt(set)>0?(ChatColor.GREEN+""+str+" "+Text.getLabel("common.item(s)")):(Text.getLabel("common.disabled")));
 			break;
 		case password:
 			str = (!rmp.hasOwnerPermission(_config.getOwnerName())?getPassword(str,true):getPassword(str));
+			break;
+		case timeofday:
+			str = (settingLib.getInt(set)>0?(ChatColor.GREEN+""+str+" "+Text.getLabel("common.item(s)")):(Text.getLabel("common.disabled")));
 			break;
 		default:
 			str = ChatColor.GREEN+str;
@@ -3526,6 +3544,8 @@ public class Game {
 		}
 		return games;
 	}
+	
+	
 	private static List<Game> getGamesByOwnerName(String name){
 		List<Game> games = new ArrayList<Game>();
 		for(Game game : Game.getGames().values()){

@@ -1,7 +1,6 @@
 package com.mtaye.ResourceMadness;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -44,6 +43,7 @@ public class Commands {
 		SET_DELAYPVP,
 		SET_FRIENDLYFIRE,
 		SET_HEALPLAYER,
+		SET_TIMEOFDAY,
 		SET_AUTORETURN,
 		SET_MIDGAMEJOIN,
 		SET_SHOWITEMSLEFT,

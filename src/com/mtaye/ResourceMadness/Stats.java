@@ -48,10 +48,19 @@ public class Stats {
 	}
 	
 	public String getRatioString(RMStat stat1, RMStat stat2){
+		if((stat1==null)||(stat2==null)) return "NULL";
 		double ratio = getRatio(stat1, stat2);
 		double round = Math.round(ratio);
+		String result = "";
 		if(ratio==round) return Integer.toString((int)ratio);
-		return Float.toString(Float.parseFloat(new DecimalFormat("#.##").format(ratio)));
+		try{
+			result = Float.toString(Float.parseFloat(new DecimalFormat("#.##").format(ratio)));
+		}
+		catch(Exception e){
+			result = new DecimalFormat("#.##").format(ratio);
+			result = result.replace(",", ".");
+		}
+		return result;
 	}
 	
 	public float getRatio(RMStat stat1, RMStat stat2){

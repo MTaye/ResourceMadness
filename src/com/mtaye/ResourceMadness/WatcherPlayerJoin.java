@@ -1,7 +1,5 @@
 package com.mtaye.ResourceMadness;
 
-import java.util.logging.Level;
-
 /**
  * ResourceMadness for Bukkit
  *

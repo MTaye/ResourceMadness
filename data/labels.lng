@@ -93,6 +93,7 @@ cmd.set.allowpvp: allowpvp
 cmd.set.delaypvp: delaypvp
 cmd.set.friendlyfire: friendlyfire
 cmd.set.healplayer: healplayer
+cmd.set.timeofday: timeofday
 cmd.set.autoreturn: autoreturn
 cmd.set.midgamejoin: midgamejoin
 cmd.set.showitemsleft: showitemsleft
@@ -574,6 +575,7 @@ setting.allowpvp: %white%Allow combat
 setting.delaypvp: %white%Amount of time to delay combat at start
 setting.friendlyfire: %white%Allow teammates to hurt each other
 setting.healplayer: %white%Heal players at game start
+setting.timeofday: %white%Set time of day at match start
 setting.autoreturn: %white%Return player to marked location after match
 setting.midgamejoin: %white%Allow players to join mid-game
 setting.showitemsleft: %white%Show how many items the other team has left
@@ -700,6 +702,7 @@ help_set.allowpvp: %help_set.common.bool%
 help_set.delaypvp: %help_set.common.amount%
 help_set.friendlyfire: %help_set.common.bool%
 help_set.healplayer: %help_set.common.bool%
+help_set.timeofday: %help_set.common.amount%
 help_set.autoreturn: %help_set.common.bool%
 help_set.midgamejoin: %help_set.common.bool%
 help_set.showitemsleft: %help_set.common.bool%

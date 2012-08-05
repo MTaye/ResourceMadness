@@ -36,6 +36,7 @@ public class SettingLibrary implements Cloneable {
 		add(Setting.delaypvp, 5*Timer.minuteInSeconds);
 		add(Setting.friendlyfire, false);
 		add(Setting.healplayer, true);
+		add(Setting.timeofday, -1, -1, 24000);
 		add(Setting.autoreturn, true);
 		add(Setting.midgamejoin, false);
 		add(Setting.showitemsleft, true);
@@ -53,6 +54,7 @@ public class SettingLibrary implements Cloneable {
 		add(Setting.dividetools, true);
 	}
 	
+	@SuppressWarnings("unused")
 	private void add(SettingPrototype setting){
 		if(setting instanceof SettingInt) map.put(setting.setting(), (SettingInt)setting);
 		else if(setting instanceof SettingBool) map.put(setting.setting(), (SettingBool)setting);
@@ -190,18 +192,22 @@ public class SettingLibrary implements Cloneable {
 		return getSettingIntRange(setting).get();
 	}
 	
+	@SuppressWarnings("unused")
 	private void addLock(Setting setting){
 		if(map.containsKey(setting)) map.get(setting).addLock();
 	}
 	
+	@SuppressWarnings("unused")
 	private void removeLock(Setting setting){
 		if(map.containsKey(setting)) map.get(setting).removeLock();
 	}
 	
+	@SuppressWarnings("unused")
 	private void toggleLock(Setting setting){
 		if(map.containsKey(setting)) map.get(setting).toggleLock();
 	}
 	
+	@SuppressWarnings("unused")
 	private boolean isLocked(Setting setting){
 		if(map.containsKey(setting)) map.get(setting).isLocked();
 		return false;

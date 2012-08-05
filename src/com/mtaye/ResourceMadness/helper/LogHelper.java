@@ -9,7 +9,9 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.EntityType;
 
+import com.mtaye.ResourceMadness.GameCreature;
 import com.mtaye.ResourceMadness.LogBlock;
 import com.mtaye.ResourceMadness.RM;
 import com.mtaye.ResourceMadness.Game;
@@ -17,11 +19,11 @@ import com.mtaye.ResourceMadness.GameConfig;
 import com.mtaye.ResourceMadness.Log;
 
 public class LogHelper {
-	public RM plugin;
+	public RM rm;
 	Helper rmHelper;
 	
 	public LogHelper(RM plugin){
-		this.plugin = plugin;
+		this.rm = plugin;
 	}
 	
 	public String encodeLogListToString(List<LogBlock> logList){
@@ -71,10 +73,50 @@ public class LogHelper {
 		return line;
 	}
 	
+	public String encodeLogCreatureListToString(List<GameCreature> logCreatureList){
+		String line = "";
+		if(logCreatureList.size()==0) return "LOG";
+
+		HashMap<String, HashMap<Integer, List<String>>> worldList = new HashMap<String, HashMap<Integer, List<String>>>();
+		
+		for(GameCreature creature : logCreatureList){
+			Location loc = creature.getLocation();
+			String world = loc.getWorld().getName();
+			int type = creature.getType().getTypeId();
+			String pos = loc.getBlockX()+","+loc.getBlockY()+","+loc.getBlockZ();
+			
+			if(!worldList.containsKey(world)) worldList.put(world, new HashMap<Integer, List<String>>());
+			
+			HashMap<Integer, List<String>> typeList = worldList.get(world);
+			if(!typeList.containsKey(type)) typeList.put(type, new ArrayList<String>());
+				
+			List<String> posList = typeList.get(type);
+			if(!posList.contains(pos)) posList.add(pos);
+		}
+		
+		for(String world : worldList.keySet()){
+			line+=world;
+			//TYPE
+			HashMap<Integer, List<String>> typeList = worldList.get(world);
+			for(Integer type : typeList.keySet()){
+				line+=":"+type;
+				//POS
+				List<String> posList = typeList.get(type);
+				for(String pos : posList){
+					line+=","+pos;
+				}
+			}
+			line+=" ";
+		}
+		line = TextHelper.stripLast(line, " ");
+		return line;
+	}
+	
 	public String encodeLogToString(Log log){
 		String line = "";
 		line += encodeLogListToString(log.getList())+";";
-		line += encodeLogListToString(log.getItemList());
+		line += encodeLogListToString(log.getItemList())+";";
+		line += encodeLogCreatureListToString(log.getCreatureList());
 		return line;
 	}
 		
@@ -85,8 +127,9 @@ public class LogHelper {
 		if(game==null) return;
 		GameConfig config = game.getGameConfig();
 		args = args[1].split(";");
-		if((args[0].length()>0)&&(args[0]!="LOG")) config.getLog().setList(getLogDataByString(args[0]));
-		if((args[1].length()>0)&&(args[1]!="LOG")) config.getLog().setItemList(getLogDataByString(args[1]));
+		if((args.length>0)&&(args[0].length()>0)&&(args[0]!="LOG")) config.getLog().setList(getLogDataByString(args[0]));
+		if((args.length>1)&&(args[1].length()>0)&&(args[1]!="LOG")) config.getLog().setItemList(getLogDataByString(args[1]));
+		if((args.length>2)&&(args[2].length()>0)&&(args[2]!="LOG")) config.getLog().setCreatureList(getLogCreatureDataByString(args[2]));
 		config.getLog().resetLocList();
 	}
 	
@@ -95,7 +138,7 @@ public class LogHelper {
 		String[] worldArgs = strArg.split(" ");
 		for(String worldArg : worldArgs){
 			String[] idArgs = worldArg.split(":"); 
-			World world = plugin.getServer().getWorld(idArgs[0]);
+			World world = rm.getServer().getWorld(idArgs[0]);
 			
 			if(world==null) continue;
 			idArgs = Arrays.copyOfRange(idArgs, 1, idArgs.length);
@@ -126,5 +169,34 @@ public class LogHelper {
 			}
 		}
 		return listLog;
+	}
+	
+	public List<GameCreature> getLogCreatureDataByString(String strArg){
+		List<GameCreature> listLogCreature = new ArrayList<GameCreature>();
+		String[] worldArgs = strArg.split(" ");
+		for(String worldArg : worldArgs){
+			String[] typeArgs = worldArg.split(":"); 
+			World world = rm.getServer().getWorld(typeArgs[0]);
+			
+			if(world==null) continue;
+			typeArgs = Arrays.copyOfRange(typeArgs, 1, typeArgs.length);
+			
+			for(String typeArg : typeArgs){
+				String[] posArgs = typeArg.split(",");
+				int type = Helper.getIntByString(posArgs[0]);
+				if(type==-1) continue;
+				EntityType entityType = EntityType.fromId(type);
+				if(entityType==null) continue;
+				posArgs = Arrays.copyOfRange(posArgs, 1, posArgs.length);
+				for(int i=0; i<posArgs.length-2; i+=3){
+					int x = Helper.getIntByString(posArgs[i]);
+					int y = Helper.getIntByString(posArgs[i+1]);
+					int z = Helper.getIntByString(posArgs[i+2]);
+					Location loc = new Location(world, x, y, z);
+					if(loc!=null) listLogCreature.add(new GameCreature(loc, entityType));
+				}
+			}
+		}
+		return listLogCreature;
 	}
 }

@@ -1,8 +1,5 @@
 package com.mtaye.ResourceMadness;
 
-import java.util.Arrays;
-
-import com.mtaye.ResourceMadness.helper.InventoryHelper;
 /**
  * ResourceMadness for Bukkit
  *

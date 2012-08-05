@@ -1,7 +1,5 @@
 package com.mtaye.ResourceMadness;
 
-import com.mtaye.ResourceMadness.setting.Setting;
-
 /**
  * ResourceMadness for Bukkit
  *

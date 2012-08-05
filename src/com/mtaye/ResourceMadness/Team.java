@@ -1,8 +1,6 @@
 package com.mtaye.ResourceMadness;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -15,7 +13,6 @@ import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
 
 import com.mtaye.ResourceMadness.Game.GameState;
-import com.mtaye.ResourceMadness.GamePlayer.ChatMode;
 import com.mtaye.ResourceMadness.GamePlayer.PlayerAction;
 import com.mtaye.ResourceMadness.Stats.RMStat;
 import com.mtaye.ResourceMadness.helper.Helper;

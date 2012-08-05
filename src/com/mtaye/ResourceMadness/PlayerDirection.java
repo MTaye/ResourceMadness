@@ -2,8 +2,6 @@ package com.mtaye.ResourceMadness;
 
 import java.util.HashMap;
 
-import org.bukkit.ChatColor;
-
 public enum PlayerDirection {
 	N(0),
 	NE(1),

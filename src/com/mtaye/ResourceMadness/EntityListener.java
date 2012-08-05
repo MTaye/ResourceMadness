@@ -3,7 +3,6 @@ package com.mtaye.ResourceMadness;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Creature;
@@ -14,6 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 
 import com.mtaye.ResourceMadness.setting.Setting;
@@ -62,13 +62,13 @@ public class EntityListener implements Listener{
 					if(rmGame.getGameConfig().getWorld()==w){
 						Debug.warning("Same world found");						
 						if(rmGame.inRangeXZ(ent, rmGame.getGameConfig().getSettingInt(Setting.playarea))){
-							rmGame.addLog(blockList);
+							rmGame.addLog(blockList.toArray(new Block[blockList.size()]));
 							return;
 						}
 						for(GamePlayer rmp : rmGame.getOnlineTeamPlayers()){
 							Debug.warning("rmp: "+rmp.getName());
 							if(rmp.inRange(ent.getLocation(), 32)){
-								rmGame.addLog(blockList);
+								rmGame.addLog(blockList.toArray(new Block[blockList.size()]));
 								return;
 							}
 							else Debug.warning("not near location");
@@ -126,6 +126,28 @@ public class EntityListener implements Listener{
 						rmpDamager.sendMessage(Text.getLabelArgs("game.pvp.disabled"));
 					}
 				}
+			}
+		}
+	}
+	
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void onEntityDeath(final EntityDeathEvent e){
+		Entity ent = e.getEntity();
+		if(ent instanceof Creature){
+			Creature creature = (Creature)e.getEntity();
+			switch(creature.getType()){
+			case CHICKEN: case COW: case PIG: case SHEEP: case VILLAGER: case WOLF:
+				Player p = creature.getKiller();
+				if(p!=null){
+					GamePlayer rmp = GamePlayer.getPlayerByName(p.getName());
+					if(rmp!=null){
+						if(rmp.isIngame()){
+							Game game = rmp.getGameInProgress();
+							game.addLog(creature);
+						}
+					}
+				}
+				break;
 			}
 		}
 	}

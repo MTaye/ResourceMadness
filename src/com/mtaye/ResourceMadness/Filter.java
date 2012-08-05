@@ -14,7 +14,6 @@ import org.bukkit.inventory.ItemStack;
 import com.mtaye.ResourceMadness.Game.HandleState;
 import com.mtaye.ResourceMadness.helper.Helper;
 import com.mtaye.ResourceMadness.helper.TextHelper;
-import com.mtaye.ResourceMadness.time.Timer;
 
 /**
  * ResourceMadness for Bukkit

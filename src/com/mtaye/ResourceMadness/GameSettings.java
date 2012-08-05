@@ -1,16 +1,7 @@
 package com.mtaye.ResourceMadness;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-
-import org.bukkit.World;
-import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
-
-import com.mtaye.ResourceMadness.Game.GameState;
-import com.mtaye.ResourceMadness.Game.InterfaceState;
 import com.mtaye.ResourceMadness.helper.InventoryHelper;
 import com.mtaye.ResourceMadness.setting.Setting;
 import com.mtaye.ResourceMadness.setting.SettingLibrary;

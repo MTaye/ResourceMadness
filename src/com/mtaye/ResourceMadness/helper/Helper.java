@@ -13,12 +13,10 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.inventory.ItemStack;
 
-import com.mtaye.ResourceMadness.Debug;
 import com.mtaye.ResourceMadness.RM;
 import com.mtaye.ResourceMadness.Game.GameState;
 import com.mtaye.ResourceMadness.Game.InterfaceState;
 import com.mtaye.ResourceMadness.GamePlayer.ChatMode;
-import com.mtaye.ResourceMadness.setting.Setting;
 
 public final class Helper {
 	public static RM rm;

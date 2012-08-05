@@ -8,6 +8,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
+import org.bukkit.entity.Creature;
 
 import com.mtaye.ResourceMadness.helper.Helper;
 
@@ -17,12 +18,13 @@ import com.mtaye.ResourceMadness.helper.Helper;
  * @author M-Taye
  */
 public class Log {
-	RM plugin;
+	RM rm;
 	
 	private List<Block> _checkList = new ArrayList<Block>();
  	private List<Location> _locList = new ArrayList<Location>();
 	private List<LogBlock> _logList = new ArrayList<LogBlock>();
 	private List<LogBlock> _logItemList = new ArrayList<LogBlock>();
+	private List<GameCreature> _logCreatureList = new ArrayList<GameCreature>();
 	private static Material[] _blockItemMaterials = {Material.BED_BLOCK, Material.BROWN_MUSHROOM, Material.CACTUS, Material.CROPS, Material.DEAD_BUSH,
 		Material.DETECTOR_RAIL, Material.DIODE_BLOCK_OFF, Material.DIODE_BLOCK_ON, Material.IRON_DOOR_BLOCK, Material.LEVER, Material.LONG_GRASS,
 		Material.POWERED_RAIL, Material.RAILS, Material.RED_MUSHROOM, Material.RED_ROSE, Material.REDSTONE, Material.REDSTONE_WIRE, Material.SAPLING,
@@ -34,14 +36,31 @@ public class Log {
 	public Log(){
 	}
 	
-	public void addList(List<Block> blocks){
-		for(Block b : blocks){
-			add(b.getState());
+	public void add(Creature... creatures){
+		for(Creature creature : creatures){
+			add(creature);
 		}
 	}
 	
+	private void add(Creature creature){
+		if(creature==null) return;
+		_logCreatureList.add(new GameCreature(creature));
+	}
+	
 	//LOG WORLD
-	public void add(BlockState bState){
+	public void add(Block... blocks){
+		for(Block block : blocks){
+			add(block.getState());
+		}
+	}
+	
+	public void add(BlockState... bStates){
+		for(BlockState bState : bStates){
+			add(bState);
+		}
+	}
+	
+	private void add(BlockState bState){
 		Block b = bState.getBlock();
 		Material mat = bState.getType();
 		Location loc = bState.getBlock().getLocation();
@@ -156,12 +175,18 @@ public class Log {
 	public List<LogBlock> getItemList(){
 		return _logItemList;
 	}
+	public List<GameCreature> getCreatureList(){
+		return _logCreatureList;
+	}
 	
 	public void setList(List<LogBlock> logList){
 		_logList = logList;
 	}
 	public void setItemList (List<LogBlock> logItemList){
 		_logItemList = logItemList;
+	}
+	public void setCreatureList (List<GameCreature> logCreatureList){
+		_logCreatureList = logCreatureList;
 	}
 	
 	public void resetLocList(){
@@ -181,6 +206,7 @@ public class Log {
 		_locList.clear();
 		_logList.clear();
 		_logItemList.clear();
+		_logCreatureList.clear();
 	}
 	
 	//Restore Log

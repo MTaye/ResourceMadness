@@ -20,6 +20,8 @@ public enum Setting{
 	delaypvp,
 	friendlyfire,
 	healplayer,
+	timeofday,
+	//setweather,
 	autoreturn,
 	midgamejoin,
 	showitemsleft,
